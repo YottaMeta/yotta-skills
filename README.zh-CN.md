@@ -1,0 +1,156 @@
+<p align="center"><b>Language</b>: <a href="./README.md">English</a> · 中文</p>
+
+<p align="center">
+  <img src="assets/banner.png" alt="yotta-skills banner" width="100%" />
+</p>
+
+<h1 align="center">yotta-skills · 元阁 (YuanGe)</h1>
+
+<p align="center">YottaMeta 的<b>全家技能一键安装 CLI</b>：一条 <code>npx</code> 命令把已发布的全部
+<code>yotta-*</code> 技能（当前 <b>22</b> 个）装进指定智能体或目录。</p>
+<p align="center">看清单、装全家、增量更新、<code>--dry-run</code> 预览、<code>--pin</code> 锁版本——
+幂等、零依赖（Node.js 18+）、纯 npm 生态。</p>
+<p align="center">本包<b>不含任何技能本体</b>——只做「清单 + 下载 + 落位 + 汇总」；每个技能仍走各自 npm 包。</p>
+
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue" /></a>
+  <a href="https://agentskills.io/"><img alt="Standard: agentskills.io" src="https://img.shields.io/badge/standard-agentskills.io-orange" /></a>
+  <a href="https://www.npmjs.com/package/@yottameta/yotta-skills"><img alt="npm package" src="https://img.shields.io/npm/v/@yottameta/yotta-skills" /></a>
+  <a href="https://github.com/YottaMeta/yotta-skills"><img alt="GitHub stars" src="https://img.shields.io/github/stars/YottaMeta/yotta-skills" /></a>
+  <a href="https://github.com/YottaMeta/yotta-skills/commits/main"><img alt="last commit" src="https://img.shields.io/github/last-commit/YottaMeta/yotta-skills" /></a>
+  <a href="https://github.com/YottaMeta/yotta-skills"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen" /></a>
+</p>
+
+## 这是什么
+
+以前装元阁全家要逐个 <code>npx</code> 跑很多次。元阁把它变成一条命令：读内置清单（22 个已发布技能）、
+逐个从各自 npm 包下载、落位到目标技能目录、打印汇总（成功 / 跳过 / 失败）。
+
+- **看清单**——全家技能一览：slug / 中文名 / 包名 / 版本 / 一句话说明。
+- **安装**——装全家（或指定技能）到智能体默认用户级目录或任意目录。
+- **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
+- **幂等**——已在清单版本的技能跳过；重复运行安全。
+- **装前摘要**——若装了元信（yotta-verify），先对每个待装技能做一次装前扫描；verdict 仅提示、不拦截。
+
+边界：只做「下载 + 落位 + 汇总」——**不**开发技能内容、**不**内置任何技能本体、**不**用 <code>-g</code>
+全局安装；只在你指定的目标内写文件。
+
+## 快速使用
+
+```bash
+# 列出全家技能（不联网、不改动）
+npx -y @yottameta/yotta-skills --list
+
+# 装全家到指定智能体默认用户级技能目录（推荐）
+npx -y @yottameta/yotta-skills install --agent codex
+
+# 装全家到任意目录（每个技能落在 <dir>/<slug>）
+npx -y @yottameta/yotta-skills install --dir ~/my-skills
+
+# 只装个别技能
+npx -y @yottameta/yotta-skills install yotta-memory yotta-verify --dir ~/my-skills
+
+# 增量更新已装技能
+npx -y @yottameta/yotta-skills update --agent codex
+
+# 预览将安装清单（不联网、不改动）
+npx -y @yottameta/yotta-skills --dry-run
+```
+
+前置：Node.js 18+、npm、系统 tar（Windows 10+ / macOS / 多数 Linux 自带）。
+
+## 命令与选项
+
+| 命令 / 选项 | 作用 |
+|---|---|
+| `--list`（`-l`） | 列出全家技能 + 版本 + 说明；可加技能名过滤 |
+| `install --agent <name>` | 装全家到指定智能体默认用户级技能目录（推荐） |
+| `install --dir <path>` | 装全家到指定目录，每个技能落在 `<path>/<slug>` |
+| `install <skill>... [--agent <name> \| --dir <path>]` | 只装指定的一个或多个技能 |
+| `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失、升级版本不一致的技能 |
+| `--dry-run` | 预览将执行的安装 / 更新清单；不联网、不改动 |
+| `--pin` | 锁死清单精确版本（默认 range：跟随同 major 最新 patch） |
+| `--force` | 已是最新也重新安装 |
+| `--skip-scan` | 跳过元信装前摘要（装了 yotta-verify 时默认自动启用） |
+| `--npm <path>` | 指定 npm 可执行文件 |
+| `--python <path>` | 指定 python 可执行文件（元信摘要用） |
+| `--verify <path>` | 指定 yotta_verify.py 路径 |
+| `-h, --help` / `-v, --version` | 帮助 / 版本 |
+
+不带命令直接给技能名时，等价于 `install <skill>`。
+
+支持 17 个智能体键名：`claude` `cursor` `codex` `gemini` `goose` `amp` `opencode` `windsurf`
+`workbuddy` `kiro` `trae` `trae-cn` `qwen` `comate` `codebuddy` `kimi` `agents`。
+未收录的智能体请用 `--dir` 指到它的技能目录（`.agents/skills` 不是通用目录）。
+
+## 版本策略
+
+- 默认 `range`：`npm pack <pkg>@<major>.x`——取清单同 major 的最新 patch，维护性更新随最新；
+- `--pin`：锁死清单精确版本，完全可复现；
+- 是否「已是最新」由目标 `<dir>/<slug>/SKILL.md` 的 frontmatter `version` 与清单比对，一致即跳过。
+
+## 安装
+
+以下四种方式任选，顺序即推荐优先级；本包一律从 **npm** 获取（GitHub 无代理较慢，npm 支持镜像）。
+
+### 方式一：npm 一行装（推荐）
+
+```text
+# 可选国内加速：npm config set registry https://registry.npmmirror.com
+npx -y @yottameta/yotta-skills install --agent <智能体名称>      # 装全家到指定智能体默认用户级技能目录
+npx -y @yottameta/yotta-skills install --dir <你的技能目录>     # 装全家到指定目录（如 ~/.codex/skills）
+```
+
+- `npx` 会自动拉取最新版 `yotta-skills`，无需单独安装步骤。
+- `--agent <name>` 自动装到该智能体默认用户级目录；`--list` 可查看各智能体默认目录。
+- `--dir <路径>` 装到指定的技能目录；未收录的智能体用 `--dir` 指到它的技能目录。
+- npmmirror 未同步新包（404）：加 `--registry=https://registry.npmjs.org/`（国内需代理），或稍等镜像缓存。
+
+### 方式二：git clone（开发者 / 有 git 环境）
+
+```text
+git clone https://github.com/YottaMeta/yotta-skills.git <你的技能目录>/yotta-skills
+cd <你的技能目录>/yotta-skills
+node bin/yotta-skills.js --list
+```
+
+### 方式三：GitHub 下载压缩包（手动 / 无 git 环境）
+
+在 GitHub 仓库 `YottaMeta/yotta-skills` 点 **Code → Download ZIP**，解压后直接在目录里跑
+`node bin/yotta-skills.js --list`，或把 `yotta-skills` 文件夹放进智能体技能目录。
+
+### 方式四：install.sh（多智能体一键脚本）
+
+```text
+bash install.sh --agent <name>   # 把本技能本身装到指定智能体默认用户级目录
+bash install.sh --dir <path>     # 把本技能本身装到指定目录
+bash install.sh --list           # 列出智能体 -> 默认目录
+```
+
+> 方式一走 npm 源（npmmirror / npmjs），不依赖 GitHub；方式二 / 三走 GitHub，国内无代理可能失败。
+
+## 全家技能清单
+
+22 个技能的 slug / 中文名 / 包名 / 版本 / 说明见 `references/skill-list.md`（机器权威源为
+`skills.json`）。家族分布：安全与护栏（12）/ 质量与工程（4）/ 记忆与上下文（3）/ 写作与表达（1）/
+工作流（1）/ 入口与引导（1）。
+
+## 工作原理
+
+对清单里每个技能：`npm pack <pkg>@<spec>` 到临时目录 → `tar -xzf` 解压 → 可选元信装前摘要 →
+替换 `<dest>/<slug>` → 汇总报告。细节见 `references/install-flow.md`；新手中文教程见
+`references/tutorial.md`。
+
+## 开发与校验
+
+```bash
+# 在技能目录内跑测试（12 个用例）
+npm test
+```
+
+测试覆盖 `--list`、临时目录安装断言、幂等、`--pin`、`update`、异常路径与元信 scan 集成
+（用 fake npm 不联网）。
+
+## 许可证
+
+MIT © YottaMeta —— 见 [LICENSE](./LICENSE)。
