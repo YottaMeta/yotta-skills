@@ -91,7 +91,9 @@ npx -y @yottameta/yotta-skills --dry-run
 
 ## 安装
 
-以下四种方式任选，顺序即推荐优先级；本包一律从 **npm** 获取（GitHub 无代理较慢，npm 支持镜像）。
+> **先分清两层**：`yotta-skills`（元阁）是「全家技能安装器」，本身**不含任何技能本体**。它所做的事是把已发布的 22 个 `yotta-*` 技能从各自 npm 包装进目标目录，所以「拿到元阁」不等于「已装齐技能」——拿到后还需运行一次 `install`，才会把全家真正放进目标目录。单个技能（如 `@yottameta/yotta-memory`）是各自独立的 npm 包、装自己即可；元阁是「一次装齐全家」的管理器，安装方式与此不同。
+
+下面四种方式任选，顺序即推荐优先级；本包一律从 **npm** 获取（GitHub 无代理较慢，npm 支持镜像）。方式二 / 三只「拿到安装器」；方式四只把「安装器技能」本身装进智能体目录——都仍需再跑一次 `install` 才装齐全家。
 
 ### 方式一：npm 一行装（推荐）
 
@@ -101,7 +103,7 @@ npx -y @yottameta/yotta-skills install --agent <智能体名称>      # 装全�
 npx -y @yottameta/yotta-skills install --dir <你的技能目录>     # 装全家到指定目录（如 ~/.codex/skills）
 ```
 
-- `npx` 会自动拉取最新版 `yotta-skills`，无需单独安装步骤。
+- `npx` 会自动拉取最新版 `yotta-skills`，无需单独安装步骤；这是唯一「拿到安装器 + 装齐全家」一步到位的方式。
 - `--agent <name>` 自动装到该智能体默认用户级目录；`--list` 可查看各智能体默认目录。
 - `--dir <路径>` 装到指定的技能目录；未收录的智能体用 `--dir` 指到它的技能目录。
 - npmmirror 未同步新包（404）：加 `--registry=https://registry.npmjs.org/`（国内需代理），或稍等镜像缓存。
@@ -111,21 +113,24 @@ npx -y @yottameta/yotta-skills install --dir <你的技能目录>     # 装全�
 ```text
 git clone https://github.com/YottaMeta/yotta-skills.git <你的技能目录>/yotta-skills
 cd <你的技能目录>/yotta-skills
-node bin/yotta-skills.js --list
+node bin/yotta-skills.js install --dir <你的技能目录>
 ```
+
+- 克隆只拿到**安装器**；`--list` 只会打印清单、不安装任何东西。跑 `install` 才会把全家装进目标目录。
 
 ### 方式三：GitHub 下载压缩包（手动 / 无 git 环境）
 
-在 GitHub 仓库 `YottaMeta/yotta-skills` 点 **Code → Download ZIP**，解压后直接在目录里跑
-`node bin/yotta-skills.js --list`，或把 `yotta-skills` 文件夹放进智能体技能目录。
+在 GitHub 仓库 `YottaMeta/yotta-skills` 点 **Code → Download ZIP**，解压后跑 `node bin/yotta-skills.js install --dir <你的技能目录>` 装齐全家。把 `yotta-skills` 文件夹放进智能体技能目录只让**安装器技能**本身可被调用（它有自己的 `SKILL.md`），并不会把 22 个技能一并带进去——那仍需跑 `install`。
 
 ### 方式四：install.sh（多智能体一键脚本）
 
 ```text
-bash install.sh --agent <name>   # 把本技能本身装到指定智能体默认用户级目录
-bash install.sh --dir <path>     # 把本技能本身装到指定目录
+bash install.sh --agent <name>   # 把「安装器技能」本身装到指定智能体默认用户级目录
+bash install.sh --dir <path>     # 把「安装器技能」本身装到指定目录
 bash install.sh --list           # 列出智能体 -> 默认目录
 ```
+
+- `install.sh` 把「元阁安装器技能」本身装进智能体 / 目录，让代理能调用元阁；要装齐 22 个技能，再执行 `node bin/yotta-skills.js install --agent <name>`（或 `--dir <path>`）。
 
 > 方式一走 npm 源（npmmirror / npmjs），不依赖 GitHub；方式二 / 三走 GitHub，国内无代理可能失败。
 

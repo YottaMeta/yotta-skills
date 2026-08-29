@@ -85,7 +85,9 @@ Supported agent keys (17): `claude` `cursor` `codex` `gemini` `goose` `amp` `ope
 
 ## Installation
 
-Pick any of the four methods below; the order is the recommended priority. The package always comes from **npm** (GitHub can be slow without a proxy; npm supports mirrors).
+> **Two layers first**: `yotta-skills` (元阁) is a **family installer**, not a skill itself — it ships no skill bodies. It pulls each of the 22 published `yotta-*` skills from its own npm package into your target directory, so **getting 元阁 is not the same as having the skills**. After you have the installer, run `install` once to actually place the whole family. A single skill (e.g. `@yottameta/yotta-memory`) is its own npm package and installs by itself; 元阁 is the **install everything at once** manager, so its install path is different.
+
+Pick any of the four methods below; the order is the recommended priority. The package always comes from **npm** (GitHub can be slow without a proxy; npm supports mirrors). Methods 2/3 only fetch the **installer**; method 4 places only the **installer skill** into an agent's skills directory — in each case you still run `install` to bring the whole family.
 
 ### Method 1: npm one-liner (recommended)
 
@@ -95,7 +97,7 @@ npx -y @yottameta/yotta-skills install --agent <agent-name>      # install the w
 npx -y @yottameta/yotta-skills install --dir <your-skills-dir>   # install the whole family to a directory (e.g. ~/.codex/skills)
 ```
 
-- `npx` fetches the latest `yotta-skills` automatically, so there is no separate installation step.
+- `npx` fetches the latest `yotta-skills` automatically, so there is no separate installation step; this is the only method that both gets the installer and installs the family in one command.
 - `--agent <name>` installs to that agent's default user-level directory; `--list` shows each agent's default directory.
 - `--dir <path>` installs to the given directory; for agents not in the preset list, point `--dir` at their skills directory.
 - If the mirror has not synced the new package (404): add `--registry=https://registry.npmjs.org/` (a proxy may be needed in China), or wait for the mirror cache.
@@ -105,20 +107,24 @@ npx -y @yottameta/yotta-skills install --dir <your-skills-dir>   # install the w
 ```text
 git clone https://github.com/YottaMeta/yotta-skills.git <your-skills-dir>/yotta-skills
 cd <your-skills-dir>/yotta-skills
-node bin/yotta-skills.js --list
+node bin/yotta-skills.js install --dir <your-skills-dir>
 ```
+
+- Cloning only fetches the **installer**; `--list` only prints the manifest and installs nothing. Run `install` to place the whole family into the target directory.
 
 ### Method 3: GitHub Download ZIP (manual / no git)
 
-On the GitHub repository `YottaMeta/yotta-skills`, click **Code → Download ZIP**, unzip it, then either run `node bin/yotta-skills.js --list` from the folder, or copy the `yotta-skills` folder into the agent's skills directory.
+On the GitHub repository `YottaMeta/yotta-skills`, click **Code → Download ZIP**, unzip it, then run `node bin/yotta-skills.js install --dir <your-skills-dir>`. Copying the `yotta-skills` folder into an agent's skills directory only makes the **installer skill** itself callable (it has its own `SKILL.md`) — it does not bring the 22 skills; run `install` for that.
 
 ### Method 4: install.sh (multi-agent one-liner script)
 
 ```text
-bash install.sh --agent <name>   # install this skill itself to the agent's default user-level directory
-bash install.sh --dir <path>     # install this skill itself to the given directory
+bash install.sh --agent <name>   # install the master installer skill to the agent's default user-level directory
+bash install.sh --dir <path>     # install the master installer skill to the given directory
 bash install.sh --list           # list agents -> default directories
 ```
+
+- `install.sh` places the **元阁 installer skill** itself so an agent can invoke the family installer. To install the 22 skills, run `node bin/yotta-skills.js install --agent <name>` (or `--dir <path>`).
 
 > Method 1 uses the npm registry (npmmirror / npmjs) and does not depend on GitHub; Methods 2/3 use GitHub and may fail without a proxy in China.
 
