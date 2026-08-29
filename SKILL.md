@@ -1,6 +1,6 @@
 ---
 name: yotta-skills
-version: 0.1.1
+version: 0.1.2
 description: 元阁 —— 全家技能一键安装 CLI：一条命令把 YottaMeta 已发布的全部 yotta-* 技能（当前 22 个）装进指定智能体或目录；支持 --list 清单 / install / update / --dry-run 预览 / --pin 锁版本；幂等、零依赖（Node.js 18+）、纯 npm 生态，不内置任何技能本体。触发：需要批量安装或更新元阁全家技能、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装时；或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家 等。边界（Do NOT trigger）：只做「清单 + 下载 + 落位 + 汇总」，不含技能本体、不做技能内容开发、不 -g 污染全局；装前摘要仅供参考，安装决策由用户确认。
 license: MIT
 metadata:
