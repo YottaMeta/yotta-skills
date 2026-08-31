@@ -83,3 +83,78 @@ test('routeRequest：应用模式默认显式调用并提示可切换', () => {
   assert.ok(result.application_mode.note.includes('需要用户确认'));
   assert.strictEqual(result.missing_skills.length, 0);
 });
+
+
+test('routeRequest：其他已装技能候选——非元技能按 description 机械匹配 Top N', () => {
+  const registry = {
+    skills: {
+      'yotta-present': { slug: 'yotta-present', version: '0.1.1', sources: ['Codex'], status: 'known' },
+      'fake-log-analyzer': {
+        slug: 'fake-log-analyzer', version: '2.1.0', description: '分析安全日志并聚合告警',
+        sources: ['Claude Code'], status: 'known',
+      },
+      'fake-weather': {
+        slug: 'fake-weather', version: '1.0.0', description: '查询天气',
+        sources: ['Cursor'], status: 'known',
+      },
+    },
+  };
+  const result = routeRequest('帮我分析日志，看有没有攻击', { registry });
+  assert.strictEqual(result.playbook.id, 'security-incident-response');
+  assert.ok(Array.isArray(result.other_skill_candidates));
+  const top = result.other_skill_candidates[0];
+  assert.strictEqual(top.slug, 'fake-log-analyzer');
+  assert.ok(top.score >= 1);
+  assert.ok(top.matched_terms.length >= 1);
+  assert.ok(top.matched_terms.includes('分析'));
+  assert.strictEqual(top.scan_status, 'not_scanned');
+  assert.deepStrictEqual(top.sources, ['Claude Code']);
+  assert.strictEqual(top.version, '2.1.0');
+  assert.ok(top.note.includes('不读取全文指令'));
+  assert.ok(top.note.includes('装前安全扫描'));
+  assert.ok(result.other_skills_note.includes('数据不出本机'));
+  assert.ok(!result.other_skill_candidates.some((c) => c.slug === 'fake-weather'));
+});
+
+test('routeRequest：元技能不进其他已装技能候选', () => {
+  const registry = {
+    skills: {
+      'yotta-memory': { slug: 'yotta-memory', version: '0.8.5', description: '按权限边界保存与恢复跨会话记忆', sources: ['Codex'], status: 'known' },
+      'yotta-chart': { slug: 'yotta-chart', version: '0.1.0', description: '本地零依赖可视化图表', sources: ['Codex'], status: 'known' },
+      'other-brand': { slug: 'other-brand', version: '1.0.0', description: '跨会话记忆助手', sources: ['Cursor'], status: 'known' },
+    },
+  };
+  const result = routeRequest('帮我记住这个，跨会话', { registry });
+  assert.deepStrictEqual(result.other_skill_candidates.map((c) => c.slug), ['other-brand']);
+  const result2 = routeRequest('帮我记住这个，跨会话', { registry, yottaSlugs: ['yotta-memory', 'yotta-chart', 'other-brand'] });
+  assert.deepStrictEqual(result2.other_skill_candidates, []);
+});
+
+test('routeRequest：候选数量受 Top N 限制并按得分排序（确定性）', () => {
+  const skills = {};
+  for (let i = 1; i <= 5; i++) {
+    skills['fake-a' + i] = { slug: 'fake-a' + i, version: '1.0.0', description: '日志分析 攻击检测 安全告警', sources: ['Codex'], status: 'known' };
+  }
+  const registry = { skills };
+  const result = routeRequest('分析日志检测攻击', { registry });
+  assert.strictEqual(result.other_skill_candidates.length, 3);
+  for (const c of result.other_skill_candidates) assert.ok(c.score >= 1);
+  const scores = result.other_skill_candidates.map((c) => c.score);
+  assert.deepStrictEqual(scores, [...scores].sort((a, b) => b - a));
+  const again = routeRequest('分析日志检测攻击', { registry });
+  assert.deepStrictEqual(again.other_skill_candidates, result.other_skill_candidates);
+  const result2 = routeRequest('分析日志检测攻击', { registry, otherSkillsTopN: 1 });
+  assert.strictEqual(result2.other_skill_candidates.length, 1);
+});
+
+test('routeRequest：无匹配或空注册表时其他候选为空数组', () => {
+  const empty = routeRequest('今天天气怎么样', { registry: { skills: {} } });
+  assert.deepStrictEqual(empty.other_skill_candidates, []);
+  const reg = {
+    skills: {
+      'fake-bug-fixer': { slug: 'fake-bug-fixer', version: '1.0.0', description: '定位并修复软件缺陷', sources: ['Cursor'], status: 'known' },
+    },
+  };
+  const noMatch = routeRequest('今天天气怎么样', { registry: reg });
+  assert.deepStrictEqual(noMatch.other_skill_candidates, []);
+});

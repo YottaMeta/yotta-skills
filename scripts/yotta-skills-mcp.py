@@ -24,7 +24,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 TOOL_NAME = "yotta-skills"
 CN_NAME = "元阁"
 MCP_PROTOCOL = "2025-03-26"
@@ -185,6 +185,7 @@ def mcp_tools():
         _tool_spec(
             "route_request",
             "按需求摘要给出静态编排路由建议：候选组合、调用顺序、每个技能角色、置信度、依据、已装/缺失状态与安装命令。"
+            "并给出其他已装技能候选（仅按 frontmatter description 本地机械匹配、标注未扫描状态，不读取全文指令、不自动调用）。"
             "只建议安装，不自动安装；数据不出本机。",
             {"request": {"type": "string", "description": "用户需求摘要"}},
             ["request"],

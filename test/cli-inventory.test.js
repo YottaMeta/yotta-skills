@@ -131,3 +131,36 @@ test('CLI --route：缺少需求参数时报错', () => {
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+
+test('CLI --route：JSON 输出含其他已装技能候选', () => {
+  const { home, skills, env } = setupEnv();
+  try {
+    const r = spawnSync(process.execPath, [BIN, '--route', '帮我处理假技能相关需求', '--dir', skills, '--json'], { encoding: 'utf8', env });
+    assert.strictEqual(r.status, 0, 'exit: ' + r.status + '\n' + r.stderr);
+    const data = JSON.parse(r.stdout);
+    assert.ok(data.playbook.id);
+    assert.ok(Array.isArray(data.other_skill_candidates));
+    const fk = data.other_skill_candidates.find((c) => c.slug === 'fake-skill');
+    assert.ok(fk, 'fake-skill 应作为候选出现');
+    assert.strictEqual(fk.scan_status, 'not_scanned');
+    assert.ok(fk.matched_terms.length >= 1);
+    assert.ok(fk.note.includes('不读取全文指令'));
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI --route：文本输出含其他已装技能候选与扫描状态', () => {
+  const { home, skills, env } = setupEnv();
+  try {
+    const r = spawnSync(process.execPath, [BIN, '--route', '帮我处理假技能相关需求', '--dir', skills], { encoding: 'utf8', env });
+    assert.strictEqual(r.status, 0, 'exit: ' + r.status + '\n' + r.stderr);
+    assert.ok(r.stdout.includes('其他已装技能候选'));
+    assert.ok(r.stdout.includes('fake-skill'));
+    assert.ok(r.stdout.includes('未扫描'));
+    assert.ok(r.stdout.includes('不读取全文指令'));
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});

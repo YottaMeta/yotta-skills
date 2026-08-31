@@ -529,11 +529,12 @@ function runReindex(opts) {
   out('注册表: ' + scan.registryPath());
 }
 
-/** --route：静态编排路由，输出组合、顺序、角色与缺失技能建议。 */
+/** --route：静态编排路由，输出组合、顺序、角色、缺失技能建议与其他已装技能候选。 */
 function runRoute(opts) {
-  const { routeRequest } = require('../lib/route');
+  const { routeRequest, defaultYottaSlugs } = require('../lib/route');
   const { registry } = reindexRegistry(opts);
-  const result = routeRequest(opts.route, { registry });
+  const yottaSlugs = new Set([...defaultYottaSlugs(), ...MANIFEST.map((s) => s.slug)]);
+  const result = routeRequest(opts.route, { registry, yottaSlugs });
   if (opts.json) {
     out(JSON.stringify(result, null, 2));
     return;
@@ -551,6 +552,16 @@ function runRoute(opts) {
     out('缺失技能: ' + result.missing_skills.map((skill) => skill.slug).join(', '));
     out('安装命令: ' + result.install_command);
     out('安全提示: 安装前请先执行装前安全扫描；本命令不会自动安装。');
+  }
+  if (result.other_skill_candidates.length) {
+    out('');
+    out('其他已装技能候选（非元阁家族，仅本地机械匹配 frontmatter description）:');
+    for (const c of result.other_skill_candidates) {
+      out('  - ' + c.slug + ' v' + c.version + ' [' + (c.sources || []).join(',') + ']');
+      out('    匹配: ' + c.matched_terms.join('、') + '（得分 ' + c.score + '）· 扫描状态: ' + (c.scan_status === 'not_scanned' ? '未扫描' : c.scan_status));
+      out('    ' + (c.description || ''));
+    }
+    out('安全提示: 其他已装技能只读 frontmatter description 做机械匹配，不读取全文指令、不自动调用；使用/安装前请先执行装前安全扫描，决定权在用户。');
   }
   out('');
   out('应用模式: 显式调用（可经用户确认后切换为按场景自动调用）');

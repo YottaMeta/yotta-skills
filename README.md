@@ -79,7 +79,7 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `update [--agent <name> \| --dir <path>]` | Incremental update: add missing, upgrade version-skewed |
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
 | `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (session start / after installing skills; `--rescan` is a synonym); `--json` for JSON |
-| `--route <task-summary>` | Static orchestration routing: return a combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install suggestion; `--json` for JSON, `--project` adds project-level dirs |
+| `--route <task-summary>` | Static orchestration routing: return a combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install suggestion; also lists other installed (non-YottaMeta) skills as candidates matched mechanically against their frontmatter description, tagged "not scanned", read-only and never auto-invoked; `--json` for JSON, `--project` adds project-level dirs |
 | `--no-reindex` | Do not re-index the registry automatically after `install` / `update` |
 | `--dry-run` | Preview the install / update list; no network, no changes |
 | `--pin` | Lock the exact manifest versions (default: range, latest patch of the same major) |
