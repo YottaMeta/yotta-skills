@@ -33,7 +33,7 @@
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前摘要**——若装了元信（yotta-verify），先对每个待装技能做一次装前扫描；verdict 仅提示、不拦截。
-- **盘点**——扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。
+- **盘点**——扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> 三工具，配置见 <code>SKILL.md</code>。
 
 边界：只做「下载 + 落位 + 汇总」——**不**开发技能内容、**不**内置任何技能本体、**不**用 <code>-g</code>
 全局安装；只在你指定的目标内写文件。

@@ -22,7 +22,7 @@ const os = require('os');
 const { spawnSync } = require('child_process');
 
 const PKG_ROOT = path.join(__dirname, '..');
-let VERSION = '0.2.0';
+let VERSION = '0.2.1';
 try { VERSION = require(path.join(PKG_ROOT, 'package.json')).version; } catch (_) { /* keep fallback */ }
 
 function loadManifest() {

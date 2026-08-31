@@ -7,7 +7,19 @@ const os = require('os');
 const path = require('path');
 
 const MCP = path.join(__dirname, '..', 'scripts', 'yotta-skills-mcp.py');
-const PY = process.env.YOTTA_TEST_PYTHON || 'python';
+const PKG = require('../package.json');
+
+function findPython() {
+  const cands = [process.env.YOTTA_TEST_PYTHON, 'python', 'python3'].filter(Boolean);
+  for (const c of cands) {
+    const r = spawnSync(c, ['--version'], { encoding: 'utf8' });
+    if (r.status === 0) return c;
+  }
+  const scoop = 'D:\\Scoop\\Base\\apps\\python38\\current\\python.exe';
+  if (fs.existsSync(scoop)) return scoop;
+  return 'python';
+}
+const PY = findPython();
 
 function setupEnv() {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'yotta-mcp-home-'));
@@ -41,7 +53,7 @@ test('MCP：initialize + tools/list + list_installed_skills + describe_skill + r
     const byId = Object.fromEntries(lines.map((l) => [l.id, l]));
     // initialize
     assert.strictEqual(byId[1].result.serverInfo.name, 'yotta-skills');
-    assert.strictEqual(byId[1].result.serverInfo.version, '0.2.0');
+    assert.strictEqual(byId[1].result.serverInfo.version, PKG.version);
     // tools/list：3 个工具
     const tools = byId[2].result.tools.map((t) => t.name);
     assert.deepStrictEqual(tools, ['list_installed_skills', 'describe_skill', 'reindex']);

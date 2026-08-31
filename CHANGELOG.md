@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.2.1 (2026-08-31)
+
+MCP 配置说明补全（按需加载口径）。
+
+- SKILL.md「技能盘点」节补「MCP：按需加载（可选）」：明确本技能与 MCP 均为按需触发、不走常驻；mcpServers 配置 JSON 示例、按需写入步骤（用后可移除）、重启/重载提示、未加载降级 CLI 兜底；frontmatter description 同步按需加载口径。
+- 测试：mcp-e2e serverInfo.version 断言改为动态读 package.json；python 探测加候选兜底（YOTTA_TEST_PYTHON / python / python3 / Scoop python38），Windows 无需手动设环境变量。
+- 版本升至 0.2.1。
+
 ## v0.2.0 (2026-08-31)
 
 技能生态盘点层（阶段 A）：元阁从「编排策划 + 安装器」升级为「编排策划 + 安装器 + 技能盘点」。

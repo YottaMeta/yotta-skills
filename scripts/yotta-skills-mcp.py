@@ -23,7 +23,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 TOOL_NAME = "yotta-skills"
 CN_NAME = "元阁"
 MCP_PROTOCOL = "2025-03-26"

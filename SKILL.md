@@ -1,7 +1,7 @@
 ---
 name: yotta-skills
-version: 0.2.0
-description: 元阁 —— 元阁全家技能的总编排策划 + 一键安装器 + 技能盘点。策划层：按场景给出「该组合哪几个元技能、组合强在哪、怎么自动装+自动用」；安装层：一条命令把 YottaMeta 已发布的全部 yotta-* 技能装进指定智能体或目录；盘点层：--inventory 扫描本机已装技能生成注册表（自包含零依赖，不依赖任何元技能）。支持 --list 清单 / install / update / --inventory / --dry-run 预览 / --pin 锁版本。触发：需要批量安装或更新元阁全家技能、按场景组合多个元技能、盘点或查看本机已装技能、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装、或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家/盘点技能/查看已装技能 等。边界（Do NOT trigger）：只做「组合策划 + 清单 + 下载 + 落位 + 汇总 + 盘点」，不含技能本体、不做技能内容开发、不 -g 污染全局；装前摘要仅供参考，安装决策由用户确认。
+version: 0.2.1
+description: 元阁 —— 元阁全家技能的总编排策划 + 一键安装器 + 技能盘点。策划层：按场景给出「该组合哪几个元技能、组合强在哪、怎么自动装+自动用」；安装层：一条命令把 YottaMeta 已发布的全部 yotta-* 技能装进指定智能体或目录；盘点层：--inventory 扫描本机已装技能生成注册表（自包含零依赖，不依赖任何元技能）；MCP 按需加载（可选：list_installed_skills/describe_skill/reindex，不常驻，未加载降级 CLI）。支持 --list 清单 / install / update / --inventory / --dry-run 预览 / --pin 锁版本。触发：需要批量安装或更新元阁全家技能、按场景组合多个元技能、盘点或查看本机已装技能、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装、或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家/盘点技能/查看已装技能 等。边界（Do NOT trigger）：只做「组合策划 + 清单 + 下载 + 落位 + 汇总 + 盘点」，不含技能本体、不做技能内容开发、不 -g 污染全局；装前摘要仅供参考，安装决策由用户确认。
 license: MIT
 metadata:
   zh_name: 元阁
@@ -142,9 +142,31 @@ npx -y @yottameta/yotta-skills --inventory --dir ~/my-skills --project
 
 注册表增量合并：新增（added）/ 更新（updated）/ 消失（gone）随输出列出；同名技能来自多个目录时合并来源，版本不一致记录冲突。
 
-**MCP（按需加载）**：`scripts/yotta-skills-mcp.py` 提供三个工具——
-`list_installed_skills`（盘点）/ `describe_skill`（单技能详情）/ `reindex`（强制重扫），
-走 stdio JSON-RPC，数据不出本机。需要时按需加载，不常驻。
+### MCP：按需加载（可选）
+
+本技能自带一个 MCP server：`yotta-skills`（`scripts/yotta-skills-mcp.py`，零依赖、数据不出本机），
+提供 `list_installed_skills`（盘点）/ `describe_skill`（单技能详情）/ `reindex`（强制重扫）三个工具。
+
+**按需加载，不走常驻**：本技能与 MCP 均为按需触发。默认以 CLI 为主
+（`npx -y @yottameta/yotta-skills --inventory`）；需要让 AI 通过工具直接调用时，再按下面配置启用：
+
+1. **检查当前客户端的 `mcpServers`** 是否已有 `yotta-skills` 条目；已有 → 直接使用。
+2. **没有 → 按需写入**下面这一条 server 配置（用后可移除，不要求常驻）：
+   ```json
+   {
+     "mcpServers": {
+       "yotta-skills": {
+         "command": "python",
+         "args": ["<技能目录>/scripts/yotta-skills-mcp.py"]
+       }
+     }
+   }
+   ```
+   > `<技能目录>` = 本技能实际安装目录，**不要写死盘符路径**；Windows 用 `python`，Linux/macOS 用 `python3`。
+3. **提醒用户**：改 `mcpServers` 后多数客户端需**重启 / 重载一次** MCP server 才生效；加载后应看到
+   `list_installed_skills` / `describe_skill` / `reindex` 三个工具。
+4. **降级兜底（重要）**：若客户端未暴露 MCP 工具 / 无法改配置 / server 未加载，**自动降级 CLI**
+   （同一套扫描核心、结果一致）：`npx -y @yottameta/yotta-skills --inventory ...`。
 
 ## 版本策略
 

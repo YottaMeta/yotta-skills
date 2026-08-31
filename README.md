@@ -30,7 +30,7 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install summary** — if yotta-verify (元信) is available, each skill is scanned first; the verdict is informational only.
-- **Inventory** — scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required.
+- **Inventory** — scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code>; see <code>SKILL.md</code> for the config.
 
 Boundaries: it only downloads, places and summarizes — it does **not** develop skill content, does **not** bundle any skill body, and does **not** use <code>-g</code> global installs. It never writes outside the target you specify.
 
