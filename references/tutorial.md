@@ -118,4 +118,14 @@ npx -y @yottameta/yotta-skills --reindex
 - `install` / `update` 完成后会自动重扫注册表（`~/.yottaskills/registry.json`），新装 / 更新的
   技能随即出现在 `--inventory` / `--reindex` 里；`--no-reindex` 可关闭自动重扫。
 - 建议每会话开工先跑一次 `--reindex`（快速增量，只合并变化），让后装的技能自动被看见。
+
+## 编排路由（--route）
+
+当你不知道「这个需求该用哪几个技能」，可以先把需求摘要交给元阁：
+
+```bash
+npx -y @yottameta/yotta-skills --route "检查代码质量，别糊弄"
+```
+
+输出会告诉你命中哪个组合、按什么顺序调用、每个技能负责什么、哪些已装、哪些缺失，以及缺失技能的安装命令。元阁只给建议，不会自动安装；安装前请先做装前安全扫描，并由用户确认。
 - `--json` 输出机器可读结果（含新增 / 更新 / 消失），适合脚本与钩子。

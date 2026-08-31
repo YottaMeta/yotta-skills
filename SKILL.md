@@ -1,7 +1,7 @@
 ---
 name: yotta-skills
-version: 0.3.0
-description: 元阁 —— 元阁全家技能的总编排策划 + 一键安装器 + 技能盘点。策划层：按场景给出「该组合哪几个元技能、组合强在哪、怎么自动装+自动用」；安装层：一条命令把 YottaMeta 已发布的全部 yotta-* 技能装进指定智能体或目录；盘点层：--inventory / --reindex 扫描本机已装技能生成/更新注册表，新装技能自动被发现（install/update 后自动 re-index，会话开工可先跑 --reindex；自包含零依赖，不依赖任何元技能）；MCP 按需加载（可选：list_installed_skills/describe_skill/reindex，不常驻，未加载降级 CLI）。支持 --list 清单 / install / update / --inventory / --reindex / --dry-run 预览 / --pin 锁版本。触发：需要批量安装或更新元阁全家技能、按场景组合多个元技能、盘点或查看本机已装技能、重扫技能注册表、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装、或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家/盘点技能/查看已装技能 等。边界（Do NOT trigger）：只做「组合策划 + 清单 + 下载 + 落位 + 汇总 + 盘点 + re-index」，不含技能本体、不做技能内容开发、不 -g 污染全局；装前摘要仅供参考，安装决策由用户确认。
+version: 0.4.0
+description: 元阁 -- 元阁全家技能的总编排策划 + 编排路由 + 一键安装器 + 技能盘点。路由层：--route / route_request 按需求摘要给出候选组合、调用顺序、角色、置信度、依据、已装/缺失状态与安装命令，只建议不自动安装；策划层：按场景给出「该组合哪几个元技能、组合强在哪、怎么自动装+自动用」；安装层：一条命令把 YottaMeta 已发布的全部 yotta-* 技能装进指定智能体或目录；盘点层：--inventory / --reindex 扫描本机已装技能生成/更新注册表，新装技能自动被发现（install/update 后自动 re-index，会话开工可先跑 --reindex；自包含零依赖，不依赖任何元技能）；MCP 按需加载（可选：list_installed_skills/describe_skill/reindex/route_request，不常驻，未加载降级 CLI）。支持 --list 清单 / --route 路由 / install / update / --inventory / --reindex / --dry-run 预览 / --pin 锁版本。触发：需要批量安装或更新元阁全家技能、按场景组合多个元技能、路由或判断该用哪些技能、盘点或查看本机已装技能、重扫技能注册表、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装、或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家/该用哪个技能/路由技能/盘点技能/查看已装技能 等。边界（Do NOT trigger）：只做「组合策划 + 静态路由建议 + 清单 + 下载 + 落位 + 汇总 + 盘点 + re-index」，不含技能本体、不做技能内容开发、不 -g 污染全局、不自动安装缺失技能；装前摘要仅供参考，安装决策由用户确认。
 license: MIT
 metadata:
   zh_name: 元阁
@@ -27,8 +27,9 @@ metadata:
 
 # 元阁（yotta-skills）
 
-**元阁全家的总编排策划 + 一键安装 + 技能盘点**，一句话三层：
+**元阁全家的总编排策划 + 编排路由 + 一键安装 + 技能盘点**，一句话四层：
 
+- **路由层（该用哪几个）**：`--route "<需求摘要>"` / MCP `route_request` 查本地注册表与静态编排 playbook，输出候选组合、调用顺序、每个技能角色、置信度、依据、已装/缺失状态与安装命令；只建议安装，不自动安装。
 - **策划层（怎么用）**：接到需求，先按「编排策划」定位命中哪个组合——哪些元技能搭配起来最强、适合什么场景、AI 该怎么自动装并自动用起来。
 - **安装层（怎么装）**：一条 `npx -y @yottameta/yotta-skills` 把组合/全家装进指定智能体或目录——`--list` 看清单、`install` 装、`update` 增量更新、`--dry-run` 预览、`--pin` 锁版本。
 - **盘点层（已装了什么）**：`--inventory` / `--reindex` 扫描本机各智能体技能目录，生成/更新本地注册表；装技能后自动 re-index，新装技能自动被发现——自包含扫描，不依赖任何元技能。
@@ -117,6 +118,7 @@ npx -y @yottameta/yotta-skills --reindex
 | `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失技能、升级版本不一致的技能 |
 | `--inventory` | 盘点本机已装技能：扫描技能目录生成/更新注册表（自包含，不依赖元技能）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（会话开工 / 装技能后自动调用）；`--json` 输出 JSON、`--project` 附扫项目级目录；`--rescan` 同义 |
+| `--route <需求摘要>` | 静态编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--no-reindex` | 安装 / 更新后不自动重扫注册表 |
 | `--dry-run` | 预览将执行的安装 / 更新清单；不联网、不改动 |
 | `--pin` | 锁死清单精确版本（默认 range：跟随同 major 最新 patch） |
@@ -156,10 +158,28 @@ npx -y @yottameta/yotta-skills --inventory --dir ~/my-skills --project
   让新装 / 更新的技能自动进入注册表。
 - **手动**：`yotta-skills --reindex`（`--rescan` 同义）；`--json` 机器可读、`--project` 附扫项目级目录。
 
+## 编排路由（--route）
+
+把需求摘要交给静态编排 playbook 和本地注册表，得到一组可执行建议：
+
+```bash
+# 文本输出：组合、调用顺序、角色、置信度、依据、缺失技能安装命令
+npx -y @yottameta/yotta-skills --route "帮我润色输出，要规范可复制，别有 AI 味"
+
+# 机器可读（JSON）
+npx -y @yottameta/yotta-skills --route "检查代码质量，别糊弄" --json
+```
+
+- **输出**：候选组合、调用顺序、每个技能的角色、置信度、命中依据、已装/缺失状态、安装命令与应用模式提醒。
+- **缺失技能**：只给安装命令，不自动安装；安装前应先做装前安全扫描，决定权在用户。
+- **应用模式**：默认用户显式调用；切换为「按场景自动调用」需要用户确认。
+- **无明确匹配**：低置信度回退到「入口 + 安装」组合，先澄清需求再继续。
+- **边界**：路由是建议，不保证完全正确；关键动作由用户确认，数据不出本机。
+
 ### MCP：按需加载（可选）
 
 本技能自带一个 MCP server：`yotta-skills`（`scripts/yotta-skills-mcp.py`，零依赖、数据不出本机），
-提供 `list_installed_skills`（盘点）/ `describe_skill`（单技能详情）/ `reindex`（强制重扫）三个工具。
+提供 `list_installed_skills`（盘点）/ `describe_skill`（单技能详情）/ `reindex`（强制重扫）/ `route_request`（静态编排路由）四个工具。
 
 **按需加载，不走常驻**：本技能与 MCP 均为按需触发。默认以 CLI 为主
 （`npx -y @yottameta/yotta-skills --inventory`）；需要让 AI 通过工具直接调用时，再按下面配置启用：
@@ -178,9 +198,9 @@ npx -y @yottameta/yotta-skills --inventory --dir ~/my-skills --project
    ```
    > `<技能目录>` = 本技能实际安装目录，**不要写死盘符路径**；Windows 用 `python`，Linux/macOS 用 `python3`。
 3. **提醒用户**：改 `mcpServers` 后多数客户端需**重启 / 重载一次** MCP server 才生效；加载后应看到
-   `list_installed_skills` / `describe_skill` / `reindex` 三个工具。
+   `list_installed_skills` / `describe_skill` / `reindex` / `route_request` 四个工具。
 4. **降级兜底（重要）**：若客户端未暴露 MCP 工具 / 无法改配置 / server 未加载，**自动降级 CLI**
-   （同一套扫描核心、结果一致）：`npx -y @yottameta/yotta-skills --inventory / --reindex ...`。
+   （同一套扫描与路由核心、结果一致）：`npx -y @yottameta/yotta-skills --inventory / --reindex / --route ...`。
 
 ## 版本策略
 

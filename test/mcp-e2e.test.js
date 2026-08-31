@@ -36,7 +36,7 @@ function runMcp(input, env) {
   return spawnSync(PY, [MCP], { input, encoding: 'utf8', env, timeout: 120000 });
 }
 
-test('MCP：initialize + tools/list + list_installed_skills + describe_skill + reindex', () => {
+test('MCP：initialize + tools/list + list_installed_skills + describe_skill + reindex + route_request', () => {
   const { home, skills, env } = setupEnv();
   try {
     const req = [
@@ -45,18 +45,19 @@ test('MCP：initialize + tools/list + list_installed_skills + describe_skill + r
       JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'list_installed_skills', arguments: {} } }),
       JSON.stringify({ jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'describe_skill', arguments: { slug: 'fake-skill' } } }),
       JSON.stringify({ jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'reindex', arguments: {} } }),
+      JSON.stringify({ jsonrpc: '2.0', id: 6, method: 'tools/call', params: { name: 'route_request', arguments: { request: '帮我润色输出，要规范可复制，别有 AI 味' } } }),
     ].join('\n') + '\n';
     const r = runMcp(req, env);
     assert.strictEqual(r.status, 0, 'exit: ' + r.status + '\n' + r.stderr);
     const lines = r.stdout.trim().split('\n').map((l) => JSON.parse(l));
-    assert.strictEqual(lines.length, 5);
+    assert.strictEqual(lines.length, 6);
     const byId = Object.fromEntries(lines.map((l) => [l.id, l]));
     // initialize
     assert.strictEqual(byId[1].result.serverInfo.name, 'yotta-skills');
     assert.strictEqual(byId[1].result.serverInfo.version, PKG.version);
-    // tools/list：3 个工具
+    // tools/list：4 个工具
     const tools = byId[2].result.tools.map((t) => t.name);
-    assert.deepStrictEqual(tools, ['list_installed_skills', 'describe_skill', 'reindex']);
+    assert.deepStrictEqual(tools, ['list_installed_skills', 'describe_skill', 'reindex', 'route_request']);
     // list_installed_skills
     const list = JSON.parse(byId[3].result.content[0].text);
     assert.strictEqual(list.count, 1);
@@ -68,6 +69,10 @@ test('MCP：initialize + tools/list + list_installed_skills + describe_skill + r
     const ri = JSON.parse(byId[5].result.content[0].text);
     assert.strictEqual(ri.count, 1);
     assert.ok(Array.isArray(ri.changes.added));
+    // route_request
+    const route = JSON.parse(byId[6].result.content[0].text);
+    assert.strictEqual(route.playbook.id, 'output-standard');
+    assert.deepStrictEqual(route.skills.map((s) => s.slug), ['yotta-present', 'yotta-humanize']);
   } finally {
     fs.rmSync(home, { recursive: true, force: true });
   }

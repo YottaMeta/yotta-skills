@@ -81,3 +81,53 @@ test('CLI --reindex：文本输出聚焦变化', () => {
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+test('CLI --route：JSON 输出组合、顺序、缺失安装建议与应用模式', () => {
+  const { home, skills, env } = setupEnv();
+  try {
+    fs.mkdirSync(path.join(skills, 'yotta-present'), { recursive: true });
+    fs.writeFileSync(path.join(skills, 'yotta-present', 'SKILL.md'),
+      '---\nname: yotta-present\nversion: 0.1.2\ndescription: 输出呈现\n---\n# yotta-present\n', 'utf8');
+    const r = spawnSync(process.execPath,
+      [BIN, '--route', '帮我润色输出，要规范可复制，别有 AI 味', '--dir', skills, '--json'],
+      { encoding: 'utf8', env });
+    assert.strictEqual(r.status, 0, 'exit: ' + r.status + '\n' + r.stderr);
+    const data = JSON.parse(r.stdout);
+    assert.strictEqual(data.playbook.id, 'output-standard');
+    assert.deepStrictEqual(data.skills.map((s) => s.slug), ['yotta-present', 'yotta-humanize']);
+    assert.strictEqual(data.skills[0].installed, true);
+    assert.strictEqual(data.skills[1].installed, false);
+    assert.ok(data.install_command.includes('install yotta-humanize'));
+    assert.strictEqual(data.application_mode.default, 'explicit');
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI --route：文本输出用户可读指引', () => {
+  const { home, skills, env } = setupEnv();
+  try {
+    const r = spawnSync(process.execPath,
+      [BIN, '--route', '检查代码质量，别糊弄', '--dir', skills],
+      { encoding: 'utf8', env });
+    assert.strictEqual(r.status, 0, 'exit: ' + r.status + '\n' + r.stderr);
+    assert.ok(r.stdout.includes('路由结果'));
+    assert.ok(r.stdout.includes('交付质量门'));
+    assert.ok(r.stdout.includes('缺失技能'));
+    assert.ok(r.stdout.includes('安装命令'));
+    assert.ok(r.stdout.includes('应用模式: 显式调用'));
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI --route：缺少需求参数时报错', () => {
+  const { home, env } = setupEnv();
+  try {
+    const r = spawnSync(process.execPath, [BIN, '--route'], { encoding: 'utf8', env });
+    assert.strictEqual(r.status, 2);
+    assert.match(r.stderr, /--route 缺少需求摘要/);
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});

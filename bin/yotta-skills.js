@@ -131,7 +131,7 @@ function parseArgs(argv) {
     list: false, dryRun: false, pin: false, skipScan: false, force: false,
     help: false, version: false, agent: null, dir: null, npm: null,
     python: null, verify: null, command: null, skill: null, rest: [],
-    inventory: false, reindex: false, noReindex: false, json: false, project: false,
+    inventory: false, reindex: false, noReindex: false, json: false, project: false, route: null,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -145,6 +145,12 @@ function parseArgs(argv) {
     else if (a === '--help' || a === '-h') opts.help = true;
     else if (a === '--version' || a === '-v') opts.version = true;
     else if (a === '--inventory' || a === '--inv') opts.inventory = true;
+    else if (a === '--route') {
+      const value = argv[i + 1];
+      if (value === undefined || value.startsWith('--')) die('--route 缺少需求摘要');
+      opts.route = value;
+      i++;
+    }
     else if (a === '--reindex' || a === '--rescan') opts.reindex = true;
     else if (a === '--no-reindex') opts.noReindex = true;
     else if (a === '--json') opts.json = true;
@@ -439,6 +445,7 @@ function printHelp() {
   out('  yotta-skills --dry-run              预览将安装清单（不联网、不改动）');
   out('  yotta-skills --inventory            盘点本机已装技能（自研扫描，不依赖任何元技能）');
   out('  yotta-skills --reindex              重扫注册表（会话开工 / 装技能后自动调用；增量合并）');
+  out('  yotta-skills --route "<需求摘要>"   给出场景组合、调用顺序、缺失技能安装建议');
   out('');
   out('选项:');
   out('  --agent <name>   智能体键名（--list 可查看；未知智能体请用 --dir）');
@@ -449,7 +456,8 @@ function printHelp() {
   out('  --npm <path>     指定 npm 可执行文件（默认 npm / npm.cmd）');
   out('  --python <path>  指定 python 可执行文件（元信 scan 用）');
   out('  --verify <path>  指定 yotta_verify.py 路径（默认找目标目录已装的元信）');
-  out('  --json            inventory / reindex 时输出 JSON');
+  out('  --json            inventory / reindex / route 时输出 JSON');
+  out('  --route <需求>    静态编排路由（输出组合 / 顺序 / 依据 / 缺失技能建议）');
   out('  --project         inventory / reindex 时附加扫描当前项目 .agents/skills / .codex/skills');
   out('  --no-reindex      安装 / 更新后不自动重扫注册表');
   out('  -h, --help       帮助');
@@ -521,6 +529,34 @@ function runReindex(opts) {
   out('注册表: ' + scan.registryPath());
 }
 
+/** --route：静态编排路由，输出组合、顺序、角色与缺失技能建议。 */
+function runRoute(opts) {
+  const { routeRequest } = require('../lib/route');
+  const { registry } = reindexRegistry(opts);
+  const result = routeRequest(opts.route, { registry });
+  if (opts.json) {
+    out(JSON.stringify(result, null, 2));
+    return;
+  }
+  out('路由结果: ' + result.playbook.name + '（置信度: ' + result.confidence + '）');
+  out('适配意图: ' + result.playbook.intent);
+  out('依据: ' + (result.matched_keywords.length ? result.matched_keywords.join('、') : '无明确匹配，回退到入口澄清'));
+  out('');
+  out('调用顺序:');
+  for (const skill of result.skills) {
+    out('  ' + skill.order + '. ' + skill.slug + ' [' + (skill.installed ? '已装' : '缺失') + '] - ' + skill.role);
+  }
+  if (result.missing_skills.length) {
+    out('');
+    out('缺失技能: ' + result.missing_skills.map((skill) => skill.slug).join(', '));
+    out('安装命令: ' + result.install_command);
+    out('安全提示: 安装前请先执行装前安全扫描；本命令不会自动安装。');
+  }
+  out('');
+  out('应用模式: 显式调用（可经用户确认后切换为按场景自动调用）');
+  out('说明: ' + result.disclaimer);
+}
+
 /** 装技能后自动 re-index（--no-reindex 关闭）：把本次落位结果反映进注册表。best-effort：失败不阻断安装。 */
 function maybeAutoReindex(opts, dest) {
   if (opts.noReindex || opts.dryRun || !dest) return;
@@ -543,6 +579,7 @@ function main() {
   if (opts.list) { printList(opts); return; }
   if (opts.inventory && !opts.command) { runInventory(opts); return; }
   if (opts.reindex && !opts.command) { runReindex(opts); return; }
+  if (opts.route && !opts.command) { runRoute(opts); return; }
 
   const command = opts.command || 'install';
   let dest = resolveTargetDir(opts);

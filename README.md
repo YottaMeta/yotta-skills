@@ -6,8 +6,8 @@
 
 <h1 align="center">yotta-skills · 元阁 (YuanGe)</h1>
 
-<p align="center">YottaMeta's skill-family <b>orchestration planner + one-command installer</b>: plan which skills to combine for a task, then one <code>npx</code> line installs the published <code>yotta-*</code> skills (currently <b>22</b>) into any agent or directory.</p>
-<p align="center">List the family, install everything, incrementally update, preview with <code>--dry-run</code>, pin exact versions — idempotent and zero-dependency (Node.js 18+), pure npm ecosystem.</p>
+<p align="center">YottaMeta's skill-family <b>orchestration router, inventory, and one-command installer</b>: route which skills to combine for a task, then one <code>npx</code> line installs the published <code>yotta-*</code> skills (currently <b>22</b>) into any agent or directory.</p>
+<p align="center">List the family, route a task, install everything, incrementally update, preview with <code>--dry-run</code>, pin exact versions - idempotent and zero-dependency (Node.js 18+), pure npm ecosystem.</p>
 <p align="center">This package contains <b>no skill bodies</b> — only a manifest, a downloader, a placer and a summary. Each skill still comes from its own npm package.</p>
 
 <p align="center">
@@ -25,12 +25,13 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 
 元阁 is also the **family orchestration planner**: given a task, check the orchestration table first — which skills to combine, in what order, and why — then install exactly those. The decision table ships in the package as <code>references/orchestration.md</code> and is summarized in <code>SKILL.md</code>.
 
-- **List** — see the whole family: slug, Chinese name, package, version and a one-line description.
+- **List** - see the whole family: slug, Chinese name, package, version and a one-line description.
+- **Orchestration routing** - <code>--route</code> turns a task summary into a candidate combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install command; it only suggests installation and never installs automatically.
 - **Install** — install everything (or a subset) into an agent's default user-level directory or any directory.
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install summary** — if yotta-verify (元信) is available, each skill is scanned first; the verdict is informational only.
-- **Inventory / re-index** — scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand (e.g. at session start). An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code>; see <code>SKILL.md</code> for the config.
+- **Inventory / re-index** - scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand (e.g. at session start). An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code>; see <code>SKILL.md</code> for the config.
 
 Boundaries: it only downloads, places and summarizes — it does **not** develop skill content, does **not** bundle any skill body, and does **not** use <code>-g</code> global installs. It never writes outside the target you specify.
 
@@ -55,6 +56,9 @@ npx -y @yottameta/yotta-skills update --agent codex
 # Preview what would be installed (no network, no changes)
 npx -y @yottameta/yotta-skills --dry-run
 
+# Route a task to a combination, call order, and missing-skill install suggestion
+npx -y @yottameta/yotta-skills --route "Review this code carefully before release"
+
 # Inventory installed skills on this machine (self-contained scan, no other skills needed)
 npx -y @yottameta/yotta-skills --inventory
 
@@ -75,6 +79,7 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `update [--agent <name> \| --dir <path>]` | Incremental update: add missing, upgrade version-skewed |
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
 | `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (session start / after installing skills; `--rescan` is a synonym); `--json` for JSON |
+| `--route <task-summary>` | Static orchestration routing: return a combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install suggestion; `--json` for JSON, `--project` adds project-level dirs |
 | `--no-reindex` | Do not re-index the registry automatically after `install` / `update` |
 | `--dry-run` | Preview the install / update list; no network, no changes |
 | `--pin` | Lock the exact manifest versions (default: range, latest patch of the same major) |

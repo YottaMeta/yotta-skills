@@ -6,6 +6,7 @@ stdio MCP server（JSON-RPC 2.0，换行分隔），把元阁技能扫描核心�
   list_installed_skills  盘点本机已装技能（读本地注册表；未生成则先扫描一次）
   describe_skill         查看单个技能详情（slug / 版本 / 功能 / 来源）
   reindex                强制重新扫描并更新注册表
+  route_request          按需求摘要给出静态编排路由建议
 
 自包含原则：扫描由元阁自带核心（bin/yotta-skills.js --inventory / --reindex）完成，
 不依赖任何元技能；数据只写本机 ~/.yottaskills/registry.json，不出本机。
@@ -23,7 +24,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 TOOL_NAME = "yotta-skills"
 CN_NAME = "元阁"
 MCP_PROTOCOL = "2025-03-26"
@@ -138,10 +139,24 @@ def _tool_reindex(arguments):  # noqa: ARG001
             "isError": False}
 
 
+def _tool_route(arguments):
+    request = str(arguments.get("request") or "").strip()
+    if not request:
+        return _tool_error("route_request 需要 request 参数")
+    stdout = _run_cli(["--route", request, "--json"])
+    try:
+        payload = json.loads(stdout)
+    except json.JSONDecodeError as e:
+        return _tool_error("route_request 输出解析失败：%s" % e)
+    return {"content": [{"type": "text", "text": json.dumps(payload, ensure_ascii=False, indent=2)}],
+            "isError": False}
+
+
 TOOL_HANDLERS = {
     "list_installed_skills": _tool_list,
     "describe_skill": _tool_describe,
     "reindex": _tool_reindex,
+    "route_request": _tool_route,
 }
 
 
@@ -166,6 +181,13 @@ def mcp_tools():
             "强制重新扫描所有技能目录并更新本地注册表，返回本次变化（新增 / 更新 / 消失）；CLI 等价命令：yotta-skills --reindex。",
             {},
             [],
+        ),
+        _tool_spec(
+            "route_request",
+            "按需求摘要给出静态编排路由建议：候选组合、调用顺序、每个技能角色、置信度、依据、已装/缺失状态与安装命令。"
+            "只建议安装，不自动安装；数据不出本机。",
+            {"request": {"type": "string", "description": "用户需求摘要"}},
+            ["request"],
         ),
     ]
 

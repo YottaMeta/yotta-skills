@@ -6,9 +6,9 @@
 
 <h1 align="center">yotta-skills · 元阁 (YuanGe)</h1>
 
-<p align="center">YottaMeta 的<b>技能生态编排策划 + 全家一键安装器</b>：先按场景规划该组合哪几个技能，再一条 <code>npx</code> 命令把已发布的全部
+<p align="center">YottaMeta 的<b>技能生态编排路由 + 全家一键安装器 + 技能盘点</b>：先按需求路由该组合哪几个技能，再一条 <code>npx</code> 命令把已发布的全部
 <code>yotta-*</code> 技能（当前 <b>22</b> 个）装进指定智能体或目录。</p>
-<p align="center">看清单、装全家、增量更新、<code>--dry-run</code> 预览、<code>--pin</code> 锁版本——
+<p align="center">看清单、路由组合、装全家、增量更新、<code>--dry-run</code> 预览、<code>--pin</code> 锁版本--
 幂等、零依赖（Node.js 18+）、纯 npm 生态。</p>
 <p align="center">本包<b>不含任何技能本体</b>——只做「清单 + 下载 + 落位 + 汇总」；每个技能仍走各自 npm 包。</p>
 
@@ -28,12 +28,13 @@
 
 元阁也是全家的**编排策划层**：接到需求先查「编排策划」组合表——该组合哪几个技能、按什么顺序、各自强在哪——再按需安装恰好那几个。决策表随包提供（<code>references/orchestration.md</code>），<code>SKILL.md</code> 中有摘要。
 
-- **看清单**——全家技能一览：slug / 中文名 / 包名 / 版本 / 一句话说明。
+- **看清单**--全家技能一览：slug / 中文名 / 包名 / 版本 / 一句话说明。
+- **编排路由**--`--route` 按需求摘要输出候选组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装命令；只建议安装，不自动安装。
 - **安装**——装全家（或指定技能）到智能体默认用户级目录或任意目录。
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前摘要**——若装了元信（yotta-verify），先对每个待装技能做一次装前扫描；verdict 仅提示、不拦截。
-- **盘点 / re-index**——扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。新装技能自动被发现：<code>install</code> / <code>update</code> 完成后自动重扫注册表，<code>--reindex</code> 可随时手动重扫（如会话开工）。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> 三工具，配置见 <code>SKILL.md</code>。
+- **盘点 / re-index**--扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。新装技能自动被发现：<code>install</code> / <code>update</code> 完成后自动重扫注册表，<code>--reindex</code> 可随时手动重扫（如会话开工）。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code> 四工具，配置见 <code>SKILL.md</code>。
 
 边界：只做「下载 + 落位 + 汇总」——**不**开发技能内容、**不**内置任何技能本体、**不**用 <code>-g</code>
 全局安装；只在你指定的目标内写文件。
@@ -59,6 +60,9 @@ npx -y @yottameta/yotta-skills update --agent codex
 # 预览将安装清单（不联网、不改动）
 npx -y @yottameta/yotta-skills --dry-run
 
+# 按需求摘要给出组合、顺序与缺失技能安装建议
+npx -y @yottameta/yotta-skills --route "检查代码质量，别糊弄"
+
 # 盘点本机已装技能（自包含扫描，不依赖任何元技能）
 npx -y @yottameta/yotta-skills --inventory
 
@@ -79,6 +83,7 @@ npx -y @yottameta/yotta-skills --reindex
 | `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失、升级版本不一致的技能 |
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（会话开工 / 装技能后自动调用；`--rescan` 同义）；`--json` 输出 JSON |
+| `--route <需求摘要>` | 静态编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--no-reindex` | 安装 / 更新后不自动重扫注册表 |
 | `--dry-run` | 预览将执行的安装 / 更新清单；不联网、不改动 |
 | `--pin` | 锁死清单精确版本（默认 range：跟随同 major 最新 patch） |
