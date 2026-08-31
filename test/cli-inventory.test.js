@@ -46,3 +46,38 @@ test('CLI --inventory：文本输出含技能与计数', () => {
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+test('CLI --reindex：重扫 + 增量合并（JSON 输出 + 幂等）', () => {
+  const { home, skills, env } = setupEnv();
+  try {
+    const r1 = spawnSync(process.execPath, [BIN, '--reindex', '--dir', skills, '--json'], { encoding: 'utf8', env });
+    assert.strictEqual(r1.status, 0, 'exit: ' + r1.status + '\n' + r1.stderr);
+    const d1 = JSON.parse(r1.stdout);
+    assert.deepStrictEqual(d1.changes.added, ['fake-skill']);
+    assert.strictEqual(d1.count, 1);
+    assert.ok(d1.reindexed_at);
+    // 幂等：第二次无变化
+    const r2 = spawnSync(process.execPath, [BIN, '--reindex', '--dir', skills, '--json'], { encoding: 'utf8', env });
+    assert.strictEqual(r2.status, 0);
+    const d2 = JSON.parse(r2.stdout);
+    assert.deepStrictEqual(d2.changes.added, []);
+    assert.deepStrictEqual(d2.changes.updated, []);
+    assert.deepStrictEqual(d2.changes.gone, []);
+    assert.strictEqual(d2.count, 1);
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI --reindex：文本输出聚焦变化', () => {
+  const { home, skills, env } = setupEnv();
+  try {
+    const r = spawnSync(process.execPath, [BIN, '--reindex', '--dir', skills], { encoding: 'utf8', env });
+    assert.strictEqual(r.status, 0);
+    assert.ok(r.stdout.includes('re-index 完成: 新增 1 / 更新 0 / 消失 0'));
+    assert.ok(r.stdout.includes('+ fake-skill'));
+    assert.ok(r.stdout.includes('注册表:'));
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});

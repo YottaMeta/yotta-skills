@@ -30,7 +30,7 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install summary** — if yotta-verify (元信) is available, each skill is scanned first; the verdict is informational only.
-- **Inventory** — scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code>; see <code>SKILL.md</code> for the config.
+- **Inventory / re-index** — scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand (e.g. at session start). An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code>; see <code>SKILL.md</code> for the config.
 
 Boundaries: it only downloads, places and summarizes — it does **not** develop skill content, does **not** bundle any skill body, and does **not** use <code>-g</code> global installs. It never writes outside the target you specify.
 
@@ -57,6 +57,9 @@ npx -y @yottameta/yotta-skills --dry-run
 
 # Inventory installed skills on this machine (self-contained scan, no other skills needed)
 npx -y @yottameta/yotta-skills --inventory
+
+# Re-index the registry (session start / after installing skills; incremental)
+npx -y @yottameta/yotta-skills --reindex
 ```
 
 Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 10+ / macOS / most Linux distributions).
@@ -71,6 +74,8 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `install <skill>... [--agent <name> \| --dir <path>]` | Install only the given skills |
 | `update [--agent <name> \| --dir <path>]` | Incremental update: add missing, upgrade version-skewed |
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
+| `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (session start / after installing skills; `--rescan` is a synonym); `--json` for JSON |
+| `--no-reindex` | Do not re-index the registry automatically after `install` / `update` |
 | `--dry-run` | Preview the install / update list; no network, no changes |
 | `--pin` | Lock the exact manifest versions (default: range, latest patch of the same major) |
 | `--force` | Reinstall even when already at the latest version |
@@ -141,12 +146,12 @@ The full 22-skill manifest with Chinese names, package names, versions and descr
 
 ## How it works
 
-For each skill in the manifest: `npm pack <pkg>@<spec>` into a temp directory → `tar -xzf` → optional yotta-verify pre-install summary → replace `<dest>/<slug>` → summary report. Details: `references/install-flow.md`; beginner tutorial (Chinese): `references/tutorial.md`.
+For each skill in the manifest: `npm pack <pkg>@<spec>` into a temp directory → `tar -xzf` → optional yotta-verify pre-install summary → replace `<dest>/<slug>` → summary report. After `install` / `update` finishes, the local skill registry is re-indexed automatically so newly installed skills show up in `--inventory` / `--reindex` (disable with `--no-reindex`). Details: `references/install-flow.md`; beginner tutorial (Chinese): `references/tutorial.md`.
 
 ## Development & validation
 
 ```bash
-# Run the test suite (12 cases) from the skill directory
+# Run the test suite from the skill directory
 npm test
 ```
 

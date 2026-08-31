@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.3.0 (2026-08-31)
+
+阶段 B（D2 re-index 自动钩子）：新装技能自动被发现。
+
+- 新增 CLI `--reindex`：重扫所有技能目录并增量合并注册表，变化聚焦输出（文本 / `--json` 机器可读），供会话开工与钩子调用；`--rescan` 为同义别名。
+- 装技能后自动 re-index：`install` / `update` 完成后自动重扫注册表，把本次落位结果反映进 `~/.yottaskills/registry.json`（新增 / 更新 / 消失随输出列出）；`--no-reindex` 可关闭。
+- 会话开工 re-scan：SKILL.md「使用须知」护栏补「会话开工先跑一次 `yotta-skills --reindex`」；注册表 `note` 口径同步 `--inventory / --reindex`。
+- MCP `reindex` 工具改走 `--reindex --json`（同一套扫描核心）；CLI 等价命令注明。
+- 文档：SKILL.md / README 中英 / references/install-flow.md / tutorial.md 同步 re-index 用法。
+- 测试：新增 `--reindex`（含幂等）与装后自动 re-index（含 `--no-reindex` 关闭）用例；全量用例全绿。
+- 版本升至 0.3.0。
+
 ## v0.2.1 (2026-08-31)
 
 MCP 配置说明补全（按需加载口径）。

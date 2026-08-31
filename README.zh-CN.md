@@ -33,7 +33,7 @@
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前摘要**——若装了元信（yotta-verify），先对每个待装技能做一次装前扫描；verdict 仅提示、不拦截。
-- **盘点**——扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> 三工具，配置见 <code>SKILL.md</code>。
+- **盘点 / re-index**——扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。新装技能自动被发现：<code>install</code> / <code>update</code> 完成后自动重扫注册表，<code>--reindex</code> 可随时手动重扫（如会话开工）。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> 三工具，配置见 <code>SKILL.md</code>。
 
 边界：只做「下载 + 落位 + 汇总」——**不**开发技能内容、**不**内置任何技能本体、**不**用 <code>-g</code>
 全局安装；只在你指定的目标内写文件。
@@ -61,6 +61,9 @@ npx -y @yottameta/yotta-skills --dry-run
 
 # 盘点本机已装技能（自包含扫描，不依赖任何元技能）
 npx -y @yottameta/yotta-skills --inventory
+
+# 重扫注册表（会话开工 / 新装技能后，增量合并变化）
+npx -y @yottameta/yotta-skills --reindex
 ```
 
 前置：Node.js 18+、npm、系统 tar（Windows 10+ / macOS / 多数 Linux 自带）。
@@ -75,6 +78,8 @@ npx -y @yottameta/yotta-skills --inventory
 | `install <skill>... [--agent <name> \| --dir <path>]` | 只装指定的一个或多个技能 |
 | `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失、升级版本不一致的技能 |
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
+| `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（会话开工 / 装技能后自动调用；`--rescan` 同义）；`--json` 输出 JSON |
+| `--no-reindex` | 安装 / 更新后不自动重扫注册表 |
 | `--dry-run` | 预览将执行的安装 / 更新清单；不联网、不改动 |
 | `--pin` | 锁死清单精确版本（默认 range：跟随同 major 最新 patch） |
 | `--force` | 已是最新也重新安装 |
@@ -150,13 +155,14 @@ bash install.sh --list           # 列出智能体 -> 默认目录
 ## 工作原理
 
 对清单里每个技能：`npm pack <pkg>@<spec>` 到临时目录 → `tar -xzf` 解压 → 可选元信装前摘要 →
-替换 `<dest>/<slug>` → 汇总报告。细节见 `references/install-flow.md`；新手中文教程见
-`references/tutorial.md`。
+替换 `<dest>/<slug>` → 汇总报告。`install` / `update` 完成后自动重扫本地技能注册表，
+新装技能随即出现在 `--inventory` / `--reindex` 里（可用 `--no-reindex` 关闭）。
+细节见 `references/install-flow.md`；新手中文教程见 `references/tutorial.md`。
 
 ## 开发与校验
 
 ```bash
-# 在技能目录内跑测试（12 个用例）
+# 在技能目录内跑测试
 npm test
 ```
 

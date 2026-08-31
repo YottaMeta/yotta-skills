@@ -157,3 +157,47 @@ test('元信 scan 集成：--verify 指定引擎时输出装前摘要', (t) => {
   assert.strictEqual(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /元信 scan: SAFE TO INSTALL/);
 });
+
+test('install 后自动 re-index：注册表反映新装技能', () => {
+  const dest = tmpdir('ys-reidx-');
+  const home = tmpdir('ys-reidx-home-');
+  const env = fakeEnv({
+    USERPROFILE: home, HOME: home,
+    CODEX_HOME: path.join(home, '.codex'),
+    XDG_CONFIG_HOME: path.join(home, '.config'),
+  });
+  try {
+    const r = run(['install', 'yotta-memory', '--dir', dest, '--skip-scan'], env);
+    assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+    assert.ok(fs.existsSync(path.join(dest, 'yotta-memory', 'SKILL.md')));
+    assert.match(r.stdout, /已自动 re-index 注册表/);
+    const regPath = path.join(home, '.yottaskills', 'registry.json');
+    assert.ok(fs.existsSync(regPath), '注册表应自动生成');
+    const reg = JSON.parse(fs.readFileSync(regPath, 'utf8'));
+    const mem = reg.skills['yotta-memory'];
+    assert.ok(mem, 'yotta-memory 应进入注册表');
+    assert.strictEqual(mem.version, '0.8.5');
+  } finally {
+    fs.rmSync(dest, { recursive: true, force: true });
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('install --no-reindex：不自动重扫注册表', () => {
+  const dest = tmpdir('ys-noreidx-');
+  const home = tmpdir('ys-noreidx-home-');
+  const env = fakeEnv({
+    USERPROFILE: home, HOME: home,
+    CODEX_HOME: path.join(home, '.codex'),
+    XDG_CONFIG_HOME: path.join(home, '.config'),
+  });
+  try {
+    const r = run(['install', 'yotta-memory', '--dir', dest, '--skip-scan', '--no-reindex'], env);
+    assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+    assert.ok(!r.stdout.includes('已自动 re-index'), '不应触发自动 re-index');
+    assert.ok(!fs.existsSync(path.join(home, '.yottaskills', 'registry.json')), '注册表不应生成');
+  } finally {
+    fs.rmSync(dest, { recursive: true, force: true });
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});

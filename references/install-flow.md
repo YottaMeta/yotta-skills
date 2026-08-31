@@ -13,6 +13,8 @@
 4. 元信装前摘要（若引擎可用；`--skip-scan` 关闭）；
 5. 删除目标 `<dest>/<slug>` 后重新复制（跳过规则见下）；
 6. 汇总报告：✔ 成功 / - 跳过（已是最新）/ ✘ 失败；有失败项时退出码 1。
+7. 全部完成后自动 re-index 本地技能注册表（`~/.yottaskills/registry.json`）：重扫技能根目录并增量合并，
+   新装 / 更新的技能随即进入注册表（`--no-reindex` 可关闭；`--dry-run` 不触发）。
 
 ## 复制跳过规则
 
@@ -21,6 +23,14 @@
 
 因此装进技能目录的是「技能本体」（SKILL.md / references / scripts 等），不含 npm
 安装器自身、测试夹具与 Python 字节码缓存。
+
+## re-index（装技能后自动重扫注册表）
+
+- `install` / `update` 完成后，CLI 自动调用 `--reindex`（同一套 `lib/skills-scan.js` 扫描核心）：
+  重扫技能根目录 → 增量合并进 `~/.yottaskills/registry.json`（新增 / 更新 / 消失）。
+- `--no-reindex` 关闭自动重扫；`--reindex` 也可单独手动执行（会话开工 / 新装技能后）。
+- 与 `--inventory` 的区别：`--inventory` 侧重「盘点展示」（文本表格 / JSON 全量），
+  `--reindex` 侧重「变化合并」（增量、输出聚焦新增 / 更新 / 消失，适合钩子与脚本）。
 
 ## 幂等与版本判断
 

@@ -104,3 +104,18 @@ npx -y @yottameta/yotta-skills install --agent codex --skip-scan # 跳过装前�
 - **目标未指定**：当前目录没有项目级技能目录时报错（退出码 4），加 `--agent` 或
   `--dir`。
 - **已有旧版本**：默认按 range 覆盖升级到最新 patch；`--pin` 则锁定清单版本。
+
+## 11. 盘点已装技能与 re-index（新装技能自动被发现）
+
+```bash
+# 盘点本机已装技能（文本表格）
+npx -y @yottameta/yotta-skills --inventory
+
+# 重扫注册表（会话开工 / 新装技能后，增量合并变化）
+npx -y @yottameta/yotta-skills --reindex
+```
+
+- `install` / `update` 完成后会自动重扫注册表（`~/.yottaskills/registry.json`），新装 / 更新的
+  技能随即出现在 `--inventory` / `--reindex` 里；`--no-reindex` 可关闭自动重扫。
+- 建议每会话开工先跑一次 `--reindex`（快速增量，只合并变化），让后装的技能自动被看见。
+- `--json` 输出机器可读结果（含新增 / 更新 / 消失），适合脚本与钩子。

@@ -131,7 +131,7 @@ function parseArgs(argv) {
     list: false, dryRun: false, pin: false, skipScan: false, force: false,
     help: false, version: false, agent: null, dir: null, npm: null,
     python: null, verify: null, command: null, skill: null, rest: [],
-    inventory: false, rescan: false, json: false, project: false,
+    inventory: false, reindex: false, noReindex: false, json: false, project: false,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -145,7 +145,8 @@ function parseArgs(argv) {
     else if (a === '--help' || a === '-h') opts.help = true;
     else if (a === '--version' || a === '-v') opts.version = true;
     else if (a === '--inventory' || a === '--inv') opts.inventory = true;
-    else if (a === '--rescan') opts.rescan = true;
+    else if (a === '--reindex' || a === '--rescan') opts.reindex = true;
+    else if (a === '--no-reindex') opts.noReindex = true;
     else if (a === '--json') opts.json = true;
     else if (a === '--project') opts.project = true;
     else if (a === '--agent') opts.agent = take('--agent').toLowerCase();
@@ -437,6 +438,7 @@ function printHelp() {
   out('  yotta-skills update --agent <name>  增量更新已装技能（补齐缺失 / 版本不一致）');
   out('  yotta-skills --dry-run              预览将安装清单（不联网、不改动）');
   out('  yotta-skills --inventory            盘点本机已装技能（自研扫描，不依赖任何元技能）');
+  out('  yotta-skills --reindex              重扫注册表（会话开工 / 装技能后自动调用；增量合并）');
   out('');
   out('选项:');
   out('  --agent <name>   智能体键名（--list 可查看；未知智能体请用 --dir）');
@@ -447,8 +449,9 @@ function printHelp() {
   out('  --npm <path>     指定 npm 可执行文件（默认 npm / npm.cmd）');
   out('  --python <path>  指定 python 可执行文件（元信 scan 用）');
   out('  --verify <path>  指定 yotta_verify.py 路径（默认找目标目录已装的元信）');
-  out('  --json            inventory 时输出 JSON');
-  out('  --project         inventory 时附加扫描当前项目 .agents/skills / .codex/skills');
+  out('  --json            inventory / reindex 时输出 JSON');
+  out('  --project         inventory / reindex 时附加扫描当前项目 .agents/skills / .codex/skills');
+  out('  --no-reindex      安装 / 更新后不自动重扫注册表');
   out('  -h, --help       帮助');
   out('  -v, --version    版本');
   out('');
@@ -458,8 +461,9 @@ function printHelp() {
 
 
 
-// ── 技能盘点（--inventory，自研零依赖扫描） ────────────────────────────────
-function runInventory(opts) {
+// ── 技能盘点 / re-index（自研零依赖扫描核心） ────────────────────────────────
+/** 重扫所有技能根目录并增量合并进注册表；返回 { result, registry, changes }。 */
+function reindexRegistry(opts) {
   const scan = require('../lib/skills-scan');
   const extraDirs = opts.dir ? [opts.dir] : [];
   const roots = scan.defaultRoots({ extraDirs: extraDirs, project: opts.project });
@@ -467,6 +471,12 @@ function runInventory(opts) {
   const prev = scan.readRegistry();
   const { registry, changes } = scan.mergeRegistry(result, prev);
   scan.saveRegistry(registry);
+  return { result, registry, changes };
+}
+
+function runInventory(opts) {
+  const scan = require('../lib/skills-scan');
+  const { result, registry, changes } = reindexRegistry(opts);
   if (opts.json) {
     out(JSON.stringify({
       generated_at: registry.updated,
@@ -486,13 +496,53 @@ function runInventory(opts) {
   }
 }
 
+/** --reindex：重扫 + 增量合并，变化聚焦输出（供会话开工 / 钩子使用）。 */
+function runReindex(opts) {
+  const scan = require('../lib/skills-scan');
+  const { result, registry, changes } = reindexRegistry(opts);
+  if (opts.json) {
+    out(JSON.stringify({
+      reindexed_at: registry.updated,
+      note: registry.note,
+      count: Object.values(registry.skills).filter((s) => s.status !== 'gone').length,
+      changes: changes,
+      errors: result.errors,
+      scanned: result.scanned,
+    }, null, 2));
+    return;
+  }
+  out('re-index 完成: 新增 ' + changes.added.length + ' / 更新 ' + changes.updated.length + ' / 消失 ' + changes.gone.length);
+  for (const slug of changes.added) out('  + ' + slug);
+  for (const slug of changes.updated) out('  ~ ' + slug);
+  for (const slug of changes.gone) out('  - ' + slug);
+  if (result.errors.length) {
+    out('跳过不存在目录 ' + result.errors.length + ' 个');
+  }
+  out('注册表: ' + scan.registryPath());
+}
+
+/** 装技能后自动 re-index（--no-reindex 关闭）：把本次落位结果反映进注册表。best-effort：失败不阻断安装。 */
+function maybeAutoReindex(opts, dest) {
+  if (opts.noReindex || opts.dryRun || !dest) return;
+  const scan = require('../lib/skills-scan');
+  try {
+    const { changes } = reindexRegistry({ ...opts, dir: dest });
+    out('');
+    out('已自动 re-index 注册表（新增 ' + changes.added.length + ' / 更新 ' + changes.updated.length + ' / 消失 ' + changes.gone.length + '；注册表: ' + scan.registryPath() + '）');
+  } catch (e) {
+    out('');
+    out('提示: 自动 re-index 跳过（' + e.message + '）；稍后可手动 --reindex 重扫');
+  }
+}
+
 // ── main ───────────────────────────────────────────────────────────────────
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (opts.help) { printHelp(); return; }
   if (opts.version) { out('yotta-skills v' + VERSION); return; }
   if (opts.list) { printList(opts); return; }
-  if (opts.inventory) { runInventory(opts); return; }
+  if (opts.inventory && !opts.command) { runInventory(opts); return; }
+  if (opts.reindex && !opts.command) { runReindex(opts); return; }
 
   const command = opts.command || 'install';
   let dest = resolveTargetDir(opts);
@@ -518,6 +568,7 @@ function main() {
 
   if (command === 'update') runUpdate(opts, dest);
   else runInstall(opts, dest);
+  maybeAutoReindex(opts, dest);
 }
 
 main();

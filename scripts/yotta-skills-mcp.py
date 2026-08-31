@@ -7,7 +7,7 @@ stdio MCP server（JSON-RPC 2.0，换行分隔），把元阁技能扫描核心�
   describe_skill         查看单个技能详情（slug / 版本 / 功能 / 来源）
   reindex                强制重新扫描并更新注册表
 
-自包含原则：扫描由元阁自带核心（bin/yotta-skills.js --inventory）完成，
+自包含原则：扫描由元阁自带核心（bin/yotta-skills.js --inventory / --reindex）完成，
 不依赖任何元技能；数据只写本机 ~/.yottaskills/registry.json，不出本机。
 
 运行：python scripts/yotta-skills-mcp.py
@@ -23,7 +23,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.2.1"
+VERSION = "0.3.0"
 TOOL_NAME = "yotta-skills"
 CN_NAME = "元阁"
 MCP_PROTOCOL = "2025-03-26"
@@ -123,13 +123,13 @@ def _tool_describe(arguments):
 
 
 def _tool_reindex(arguments):  # noqa: ARG001
-    stdout = _run_cli(["--inventory", "--json"])
+    stdout = _run_cli(["--reindex", "--json"])
     try:
         data = json.loads(stdout)
     except json.JSONDecodeError as e:
         return _tool_error("reindex 输出解析失败：%s" % e)
     payload = {
-        "count": len(data.get("skills", [])),
+        "count": data.get("count", len(data.get("skills", []))),
         "changes": data.get("changes"),
         "errors": data.get("errors"),
         "registry": str(REGISTRY_FILE),
@@ -163,7 +163,7 @@ def mcp_tools():
         ),
         _tool_spec(
             "reindex",
-            "强制重新扫描所有技能目录并更新本地注册表，返回本次变化（新增 / 更新 / 消失）。",
+            "强制重新扫描所有技能目录并更新本地注册表，返回本次变化（新增 / 更新 / 消失）；CLI 等价命令：yotta-skills --reindex。",
             {},
             [],
         ),
