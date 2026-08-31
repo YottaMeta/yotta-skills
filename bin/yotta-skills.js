@@ -22,7 +22,7 @@ const os = require('os');
 const { spawnSync } = require('child_process');
 
 const PKG_ROOT = path.join(__dirname, '..');
-let VERSION = '0.1.3';
+let VERSION = '0.2.0';
 try { VERSION = require(path.join(PKG_ROOT, 'package.json')).version; } catch (_) { /* keep fallback */ }
 
 function loadManifest() {
@@ -131,6 +131,7 @@ function parseArgs(argv) {
     list: false, dryRun: false, pin: false, skipScan: false, force: false,
     help: false, version: false, agent: null, dir: null, npm: null,
     python: null, verify: null, command: null, skill: null, rest: [],
+    inventory: false, rescan: false, json: false, project: false,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -143,6 +144,10 @@ function parseArgs(argv) {
     else if (a === '--force') opts.force = true;
     else if (a === '--help' || a === '-h') opts.help = true;
     else if (a === '--version' || a === '-v') opts.version = true;
+    else if (a === '--inventory' || a === '--inv') opts.inventory = true;
+    else if (a === '--rescan') opts.rescan = true;
+    else if (a === '--json') opts.json = true;
+    else if (a === '--project') opts.project = true;
     else if (a === '--agent') opts.agent = take('--agent').toLowerCase();
     else if (a === '--dir') opts.dir = take('--dir');
     else if (a === '--npm') opts.npm = take('--npm');
@@ -431,6 +436,7 @@ function printHelp() {
   out('  yotta-skills install <skill> --dir <path>  装单个技能（可多个）');
   out('  yotta-skills update --agent <name>  增量更新已装技能（补齐缺失 / 版本不一致）');
   out('  yotta-skills --dry-run              预览将安装清单（不联网、不改动）');
+  out('  yotta-skills --inventory            盘点本机已装技能（自研扫描，不依赖任何元技能）');
   out('');
   out('选项:');
   out('  --agent <name>   智能体键名（--list 可查看；未知智能体请用 --dir）');
@@ -441,11 +447,43 @@ function printHelp() {
   out('  --npm <path>     指定 npm 可执行文件（默认 npm / npm.cmd）');
   out('  --python <path>  指定 python 可执行文件（元信 scan 用）');
   out('  --verify <path>  指定 yotta_verify.py 路径（默认找目标目录已装的元信）');
+  out('  --json            inventory 时输出 JSON');
+  out('  --project         inventory 时附加扫描当前项目 .agents/skills / .codex/skills');
   out('  -h, --help       帮助');
   out('  -v, --version    版本');
   out('');
   out('支持智能体: ' + Object.keys(AGENT_DIRS).join(', '));
   out('依赖: Node.js 18+ / npm / 系统 tar；环境变量 YOTTA_SKILLS_NPM / YOTTA_SKILLS_PYTHON / YOTTA_SKILLS_VERIFY / YOTTA_SKILLS_NPM_FLAGS 可覆盖。');
+}
+
+
+
+// ── 技能盘点（--inventory，自研零依赖扫描） ────────────────────────────────
+function runInventory(opts) {
+  const scan = require('../lib/skills-scan');
+  const extraDirs = opts.dir ? [opts.dir] : [];
+  const roots = scan.defaultRoots({ extraDirs: extraDirs, project: opts.project });
+  const result = scan.scanRoots(roots);
+  const prev = scan.readRegistry();
+  const { registry, changes } = scan.mergeRegistry(result, prev);
+  scan.saveRegistry(registry);
+  if (opts.json) {
+    out(JSON.stringify({
+      generated_at: registry.updated,
+      note: registry.note,
+      scanned: result.scanned,
+      errors: result.errors,
+      changes: changes,
+      skills: Object.values(registry.skills).sort((a, b) => a.slug.localeCompare(b.slug)),
+    }, null, 2));
+    return;
+  }
+  out(scan.formatInventory(registry));
+  out('');
+  out('本次变化: 新增 ' + changes.added.length + ' / 更新 ' + changes.updated.length + ' / 消失 ' + changes.gone.length);
+  if (result.errors.length) {
+    out('跳过不存在目录 ' + result.errors.length + ' 个: ' + result.errors.map((e) => e.dir).join('; '));
+  }
 }
 
 // ── main ───────────────────────────────────────────────────────────────────
@@ -454,6 +492,7 @@ function main() {
   if (opts.help) { printHelp(); return; }
   if (opts.version) { out('yotta-skills v' + VERSION); return; }
   if (opts.list) { printList(opts); return; }
+  if (opts.inventory) { runInventory(opts); return; }
 
   const command = opts.command || 'install';
   let dest = resolveTargetDir(opts);

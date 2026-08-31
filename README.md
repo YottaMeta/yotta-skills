@@ -30,6 +30,7 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install summary** — if yotta-verify (元信) is available, each skill is scanned first; the verdict is informational only.
+- **Inventory** — scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required.
 
 Boundaries: it only downloads, places and summarizes — it does **not** develop skill content, does **not** bundle any skill body, and does **not** use <code>-g</code> global installs. It never writes outside the target you specify.
 
@@ -53,6 +54,9 @@ npx -y @yottameta/yotta-skills update --agent codex
 
 # Preview what would be installed (no network, no changes)
 npx -y @yottameta/yotta-skills --dry-run
+
+# Inventory installed skills on this machine (self-contained scan, no other skills needed)
+npx -y @yottameta/yotta-skills --inventory
 ```
 
 Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 10+ / macOS / most Linux distributions).
@@ -66,6 +70,7 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `install --dir <path>` | Install everything into a directory; each skill lands in `<path>/<slug>` |
 | `install <skill>... [--agent <name> \| --dir <path>]` | Install only the given skills |
 | `update [--agent <name> \| --dir <path>]` | Incremental update: add missing, upgrade version-skewed |
+| `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
 | `--dry-run` | Preview the install / update list; no network, no changes |
 | `--pin` | Lock the exact manifest versions (default: range, latest patch of the same major) |
 | `--force` | Reinstall even when already at the latest version |

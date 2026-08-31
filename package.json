@@ -1,6 +1,6 @@
 {
   "name": "@yottameta/yotta-skills",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "YuanGe (元阁) — one-command installer for the whole YottaMeta skill family: list, install, and update all published yotta-* skills into any agent (npx one-shot, zero dependencies, Node.js only).",
   "license": "MIT",
   "keywords": [
@@ -22,6 +22,8 @@
     "references",
     "assets",
     "bin",
+    "lib",
+    "scripts",
     "skills.json",
     "!**/__pycache__",
     "!**/*.pyc"

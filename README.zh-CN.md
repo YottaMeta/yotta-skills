@@ -33,6 +33,7 @@
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前摘要**——若装了元信（yotta-verify），先对每个待装技能做一次装前扫描；verdict 仅提示、不拦截。
+- **盘点**——扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。
 
 边界：只做「下载 + 落位 + 汇总」——**不**开发技能内容、**不**内置任何技能本体、**不**用 <code>-g</code>
 全局安装；只在你指定的目标内写文件。
@@ -57,6 +58,9 @@ npx -y @yottameta/yotta-skills update --agent codex
 
 # 预览将安装清单（不联网、不改动）
 npx -y @yottameta/yotta-skills --dry-run
+
+# 盘点本机已装技能（自包含扫描，不依赖任何元技能）
+npx -y @yottameta/yotta-skills --inventory
 ```
 
 前置：Node.js 18+、npm、系统 tar（Windows 10+ / macOS / 多数 Linux 自带）。
@@ -70,6 +74,7 @@ npx -y @yottameta/yotta-skills --dry-run
 | `install --dir <path>` | 装全家到指定目录，每个技能落在 `<path>/<slug>` |
 | `install <skill>... [--agent <name> \| --dir <path>]` | 只装指定的一个或多个技能 |
 | `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失、升级版本不一致的技能 |
+| `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--dry-run` | 预览将执行的安装 / 更新清单；不联网、不改动 |
 | `--pin` | 锁死清单精确版本（默认 range：跟随同 major 最新 patch） |
 | `--force` | 已是最新也重新安装 |

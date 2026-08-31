@@ -1,7 +1,7 @@
 ---
 name: yotta-skills
-version: 0.1.3
-description: 元阁 —— 元阁全家技能的总编排策划 + 一键安装器。策划层：按场景给出「该组合哪几个元技能、组合强在哪、怎么自动装+自动用」；安装层：一条命令把 YottaMeta 已发布的全部 yotta-* 技能（当前 22 个）装进指定智能体或目录，支持 --list 清单 / install / update / --dry-run 预览 / --pin 锁版本。触发：需要批量安装或更新元阁全家技能、按场景组合多个元技能、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装、或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家 等。边界（Do NOT trigger）：只做「组合策划 + 清单 + 下载 + 落位 + 汇总」，不含技能本体、不做技能内容开发、不 -g 污染全局；装前摘要仅供参考，安装决策由用户确认。
+version: 0.2.0
+description: 元阁 —— 元阁全家技能的总编排策划 + 一键安装器 + 技能盘点。策划层：按场景给出「该组合哪几个元技能、组合强在哪、怎么自动装+自动用」；安装层：一条命令把 YottaMeta 已发布的全部 yotta-* 技能装进指定智能体或目录；盘点层：--inventory 扫描本机已装技能生成注册表（自包含零依赖，不依赖任何元技能）。支持 --list 清单 / install / update / --inventory / --dry-run 预览 / --pin 锁版本。触发：需要批量安装或更新元阁全家技能、按场景组合多个元技能、盘点或查看本机已装技能、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装、或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家/盘点技能/查看已装技能 等。边界（Do NOT trigger）：只做「组合策划 + 清单 + 下载 + 落位 + 汇总 + 盘点」，不含技能本体、不做技能内容开发、不 -g 污染全局；装前摘要仅供参考，安装决策由用户确认。
 license: MIT
 metadata:
   zh_name: 元阁
@@ -26,10 +26,11 @@ metadata:
 
 # 元阁（yotta-skills）
 
-**元阁全家的总编排策划 + 一键安装**，一句话两层：
+**元阁全家的总编排策划 + 一键安装 + 技能盘点**，一句话三层：
 
 - **策划层（怎么用）**：接到需求，先按「编排策划」定位命中哪个组合——哪些元技能搭配起来最强、适合什么场景、AI 该怎么自动装并自动用起来。
 - **安装层（怎么装）**：一条 `npx -y @yottameta/yotta-skills` 把组合/全家装进指定智能体或目录——`--list` 看清单、`install` 装、`update` 增量更新、`--dry-run` 预览、`--pin` 锁版本。
+- **盘点层（已装了什么）**：`--inventory` 扫描本机各智能体技能目录，生成/更新本地注册表——自包含扫描，不依赖任何元技能。
 
 每个技能仍走各自独立的 npm 包（版本源唯一）；本包只做「清单 + 下载 + 落位 + 汇总」，**不内置任何技能本体**。
 > **本包不含技能本体**：拿到它只代表有了「编排策划 + 安装工具」；真正装齐需运行 `install`。
@@ -96,6 +97,9 @@ npx -y @yottameta/yotta-skills update --agent codex
 
 # 预览将安装清单（不联网、不改动）
 npx -y @yottameta/yotta-skills --dry-run
+
+# 盘点本机已装技能（自包含扫描，不依赖任何元技能）
+npx -y @yottameta/yotta-skills --inventory
 ```
 
 ## 命令与选项
@@ -107,6 +111,7 @@ npx -y @yottameta/yotta-skills --dry-run
 | `install --dir <path>` | 装全家到指定目录，每个技能落在 `<path>/<slug>` |
 | `install <skill>... [--agent <name> \| --dir <path>]` | 只装指定的一个或多个技能 |
 | `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失技能、升级版本不一致的技能 |
+| `--inventory` | 盘点本机已装技能：扫描技能目录生成/更新注册表（自包含，不依赖元技能）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--dry-run` | 预览将执行的安装 / 更新清单；不联网、不改动 |
 | `--pin` | 锁死清单精确版本（默认 range：跟随同 major 最新 patch） |
 | `--force` | 已是最新也重新安装 |
@@ -117,6 +122,29 @@ npx -y @yottameta/yotta-skills --dry-run
 | `-h, --help` / `-v, --version` | 帮助 / 版本 |
 
 不带命令直接给技能名时，等价于 `install <skill>`。
+
+## 技能盘点（--inventory）
+
+元阁自带技能扫描核心（零依赖，不依赖任何元技能）：扫描各智能体技能目录，解析
+`SKILL.md` frontmatter，生成/更新本地注册表 `~/.yottaskills/registry.json`，数据不出本机。
+适合「装了哪些技能、各干嘛、从哪来」的快速盘点。
+
+```bash
+# 盘点本机已装技能（文本表格）
+npx -y @yottameta/yotta-skills --inventory
+
+# 机器可读（JSON）
+npx -y @yottameta/yotta-skills --inventory --json
+
+# 追加扫描任意目录 / 当前项目级目录
+npx -y @yottameta/yotta-skills --inventory --dir ~/my-skills --project
+```
+
+注册表增量合并：新增（added）/ 更新（updated）/ 消失（gone）随输出列出；同名技能来自多个目录时合并来源，版本不一致记录冲突。
+
+**MCP（按需加载）**：`scripts/yotta-skills-mcp.py` 提供三个工具——
+`list_installed_skills`（盘点）/ `describe_skill`（单技能详情）/ `reindex`（强制重扫），
+走 stdio JSON-RPC，数据不出本机。需要时按需加载，不常驻。
 
 ## 版本策略
 
