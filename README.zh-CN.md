@@ -6,7 +6,7 @@
 
 <h1 align="center">yotta-skills · 元阁 (YuanGe)</h1>
 
-<p align="center">YottaMeta 的<b>全家技能一键安装 CLI</b>：一条 <code>npx</code> 命令把已发布的全部
+<p align="center">YottaMeta 的<b>技能生态编排策划 + 全家一键安装器</b>：先按场景规划该组合哪几个技能，再一条 <code>npx</code> 命令把已发布的全部
 <code>yotta-*</code> 技能（当前 <b>22</b> 个）装进指定智能体或目录。</p>
 <p align="center">看清单、装全家、增量更新、<code>--dry-run</code> 预览、<code>--pin</code> 锁版本——
 幂等、零依赖（Node.js 18+）、纯 npm 生态。</p>
@@ -25,6 +25,8 @@
 
 以前装元阁全家要逐个 <code>npx</code> 跑很多次。元阁把它变成一条命令：读内置清单（22 个已发布技能）、
 逐个从各自 npm 包下载、落位到目标技能目录、打印汇总（成功 / 跳过 / 失败）。
+
+元阁也是全家的**编排策划层**：接到需求先查「编排策划」组合表——该组合哪几个技能、按什么顺序、各自强在哪——再按需安装恰好那几个。决策表随包提供（<code>references/orchestration.md</code>），<code>SKILL.md</code> 中有摘要。
 
 - **看清单**——全家技能一览：slug / 中文名 / 包名 / 版本 / 一句话说明。
 - **安装**——装全家（或指定技能）到智能体默认用户级目录或任意目录。

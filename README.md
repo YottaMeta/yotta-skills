@@ -6,7 +6,7 @@
 
 <h1 align="center">yotta-skills · 元阁 (YuanGe)</h1>
 
-<p align="center">YottaMeta's <b>one-command family installer</b> for Agent skills: one <code>npx</code> line installs all published <code>yotta-*</code> skills (currently <b>22</b>) into any agent or directory.</p>
+<p align="center">YottaMeta's skill-family <b>orchestration planner + one-command installer</b>: plan which skills to combine for a task, then one <code>npx</code> line installs the published <code>yotta-*</code> skills (currently <b>22</b>) into any agent or directory.</p>
 <p align="center">List the family, install everything, incrementally update, preview with <code>--dry-run</code>, pin exact versions — idempotent and zero-dependency (Node.js 18+), pure npm ecosystem.</p>
 <p align="center">This package contains <b>no skill bodies</b> — only a manifest, a downloader, a placer and a summary. Each skill still comes from its own npm package.</p>
 
@@ -22,6 +22,8 @@
 ## What it is
 
 Installing the whole YottaMeta family used to mean running <code>npx</code> for each skill one by one. 元阁 turns it into a single command: it reads a built-in manifest (22 published skills), downloads each from its own npm package, places it into the target skills directory, and prints a summary (success / skipped / failed).
+
+元阁 is also the **family orchestration planner**: given a task, check the orchestration table first — which skills to combine, in what order, and why — then install exactly those. The decision table ships in the package as <code>references/orchestration.md</code> and is summarized in <code>SKILL.md</code>.
 
 - **List** — see the whole family: slug, Chinese name, package, version and a one-line description.
 - **Install** — install everything (or a subset) into an agent's default user-level directory or any directory.

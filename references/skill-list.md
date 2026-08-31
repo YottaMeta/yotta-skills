@@ -7,9 +7,9 @@
 |---|---|---|---|---|
 | `yotta-anti-shallow` | 元谨 | `@yottameta/yotta-anti-shallow` | 1.3.4 | 防 AI 敷衍规则引擎（深入分析/根因追溯时激活） |
 | `yotta-code-quality` | 元质 | `@yottameta/yotta-code-quality` | 0.3.4 | 结对式代码质量评审（十二类腐化风险 + 0-100 健康分） |
-| `yotta-workflow` | 元序 | `@yottameta/yotta-workflow` | 0.2.6 | 跨会话/跨项目通用工作流协议（状态就近存 .workflow） |
+| `yotta-workflow` | 元序 | `@yottameta/yotta-workflow` | 0.2.6 | 跨会话/跨项目通用工作流协议（状态就近存） |
 | `yotta-memory` | 元忆 | `@yottameta/yotta-memory` | 0.8.4 | 有权限边界的文件式智能体记忆（FACT/PREF/BOUND/COMMIT） |
-| `yotta-learn` | 元习 | `@yottameta/yotta-learn` | 0.1.4 | 学习闭环 CLI：错误/纠正/洞见沉淀为 .learnings/ 条目 |
+| `yotta-learn` | 元习 | `@yottameta/yotta-learn` | 0.1.4 | 学习沉淀 CLI：错误/纠正/洞见沉淀为 .learnings/ 条目 |
 | `yotta-security-audit` | 元安 | `@yottameta/yotta-security-audit` | 0.1.7 | 安全扫描引擎：13 类检测器 + 系统安全基线 |
 | `yotta-vetter` | 元审 | `@yottameta/yotta-vetter` | 0.1.5 | 安全审查协议：四阶段 review + SAFE TO INSTALL 判定 |
 | `yotta-recon` | 元析 | `@yottameta/yotta-recon` | 0.1.5 | 跨智能体网络侦察：零依赖端口/服务/版本指纹探测 |

@@ -112,7 +112,7 @@ test('install 单个 + --pin 用精确版本', () => {
   assert.ok(fs.existsSync(path.join(dest, 'yotta-memory', 'SKILL.md')));
   const lines = readLog(log);
   assert.strictEqual(lines.length, 1);
-  assert.ok(lines[0].includes('@yottameta/yotta-memory@0.8.4'), 'pin 应传精确版本: ' + lines[0]);
+  assert.ok(lines[0].includes('@yottameta/yotta-memory@0.8.5'), 'pin 应传精确版本: ' + lines[0]);
 });
 
 test('update：删除一个技能后补齐，其余跳过', () => {
