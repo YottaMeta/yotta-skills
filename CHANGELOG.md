@@ -1,3 +1,7 @@
+## v0.6.1 (2026-09-06)
+
+**skills.json 全量清单对齐（22 技能 vs npm latest 全一致）**：yotta-memory 0.10.1 → 0.11.0（MCP 协议对齐批次发布后同步，元阁 install 按清单版本拉包，不同步会装到旧版）；源清单 + 构建副本双份同步；其余 21 技能核对无滞后。无功能代码变更。
+
 ## v0.6.0 (2026-09-06)
 
 **MCP 协议对齐最新版 2026-07-28（无状态时代）**：yotta-skills MCP 升级 dual-era——modern 直连（server/discover 免握手、逐请求 _meta 版本声明、resultType、-32022）服务新客户端；legacy（initialize 握手，protocolVersion 2025-11-25）兼容旧客户端，旧形状响应零惊扰。SKILL 标注「基于 MCP 最新协议 2026-07-28（向后兼容 2025-11-25 及更早握手）」。npm test 42/42（含 modern MCP e2e）。

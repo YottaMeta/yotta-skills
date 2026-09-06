@@ -112,7 +112,7 @@ test('install 单个 + --pin 用精确版本', () => {
   assert.ok(fs.existsSync(path.join(dest, 'yotta-memory', 'SKILL.md')));
   const lines = readLog(log);
   assert.strictEqual(lines.length, 1);
-  assert.ok(lines[0].includes('@yottameta/yotta-memory@0.10.1'), 'pin 应传精确版本: ' + lines[0]);
+  assert.ok(lines[0].includes('@yottameta/yotta-memory@0.11.0'), 'pin 应传精确版本: ' + lines[0]);
 });
 
 test('update：删除一个技能后补齐，其余跳过', () => {
@@ -176,7 +176,7 @@ test('install 后自动 re-index：注册表反映新装技能', () => {
     const reg = JSON.parse(fs.readFileSync(regPath, 'utf8'));
     const mem = reg.skills['yotta-memory'];
     assert.ok(mem, 'yotta-memory 应进入注册表');
-    assert.strictEqual(mem.version, '0.10.1');
+    assert.strictEqual(mem.version, '0.11.0');
   } finally {
     fs.rmSync(dest, { recursive: true, force: true });
     fs.rmSync(home, { recursive: true, force: true });
