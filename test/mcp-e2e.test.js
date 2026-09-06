@@ -55,6 +55,7 @@ test('MCP：initialize + tools/list + list_installed_skills + describe_skill + r
     // initialize
     assert.strictEqual(byId[1].result.serverInfo.name, 'yotta-skills');
     assert.strictEqual(byId[1].result.serverInfo.version, PKG.version);
+    assert.strictEqual(byId[1].result.protocolVersion, '2025-11-25'); // legacy 握手
     // tools/list：4 个工具
     const tools = byId[2].result.tools.map((t) => t.name);
     assert.deepStrictEqual(tools, ['list_installed_skills', 'describe_skill', 'reindex', 'route_request']);
@@ -87,6 +88,33 @@ test('MCP：describe_skill 未找到技能返回 isError', () => {
     const line = JSON.parse(r.stdout.trim().split('\n')[0]);
     assert.strictEqual(line.result.isError, true);
     assert.ok(JSON.parse(line.result.content[0].text).error.includes('未找到技能'));
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('MCP 2026-07-28：modern discover + tools/list + 版本不支持 -32022', () => {
+  const { home, env } = setupEnv();
+  try {
+    const meta = { _meta: { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientCapabilities': {} } };
+    const req = [
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'server/discover', params: meta }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: meta }),
+      JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'server/discover', params: { _meta: { 'io.modelcontextprotocol/protocolVersion': '2025-11-25' } } }),
+    ].join('\n') + '\n';
+    const r = runMcp(req, env);
+    assert.strictEqual(r.status, 0, 'exit: ' + r.status + '\n' + r.stderr);
+    const lines = r.stdout.trim().split('\n').map((l) => JSON.parse(l));
+    const byId = Object.fromEntries(lines.map((l) => [l.id, l]));
+    assert.strictEqual(byId[1].result.resultType, 'complete');
+    assert.deepStrictEqual(byId[1].result.supportedVersions, ['2026-07-28']);
+    assert.strictEqual(byId[1].result._meta['io.modelcontextprotocol/serverInfo'].name, 'yotta-skills');
+    assert.strictEqual(byId[1].result.ttlMs > 0, true);
+    assert.strictEqual(byId[2].result.resultType, 'complete');
+    assert.strictEqual(byId[2].result.tools.length, 4);
+    assert.strictEqual(byId[3].error.code, -32022);
+    assert.deepStrictEqual(byId[3].error.data.supported, ['2026-07-28']);
+    assert.strictEqual(byId[3].error.data.requested, '2025-11-25');
   } finally {
     fs.rmSync(home, { recursive: true, force: true });
   }
