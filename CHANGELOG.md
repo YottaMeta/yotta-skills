@@ -1,3 +1,10 @@
+## v0.6.2 (2026-09-06)
+
+**更新检查 / 自动更新（`update --check` / `update --auto`）**：元阁 CLI 新增联网只读检查本地已装技能是否有更新（对 npm `dist-tags.latest`，版本源唯一），
+按本地 `SKILL.md` 版本对比，无论技能源自哪个安装渠道（npm / git clone / 本地拷贝等）都兼容。`--check` 只读列清单，退出码 0=全部最新 / 3=有更新 / 1=查失败；
+`--auto` 检测到家族（`yotta-*` / 清单内）可更新时走安装管线（含元信装前安全扫描）自动更新，非元阁家族（非 yotta-*）技能绝不自动更新。
+新增 `--registry <url>` 自定义版本源；网络异常优雅降级（不阻塞会话）。SKILL.md「使用须知」注入文本同步加入「会话开工跑 `update --check`」规则。
+测试：新增 update-check / update-auto 本地 HTTP registry 离线用例，npm test 47/47。
 ## v0.6.1 (2026-09-06)
 
 **skills.json 全量清单对齐（22 技能 vs npm latest 全一致）**：yotta-memory 0.10.1 → 0.11.0（MCP 协议对齐批次发布后同步，元阁 install 按清单版本拉包，不同步会装到旧版）；源清单 + 构建副本双份同步；其余 21 技能核对无滞后。无功能代码变更。
