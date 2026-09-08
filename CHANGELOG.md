@@ -1,3 +1,11 @@
+## v0.7.0 (2026-09-08)
+
+**评测驱动完善**：新增 FAQ 与复杂场景走查；同步 22 技能清单并新增清单一致性测试，防止人工文档版本漂移；CLI 增加统一异常提示。
+
+- 新增 references/faq.md 与 references/walkthroughs.md。
+- skills.json 与 references/skill-list.md 全量同步，新增 test/skill-list.test.js 强制版本一致。
+- CLI 增加顶层异常提示与修复建议。
+
 ## v0.6.2 (2026-09-06)
 
 **更新检查 / 自动更新（`update --check` / `update --auto`）**：元阁 CLI 新增联网只读检查本地已装技能是否有更新（对 npm `dist-tags.latest`，版本源唯一），

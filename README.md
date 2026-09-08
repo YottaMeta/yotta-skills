@@ -172,6 +172,11 @@ npm test
 
 The tests cover `--list`, install into a temp directory with assertions, idempotency, `--pin`, `update`, error paths, and yotta-verify scan integration (with a fake npm).
 
+## 参考文档
+
+- 常见问题：`references/faq.md`
+- 复杂场景走查：`references/walkthroughs.md`
+
 ## License
 
 MIT © YottaMeta — see [LICENSE](./LICENSE).

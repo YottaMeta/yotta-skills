@@ -184,6 +184,11 @@ npm test
 测试覆盖 `--list`、临时目录安装断言、幂等、`--pin`、`update`、异常路径与元信 scan 集成
 （用 fake npm 不联网）。
 
+## 参考文档
+
+- 常见问题：`references/faq.md`
+- 复杂场景走查：`references/walkthroughs.md`
+
 ## 许可证
 
 MIT © YottaMeta —— 见 [LICENSE](./LICENSE)。
