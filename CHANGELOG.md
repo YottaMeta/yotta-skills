@@ -1,3 +1,13 @@
+## v0.7.1 (2026-09-09)
+
+skills.json 清单同步（评测批 2 六技能升版后，元阁安装清单随包更新）：
+
+- yotta-learn 0.1.4 → 0.2.0；yotta-humanize 0.1.3 → 0.2.0；
+  yotta-security-testing 0.2.4 → 0.3.0；yotta-publish-guard 0.2.1 → 0.3.0；
+  yotta-intel 0.1.1 → 0.2.0；yotta-secret 0.1.2 → 0.2.0。
+- skills.json 与 references/skill-list.md 全量同步，updated → 2026-09-09。
+- 版本四件对齐 0.7.1；无功能代码变更。
+
 ## v0.7.0 (2026-09-08)
 
 **评测驱动完善**：新增 FAQ 与复杂场景走查；同步 22 技能清单并新增清单一致性测试，防止人工文档版本漂移；CLI 增加统一异常提示。
