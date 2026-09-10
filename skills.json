@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "updated": "2026-09-09",
+  "updated": "2026-09-10",
   "note": "清单同步要求：每次技能发布新版本后，按 YottaSkills 技能登记表更新本文件（登记表为内部台账，不随包分发）。",
   "skills": [
     {
@@ -21,7 +21,7 @@
       "slug": "yotta-workflow",
       "name": "元序",
       "pkg": "@yottameta/yotta-workflow",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "desc": "跨会话/跨项目通用工作流协议（状态就近存）"
     },
     {
