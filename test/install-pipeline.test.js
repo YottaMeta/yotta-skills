@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { createInstaller, renameWithRetry } = require('../lib/install-pipeline');
+const { createInstaller, renameWithRetry, isSafeTarEntry } = require('../lib/install-pipeline');
 
 const skill = { slug: 'yotta-demo', name: '元示例', pkg: '@yottameta/yotta-demo', version: '1.0.0' };
 
@@ -91,4 +91,14 @@ test('renameWithRetry retries transient EPERM on Windows', () => {
   });
   assert.strictEqual(result, 'ok');
   assert.strictEqual(attempts, 3);
+});
+
+test('isSafeTarEntry rejects traversal, absolute and non-package entries', () => {
+  assert.strictEqual(isSafeTarEntry('package/SKILL.md'), true);
+  assert.strictEqual(isSafeTarEntry('package'), true);
+  assert.strictEqual(isSafeTarEntry('../evil'), false);
+  assert.strictEqual(isSafeTarEntry('package/../../evil'), false);
+  assert.strictEqual(isSafeTarEntry('/tmp/evil'), false);
+  assert.strictEqual(isSafeTarEntry('C:\\tmp\\evil'), false);
+  assert.strictEqual(isSafeTarEntry('other/file'), false);
 });
