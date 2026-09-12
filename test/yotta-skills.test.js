@@ -24,7 +24,13 @@ function run(args, env, cwd) {
   });
 }
 function fakeEnv(extra) {
-  return { YOTTA_SKILLS_NPM: FAKE_NPM, ...(extra || {}) };
+  const home = tmpdir('ys-home-');
+  return {
+    YOTTA_SKILLS_NPM: FAKE_NPM,
+    USERPROFILE: home,
+    HOME: home,
+    ...(extra || {}),
+  };
 }
 function tmpdir(prefix) { return fs.mkdtempSync(path.join(os.tmpdir(), prefix)); }
 function logPath() { return path.join(tmpdir('ys-log-'), 'npm.log'); }
@@ -200,4 +206,88 @@ test('install --no-reindex：不自动重扫注册表', () => {
     fs.rmSync(dest, { recursive: true, force: true });
     fs.rmSync(home, { recursive: true, force: true });
   }
+});
+
+test('install resolves verifier by bootstrap and records evidence', () => {
+  const dest = tmpdir('ys-bootstrap-');
+  const home = tmpdir('ys-bootstrap-home-');
+  const env = fakeEnv({
+    USERPROFILE: home,
+    HOME: home,
+    YOTTA_SKILLS_FAKE_VERDICT: 'SAFE TO INSTALL',
+  });
+  const r = run(['install', 'yotta-verify', '--dir', dest], env);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  assert.ok(fs.existsSync(path.join(dest, 'yotta-verify', 'scripts', 'yotta_verify.py')));
+  const log = path.join(home, '.yottaskills', 'install-log.jsonl');
+  assert.ok(fs.existsSync(log), '安装证据应存在');
+  const content = fs.readFileSync(log, 'utf8');
+  assert.match(content, /trusted-bootstrap/);
+  assert.match(content, /bootstrap_scan/);
+});
+
+test('install bootstraps verifier before installing another family skill', () => {
+  const dest = tmpdir('ys-bootstrap-other-');
+  const home = tmpdir('ys-bootstrap-other-home-');
+  const env = fakeEnv({
+    USERPROFILE: home,
+    HOME: home,
+    YOTTA_SKILLS_FAKE_VERDICT: 'SAFE TO INSTALL',
+  });
+  const r = run(['install', 'yotta-memory', '--dir', dest], env);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  assert.ok(fs.existsSync(path.join(dest, 'yotta-verify', 'scripts', 'yotta_verify.py')));
+  assert.ok(fs.existsSync(path.join(dest, 'yotta-memory', 'SKILL.md')));
+  const log = fs.readFileSync(path.join(home, '.yottaskills', 'install-log.jsonl'), 'utf8');
+  assert.match(log, /trusted-bootstrap/);
+  assert.match(log, /bootstrap_scan/);
+});
+
+test('DO NOT INSTALL blocks family install and preserves old target', () => {
+  const dest = tmpdir('ys-block-');
+  const old = path.join(dest, 'yotta-memory');
+  fs.mkdirSync(old, { recursive: true });
+  fs.writeFileSync(path.join(old, 'SKILL.md'), 'old-version', 'utf8');
+  const env = fakeEnv({ YOTTA_SKILLS_FAKE_VERDICT: 'DO NOT INSTALL' });
+  const r = run(
+    ['install', 'yotta-memory', '--dir', dest, '--verify', path.join(ROOT, 'test', 'helpers', 'fake-verify.py')],
+    env,
+  );
+  assert.strictEqual(r.status, 5, r.stdout + r.stderr);
+  assert.strictEqual(fs.readFileSync(path.join(old, 'SKILL.md'), 'utf8'), 'old-version');
+});
+
+test('--skip-scan installs but is marked explicit-unverified', () => {
+  const dest = tmpdir('ys-skip-');
+  const home = tmpdir('ys-skip-home-');
+  const env = fakeEnv({ USERPROFILE: home, HOME: home });
+  const r = run(['install', 'yotta-memory', '--dir', dest, '--skip-scan'], env);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /explicit-unverified/);
+  const log = fs.readFileSync(path.join(home, '.yottaskills', 'install-log.jsonl'), 'utf8');
+  assert.match(log, /explicit-unverified/);
+});
+
+test('manifest identity mismatch blocks install and preserves old target', () => {
+  const dest = tmpdir('ys-manifest-block-');
+  const old = path.join(dest, 'yotta-memory');
+  fs.mkdirSync(old, { recursive: true });
+  fs.writeFileSync(path.join(old, 'SKILL.md'), 'old-version', 'utf8');
+  const badManifest = path.join(tmpdir('ys-bad-manifest-'), 'skill-manifest.json');
+  fs.writeFileSync(badManifest, JSON.stringify({
+    manifestVersion: 1,
+    slug: 'yotta-memory',
+    name: '元忆',
+    package: '@yottameta/wrong-package',
+    version: '0.11.0',
+    trust: 'yottameta',
+    install: { idempotent: true },
+    permissions: { filesystem: 'user-skills-dir', network: 'registry' },
+  }), 'utf8');
+  const r = run(
+    ['install', 'yotta-memory', '--dir', dest, '--skip-scan'],
+    fakeEnv({ YOTTA_SKILLS_FAKE_MANIFEST_FILE: badManifest }),
+  );
+  assert.strictEqual(r.status, 6, r.stdout + r.stderr);
+  assert.strictEqual(fs.readFileSync(path.join(old, 'SKILL.md'), 'utf8'), 'old-version');
 });

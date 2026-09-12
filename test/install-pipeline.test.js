@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { createInstaller } = require('../lib/install-pipeline');
+const { createInstaller, renameWithRetry } = require('../lib/install-pipeline');
 
 const skill = { slug: 'yotta-demo', name: '元示例', pkg: '@yottameta/yotta-demo', version: '1.0.0' };
 
@@ -73,4 +73,22 @@ test('safe pipeline marks skip-scan as explicit-unverified', () => {
   const result = installer(skill, dest, { skipScan: true });
   assert.strictEqual(result.status, 'ok');
   assert.strictEqual(result.gate.mode, 'explicit-unverified');
+});
+
+test('renameWithRetry retries transient EPERM on Windows', () => {
+  let attempts = 0;
+  const result = renameWithRetry('from', 'to', {
+    rename() {
+      attempts++;
+      if (attempts < 3) {
+        const error = new Error('locked');
+        error.code = 'EPERM';
+        throw error;
+      }
+      return 'ok';
+    },
+    sleep() {},
+  });
+  assert.strictEqual(result, 'ok');
+  assert.strictEqual(attempts, 3);
 });

@@ -11,6 +11,7 @@ const os = require('os');
 const { spawnSync } = require('child_process');
 
 const logFile = process.env.YOTTA_SKILLS_FAKE_LOG || null;
+const manifestFile = process.env.YOTTA_SKILLS_FAKE_MANIFEST_FILE || null;
 const args = process.argv.slice(2);
 if (logFile) fs.appendFileSync(logFile, JSON.stringify(args) + '\n');
 
@@ -61,6 +62,15 @@ fs.writeFileSync(path.join(pkgRoot, 'assets', 'marker.txt'), bare + ' ' + versio
 // 安装时应被跳过的文件（验证 skip 集合）
 fs.writeFileSync(path.join(pkgRoot, 'package.json'), JSON.stringify({ name: pkg, version }, null, 2) + '\n', 'utf8');
 fs.writeFileSync(path.join(pkgRoot, 'bin', 'extra.js'), '#!/usr/bin/env node\nconsole.log(1);\n', 'utf8');
+if (manifestFile && fs.existsSync(manifestFile)) {
+  fs.copyFileSync(manifestFile, path.join(pkgRoot, 'skill-manifest.json'));
+}
+if (bare === 'yotta-verify') {
+  fs.copyFileSync(
+    path.join(__dirname, 'fake-verify.py'),
+    path.join(pkgRoot, 'scripts', 'yotta_verify.py'),
+  );
+}
 // 缓存/编译产物：安装时应被跳过（元信 scan 会产生 __pycache__）
 fs.mkdirSync(path.join(pkgRoot, 'scripts', '__pycache__'), { recursive: true });
 fs.writeFileSync(path.join(pkgRoot, 'scripts', '__pycache__', 'demo.cpython-38.pyc'), 'x', 'utf8');
