@@ -29,12 +29,12 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Orchestration routing** - <code>--route</code> turns a task summary into a candidate combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install command; it only suggests installation and never installs automatically.
 - **Install** — install everything (or a subset) into an agent's default user-level directory or any directory.
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
-- **Update check / auto-update** — <code>update --check</code> compares installed skill versions against the npm registry and reports (no changes; quick to run at session start); <code>update --auto</code> upgrades the installed YottaMeta family to the latest (non-family skills are never auto-updated).
+- **Update check / auto-update** — <code>update --check</code> compares installed skill versions against the npm registry and reports (no changes; run manually or from doctor / release checks); <code>update --auto</code> upgrades the installed YottaMeta family to the latest (non-family skills are never auto-updated).
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
-- **Pre-install summary** — if yotta-verify (元信) is available, each skill is scanned first; the verdict is informational only.
+- **Pre-install gate** — family installs read the package manifest, bootstrap yotta-verify (元信) when it is missing, then scan each package. <code>DO NOT INSTALL</code> blocks; caution/review continue with visible risk. Old versions are snapshotted before replacement.
 - **Inventory / re-index** - scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand (e.g. at session start). An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code>; see <code>SKILL.md</code> for the config.
 
-Boundaries: it only downloads, places and summarizes — it does **not** develop skill content, does **not** bundle any skill body, and does **not** use <code>-g</code> global installs. It never writes outside the target you specify.
+Boundaries: it only downloads, places, gates and summarizes — it does **not** develop skill content, does **not** bundle any skill body, and does **not** use <code>-g</code> global installs. Besides the target directory, it keeps its registry, snapshots and install evidence under <code>~/.yottaskills</code>.
 
 ## Quick start
 
@@ -57,7 +57,7 @@ npx -y @yottameta/yotta-skills update --agent codex
 # Check for updates (read-only, no changes); good to run at session start
 npx -y @yottameta/yotta-skills update --check
 
-# Check and auto-update the installed YottaMeta family (pre-install summary applies; non-family skills untouched)
+# Check and auto-update the installed YottaMeta family (pre-install gate applies; non-family skills untouched)
 npx -y @yottameta/yotta-skills update --auto
 
 # Preview what would be installed (no network, no changes)
@@ -85,7 +85,7 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `install <skill>... [--agent <name> \| --dir <path>]` | Install only the given skills |
 | `update [--agent <name> \| --dir <path>]` | Incremental update: add missing, upgrade version-skewed |
 | `update --check` | Read-only update check: compare installed versions against the npm registry and report (exit 0 = up to date, 3 = updates available, 1 = could not check; run with `--registry <url>` to target a mirror); no changes |
-| `update --auto` | Check and automatically update the installed YottaMeta family to the latest (runs the pre-install summary; never auto-updates non-family skills) |
+| `update --auto` | Check and automatically update the installed YottaMeta family to the latest (runs the pre-install gate; never auto-updates non-family skills) |
 | `--registry <url>` | npm registry to check against (default https://registry.npmjs.org/; `YOTTA_SKILLS_REGISTRY` overrides) |
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
 | `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (session start / after installing skills; `--rescan` is a synonym); `--json` for JSON |
@@ -94,9 +94,9 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `--dry-run` | Preview the install / update list; no network, no changes |
 | `--pin` | Lock the exact manifest versions (default: range, latest patch of the same major) |
 | `--force` | Reinstall even when already at the latest version |
-| `--skip-scan` | Skip the yotta-verify pre-install summary (auto-enabled when yotta-verify is installed) |
+| `--skip-scan` | Manual escape hatch: skip the verifier gate and mark the result `explicit-unverified`; never used by `update --auto` |
 | `--npm <path>` | Specify the npm executable |
-| `--python <path>` | Specify the python executable (used for the yotta-verify summary) |
+| `--python <path>` | Specify the python executable (used for yotta-verify scan) |
 | `--verify <path>` | Specify the yotta_verify.py path |
 | `-h, --help` / `-v, --version` | Help / version |
 
@@ -161,7 +161,7 @@ The full 22-skill manifest with Chinese names, package names, versions and descr
 
 ## How it works
 
-For each skill in the manifest: `npm pack <pkg>@<spec>` into a temp directory → `tar -xzf` → optional yotta-verify pre-install summary → replace `<dest>/<slug>` → summary report. After `install` / `update` finishes, the local skill registry is re-indexed automatically so newly installed skills show up in `--inventory` / `--reindex` (disable with `--no-reindex`). Details: `references/install-flow.md`; beginner tutorial (Chinese): `references/tutorial.md`.
+For each skill in the manifest: `npm pack <pkg>@<spec>` into a temp directory → `tar -xzf` → read the package manifest → run the yotta-verify pre-install gate (bootstrap yotta-verify first when missing) → snapshot the old version and stage the new one → atomically replace `<dest>/<slug>` → summary report. After `install` / `update` finishes, the local skill registry is re-indexed automatically so newly installed skills show up in `--inventory` / `--reindex` (disable with `--no-reindex`). Details: `references/install-flow.md`; beginner tutorial (Chinese): `references/tutorial.md`.
 
 ## Development & validation
 
