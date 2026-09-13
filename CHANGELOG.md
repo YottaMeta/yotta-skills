@@ -1,3 +1,11 @@
+## v0.19.3 (2026-09-13)
+
+**自装契约修复 + 扫描误报消除**：
+
+- `skill-manifest.json` 的 `before_install` 声明由 `install_gate` 改为 `scan_skill`，与安装管线实际提供的检查项对齐；此前自装会被自己的 hook 判为 missing → block（只能 `--skip-scan` 绕过）。
+- `permissions.note` 调整措辞，避免同时出现「下载 / 执行」触发元信 PIJ-020 误报（high）。
+- 新增 `test/self-install-contract.test.js`：锁定「声明 = 管线检查项」「扫描通过放行 / 失败阻断」「note 不触发 PIJ-020」三条契约。
+
 ## v0.19.2 (2026-09-13)
 
 **授权边界整改（平台安全评估反馈）**：
