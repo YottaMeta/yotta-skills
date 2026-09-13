@@ -125,3 +125,26 @@ test('hook rejects an event without a manifest', () => {
   assert.strictEqual(r.status, 2);
   assert.match(r.stderr, /manifest/);
 });
+
+test('yotta-present before_send pilot records explicit-unverified on Codex', () => {
+  const home = tmpDir('ys-hook-present-');
+  const manifest = path.join(ROOT, '..', 'yotta-present', 'skill-manifest.json');
+  const r = run([
+    'hook', 'evaluate',
+    '--host', 'codex',
+    '--event', 'before_send',
+    '--manifest', manifest,
+    '--context', JSON.stringify({
+      checks: { present_result: { ok: true, evidence: { tool_call_id: 'call-present' } } },
+    }),
+    '--json',
+  ], home);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  const payload = JSON.parse(r.stdout);
+  assert.strictEqual(payload.decision, 'unverified');
+  assert.strictEqual(payload.verified, false);
+  assert.strictEqual(payload.results[0].capability, 'unsupported');
+  assert.match(payload.user_message, /explicit-unverified/);
+  const log = fs.readFileSync(path.join(home, '.yottaskills', 'hook-log.jsonl'), 'utf8');
+  assert.match(log, /"result":"unverified"/);
+});
