@@ -34,6 +34,7 @@
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
 - **更新检查 / 自动更新**——<code>update --check</code> 只读比对已装技能版本与 npm 注册表并报告；<code>update --check --scheduled</code> 是后台周检入口，用本地缓存和随机抖动做到未到期不联网；<code>update --auto</code> 检查后自动把已装元阁家族升到最新（非元阁家族技能绝不自动更新）。
 - **自检 / 回滚**——<code>doctor</code> 只读检查技能目录、版本、manifest、注册表和自定义 doctor；<code>rollback</code> 校验快照后恢复最近一次安装或更新，恢复失败不会覆盖当前目录。
+- **运行时 hook 适配层**——技能 manifest 只声明六个生命周期要求；<code>hook capabilities / evaluate / bind / unbind</code> 负责宿主能力探测、确定性决策、结构化证据和降级标注，不把 audit 能力夸大为强制。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前门禁**——家族安装先读取包内 manifest，元信（yotta-verify）缺失时自动自举，再逐个扫描。`DO NOT INSTALL` 阻断；`CAUTION` / `REVIEW` 继续但显示风险。旧版本会先做快照再替换。
 - **盘点 / re-index**--扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。新装技能自动被发现：<code>install</code> / <code>update</code> 完成后自动重扫注册表，<code>--reindex</code> 可随时手动重扫（如会话开工）。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code> 四工具，配置见 <code>SKILL.md</code>。
@@ -75,6 +76,10 @@ npx -y @yottameta/yotta-skills doctor --dir ~/my-skills --slug yotta-memory
 npx -y @yottameta/yotta-skills rollback --list --dir ~/my-skills
 npx -y @yottameta/yotta-skills rollback --slug yotta-memory --dir ~/my-skills
 
+# 查看宿主 hook 能力并评估一次 manifest 事件
+npx -y @yottameta/yotta-skills hook capabilities --host codex --json
+npx -y @yottameta/yotta-skills hook evaluate --host codex --event before_send --manifest ./skill-manifest.json --json
+
 # 预览将安装清单（不联网、不改动）
 npx -y @yottameta/yotta-skills --dry-run
 
@@ -102,6 +107,9 @@ npx -y @yottameta/yotta-skills --reindex
 | `update --check` | 只读更新检查：比对已装版本与 npm 注册表并报告（退出码 0=最新 / 3=有更新 / 1=无法检查；可用 `--registry <url>` 指定镜像）；不改动 |
 | `update --check --scheduled` | 后台周检入口：未到期不联网；到期只检查一次并写本地缓存；文本失败静默，`--json` 保留诊断；始终退出 0 |
 | `update --auto` | 检查后自动更新已装元阁家族到最新（含装前门禁；非元阁家族技能绝不自动更新） |
+| `hook capabilities --host <name>` | 查看六个统一事件的宿主能力矩阵；未知宿主默认 `unsupported` |
+| `hook evaluate --host <name> --event <event> --manifest <file> --context <json>` | 评估 manifest hook 事件，返回 allow / block / warn / unverified，并写结构化证据 |
+| `hook bind --host <name> --manifest <file>` / `hook unbind <id>` | 幂等注册或反注册 hook 声明 |
 | `--registry <url>` | 检查的 npm registry 地址（默认 https://registry.npmjs.org/；`YOTTA_SKILLS_REGISTRY` 覆盖） |
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（会话开工 / 装技能后自动调用；`--rescan` 同义）；`--json` 输出 JSON |

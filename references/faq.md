@@ -101,3 +101,7 @@ npx -y @yottameta/yotta-skills install <slug> --dir /path/to/skills
 ## 12. 装完为什么智能体里看不到？
 
 确认安装目录与智能体实际读取目录一致；安装后通常需要重启会话或重新加载技能列表。
+
+## 13. `hook evaluate` 会真的拦截动作吗？
+
+不一定。适配层先探测宿主能力：`native-block` 才能声明动作前阻断；`native-audit` 只能审计并触发一次纠偏，结果会标记 `explicit-unverified`；`wrapper-only` 仅在 wrapper 注册后保证；未知宿主全部按 `unsupported` 处理。当前 Codex 已实测能力见 `hook capabilities --host codex`。

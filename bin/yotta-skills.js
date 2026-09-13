@@ -11,6 +11,8 @@
  *   npx -y @yottameta/yotta-skills update --check         # 只读检查更新（联网对 npm 最新，不改动；退出码 0/3/1）
  *   npx -y @yottameta/yotta-skills update --check --scheduled  # 后台周检（未到期不联网，到期单次检查并写缓存）
  *   npx -y @yottameta/yotta-skills update --auto          # 检查到家族更新后自动更新（仅 yotta-* 家族，含装前扫描）
+ *   npx -y @yottameta/yotta-skills hook capabilities      # 查看宿主六事件能力矩阵
+ *   npx -y @yottameta/yotta-skills hook evaluate --event before_send --manifest <file>  # 评估并留证
  *   npx -y @yottameta/yotta-skills --dry-run              # 预览将安装清单（不联网、不改动）
  *
  * 版本策略：清单锁定 `major.x`（不锁死 patch，维护性更新随最新）；--pin 锁死精确版本。
@@ -31,10 +33,11 @@ const healthLib = require('../lib/install-health');
 const lifecycleLib = require('../lib/install-lifecycle');
 const snapshotLib = require('../lib/install-snapshot');
 const updateCheckLib = require('../lib/update-check');
+const hookAdapterLib = require('../lib/hook-adapter');
 const { createInstaller, isSafeTarEntry } = require('../lib/install-pipeline');
 
 const PKG_ROOT = path.join(__dirname, '..');
-let VERSION = '0.10.0';
+let VERSION = '0.11.0';
 try { VERSION = require(path.join(PKG_ROOT, 'package.json')).version; } catch (_) { /* keep fallback */ }
 
 function loadManifest() {
@@ -146,6 +149,7 @@ function parseArgs(argv) {
     python: null, verify: null, command: null, skill: null, rest: [],
     inventory: false, reindex: false, noReindex: false, json: false, project: false, route: null,
     check: false, auto: false, scheduled: false, registry: null, slug: null,
+    host: null, event: null, manifest: null, context: null,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -185,12 +189,16 @@ function parseArgs(argv) {
     else if (a === '--auto') opts.auto = true;
     else if (a === '--scheduled') opts.scheduled = true;
     else if (a === '--registry') opts.registry = take('--registry');
+    else if (a === '--host') opts.host = take('--host').toLowerCase();
+    else if (a === '--event') opts.event = take('--event').toLowerCase();
+    else if (a === '--manifest') opts.manifest = take('--manifest');
+    else if (a === '--context') opts.context = take('--context');
     else if (a.startsWith('-')) die('未知参数: ' + a, 2, '可用 --help 查看支持的选项。');
     else positionals.push(a);
   }
   // 命令解析：install / update / doctor / rollback，其余位置参数 = 技能 slug（可多个）
   for (const p of positionals) {
-    if (p === 'install' || p === 'update' || p === 'doctor' || p === 'rollback') {
+    if (p === 'install' || p === 'update' || p === 'doctor' || p === 'rollback' || p === 'hook') {
       if (opts.command && opts.command !== p) die('命令冲突：' + opts.command + ' 与 ' + p);
       opts.command = p;
     } else {
@@ -1067,6 +1075,10 @@ function printHelp() {
   out('  yotta-skills --inventory            盘点本机已装技能（自研扫描，不依赖任何元技能）');
   out('  yotta-skills --reindex              重扫注册表（会话开工 / 装技能后自动调用；增量合并）');
   out('  yotta-skills --route "<需求摘要>"   给出场景组合、调用顺序、缺失技能安装建议');
+  out('  yotta-skills hook capabilities       查看宿主六事件能力矩阵');
+  out('  yotta-skills hook evaluate --event <event> --manifest <file>  评估 hook 声明并留证');
+  out('  yotta-skills hook bind --manifest <file>  注册 hook 声明（幂等）');
+  out('  yotta-skills hook unbind <binding-id>  反注册 hook 声明');
   out('');
   out('选项:');
   out('  --agent <name>   智能体键名（--list 可查看；未知智能体请用 --dir）');
@@ -1084,6 +1096,10 @@ function printHelp() {
   out('  --scheduled        与 update --check 合用：后台周检入口（未到期不联网；到期单次检查并写缓存）');
   out('  --auto             update 时检查到家族更新后自动更新（仅 yotta-* 家族，含装前扫描）');
   out('  --registry <url>  npm registry 地址（默认 https://registry.npmjs.org/；YOTTA_SKILLS_REGISTRY 覆盖）');
+  out('  --host <name>     hook 适配宿主名（默认 generic；当前已实测 codex）');
+  out('  --event <event>   hook 六事件之一（before_start / before_tool / before_install / before_publish / after_milestone / before_send）');
+  out('  --manifest <file> hook evaluate / bind 使用的 skill-manifest.json 路径');
+  out('  --context <json>  hook evaluate 的检查结果 JSON（checks / wrapperRegistered / evidence）');
   out('  --project         inventory / reindex 时附加扫描当前项目 .agents/skills / .codex/skills');
   out('  --no-reindex      安装 / 更新后不自动重扫注册表');
   out('  -h, --help       帮助');
@@ -1208,6 +1224,99 @@ function maybeAutoReindex(opts, dest) {
   }
 }
 
+// ── 运行时 hook 适配层（P0-3） ───────────────────────────────────────────────
+function readJsonFile(file, label) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (error) {
+    die(label + ' 读取失败: ' + error.message, 2, '请确认文件存在且为合法 JSON。');
+  }
+}
+
+function runHook(opts) {
+  const action = opts.rest[0] || 'capabilities';
+  const host = opts.host || 'generic';
+  const adapter = hookAdapterLib.createHookAdapter({ host });
+
+  if (action === 'capabilities') {
+    const payload = { host, capabilities: adapter.capabilities() };
+    if (opts.json) out(JSON.stringify(payload, null, 2));
+    else {
+      out('yotta-skills（元阁）v' + VERSION + ' —— hook capabilities');
+      out('宿主: ' + host);
+      hookAdapterLib.EVENTS.forEach((event) => out('  ' + event.padEnd(18) + payload.capabilities[event]));
+    }
+    return;
+  }
+
+  if (action === 'evaluate') {
+    if (!opts.event) die('hook evaluate 缺少 --event', 2, '请提供六个统一事件之一。');
+    if (!opts.manifest) die('hook evaluate 缺少 --manifest', 2, '请提供 skill-manifest.json 路径。');
+    const manifest = readJsonFile(opts.manifest, 'manifest');
+    let context = {};
+    if (opts.context) {
+      try {
+        context = JSON.parse(opts.context);
+      } catch (error) {
+        die('--context 不是合法 JSON: ' + error.message, 2, '请传入 JSON 对象。');
+      }
+    }
+    if (!context || typeof context !== 'object' || Array.isArray(context)) {
+      die('--context 必须是 JSON 对象', 2);
+    }
+    const result = adapter.evaluate(opts.event, manifest, context);
+    const entries = result.results.length > 0
+      ? result.results
+      : [{ event: opts.event, skill: manifest.slug, action: null, decision: result.decision, evidence: {}, capability: adapter.capabilities()[opts.event] || 'unsupported', reason: result.user_message }];
+    for (const entry of entries) {
+      hookAdapterLib.appendHookEvidence({
+        event: entry.event,
+        skill: entry.skill,
+        action: entry.action,
+        result: entry.decision,
+        capability: entry.capability,
+        evidence: entry.evidence,
+        reason: entry.reason,
+      }, { homeDir: os.homedir() });
+    }
+    if (opts.json) out(JSON.stringify({ host, event: opts.event, ...result }, null, 2));
+    else {
+      out('yotta-skills（元阁）v' + VERSION + ' —— hook evaluate');
+      out('宿主: ' + host + ' / 事件: ' + opts.event);
+      out('决策: ' + result.decision + ' / verified: ' + result.verified);
+      out(result.user_message);
+      for (const entry of result.results) out('  ' + entry.action + ': ' + entry.decision + '（' + entry.capability + '）');
+    }
+    process.exitCode = result.decision === 'block' ? 3 : 0;
+    return;
+  }
+
+  if (action === 'bind') {
+    if (!opts.manifest) die('hook bind 缺少 --manifest', 2, '请提供 skill-manifest.json 路径。');
+    const manifest = readJsonFile(opts.manifest, 'manifest');
+    const bindings = adapter.bind(manifest, opts.event || null);
+    if (opts.json) out(JSON.stringify({ host, bindings }, null, 2));
+    else {
+      out('yotta-skills（元阁）v' + VERSION + ' —— hook bind');
+      out('宿主: ' + host + ' / 绑定 ' + bindings.length + ' 项');
+      for (const binding of bindings) out('  ' + binding.id + '  ' + binding.event + '  ' + binding.action + '  ' + binding.capability);
+    }
+    return;
+  }
+
+  if (action === 'unbind') {
+    const id = opts.rest[1];
+    if (!id) die('hook unbind 缺少 binding id', 2, '先用 hook bind / list 获取 id。');
+    const removed = adapter.unbind(id);
+    if (opts.json) out(JSON.stringify({ host, id, removed }, null, 2));
+    else out(removed ? '已解除绑定: ' + id : '未找到绑定: ' + id);
+    process.exitCode = removed ? 0 : 1;
+    return;
+  }
+
+  die('未知 hook 子命令: ' + action, 2, '支持 capabilities / evaluate / bind / unbind。');
+}
+
 // ── main ───────────────────────────────────────────────────────────────────
 function main() {
   const opts = parseArgs(process.argv.slice(2));
@@ -1219,6 +1328,10 @@ function main() {
   if (opts.route && !opts.command) { runRoute(opts); return; }
 
   const command = opts.command || 'install';
+  if (command === 'hook') {
+    runHook(opts);
+    return;
+  }
   if (command === 'rollback' && opts.list) {
     runRollback(opts, null);
     return;

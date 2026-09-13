@@ -31,6 +31,7 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
 - **Update check / auto-update** — <code>update --check</code> compares installed skill versions against the npm registry and reports; <code>update --check --scheduled</code> is the weekly background entry with a local cache and jitter, so it stays offline until due; <code>update --auto</code> upgrades the installed YottaMeta family to the latest (non-family skills are never auto-updated).
 - **Doctor / rollback** — <code>doctor</code> checks the installed skill directory, version, manifest, registry and custom doctor script without modifying it; <code>rollback</code> validates a snapshot and restores the latest install or update.
+- **Runtime hook adapter** — manifests declare six lifecycle requirements; <code>hook capabilities / evaluate / bind / unbind</code> probe host support, apply deterministic decisions, record evidence, and never overstate audit-only hosts as enforced.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install gate** — family installs read the package manifest, bootstrap yotta-verify (元信) when it is missing, then scan each package. <code>DO NOT INSTALL</code> blocks; caution/review continue with visible risk. Old versions are snapshotted before replacement.
 - **Inventory / re-index** - scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand (e.g. at session start). An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code>; see <code>SKILL.md</code> for the config.
@@ -71,6 +72,10 @@ npx -y @yottameta/yotta-skills doctor --dir ~/my-skills --slug yotta-memory
 npx -y @yottameta/yotta-skills rollback --list --dir ~/my-skills
 npx -y @yottameta/yotta-skills rollback --slug yotta-memory --dir ~/my-skills
 
+# Inspect host hook capability and evaluate one manifest event
+npx -y @yottameta/yotta-skills hook capabilities --host codex --json
+npx -y @yottameta/yotta-skills hook evaluate --host codex --event before_send --manifest ./skill-manifest.json --json
+
 # Preview what would be installed (no network, no changes)
 npx -y @yottameta/yotta-skills --dry-run
 
@@ -98,6 +103,9 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `update --check` | Read-only update check: compare installed versions against the npm registry and report (exit 0 = up to date, 3 = updates available, 1 = could not check; run with `--registry <url>` to target a mirror); no changes |
 | `update --check --scheduled` | Weekly background entry: no network until due, then one check and a local cache write; text mode stays quiet on failure, `--json` keeps diagnostics; always exits 0 |
 | `update --auto` | Check and automatically update the installed YottaMeta family to the latest (runs the pre-install gate; never auto-updates non-family skills) |
+| `hook capabilities --host <name>` | Show the six-event host capability matrix; unknown hosts stay <code>unsupported</code> |
+| `hook evaluate --host <name> --event <event> --manifest <file> --context <json>` | Evaluate a manifest hook event, return allow / block / warn / unverified, and append structured evidence |
+| `hook bind --host <name> --manifest <file>` / `hook unbind <id>` | Idempotently register or remove hook declarations |
 | `--registry <url>` | npm registry to check against (default https://registry.npmjs.org/; `YOTTA_SKILLS_REGISTRY` overrides) |
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
 | `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (session start / after installing skills; `--rescan` is a synonym); `--json` for JSON |

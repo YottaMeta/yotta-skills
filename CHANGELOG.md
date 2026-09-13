@@ -1,3 +1,14 @@
+## v0.11.0 (2026-09-13)
+
+**P0-3 运行时 hook 适配层**：
+
+- 新增 `lib/hook-adapter.js`：六个统一事件、Codex 四档能力矩阵、manifest hook 声明校验、四档决策聚合和 `explicit-unverified` 降级。
+- 新增 `hook capabilities / evaluate / bind / unbind` CLI：可查看宿主能力、评估事件、写入结构化证据、幂等注册与反注册声明。
+- 证据写入 `~/.yottaskills/hook-log.jsonl`；绑定注册表写入 `~/.yottaskills/hook-bindings.json`，不直接改写宿主配置。
+- `native-audit` 不宣称强制；失败时输出 `explicit-unverified` 与纠偏信号。未核验宿主一律 `unsupported`。
+- 新增 `test/hook-adapter.test.js` 与 `test/hook-cli.test.js`；全量测试 131/131。
+- 本版只交付适配器内核，具体技能接入留待 P0-4 试点。
+
 ## v0.10.0 (2026-09-13)
 
 **更新检查缓存与后台周检**：

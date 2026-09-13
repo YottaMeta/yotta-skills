@@ -151,3 +151,16 @@ npx -y @yottameta/yotta-skills --route "检查代码质量，别糊弄"
 输出会告诉你命中哪个组合、按什么顺序调用、每个技能负责什么、哪些已装、哪些缺失，以及缺失技能的安装命令。元阁只给建议，不会自动安装；安装前请先做装前安全扫描，并由用户确认。
 - `--json` 输出机器可读结果（含新增 / 更新 / 消失），适合脚本与钩子。
 - 如果本机还装了非元阁家族技能，`--route` 会额外列出「其他已装技能候选」：只按 frontmatter description 与需求文本做本地机械匹配，标注来源、得分、命中词项与扫描状态（默认未扫描），不读取全文指令、不自动调用；使用/安装前请先做装前安全扫描。
+
+## 运行时 hook 适配（hook）
+
+技能 manifest 只声明六个统一事件的要求；元阁负责能力探测、确定性评估、证据留痕和降级标注：
+
+```bash
+npx -y @yottameta/yotta-skills hook capabilities --host codex --json
+npx -y @yottameta/yotta-skills hook evaluate --host codex --event before_send --manifest ./skill-manifest.json --context '{"checks":{}}' --json
+npx -y @yottameta/yotta-skills hook bind --host codex --manifest ./skill-manifest.json
+```
+
+`native-block` 才会显示动作前阻断；`native-audit` 只能审计并触发一次纠偏，结果标
+`explicit-unverified`；未知宿主全部按 `unsupported` 处理。本层不联网、不下载、不改宿主配置文件。

@@ -97,6 +97,14 @@
   字段包含 `last_checked`、`next_check`、`last_result`、`last_error`。
 - 本缓存只记录版本检查结果与网络错误，不记录技能内容或用户数据。
 
+## 运行时 hook 适配
+
+- `hook capabilities --host <name>`：查看六个统一事件的四档宿主能力；未知宿主默认 `unsupported`。
+- `hook evaluate --host <name> --event <event> --manifest <file> --context <json>`：按 manifest 顺序评估声明，输出 `allow` / `block` / `warn` / `unverified`。
+- `hook bind --manifest <file>` / `hook unbind <id>`：幂等注册或反注册声明，不直接改写宿主配置。
+- 评估证据写入 `~/.yottaskills/hook-log.jsonl`，绑定记录写入 `~/.yottaskills/hook-bindings.json`。
+- `native-audit` 不等于强制；缺少能力或证据时必须显示 `explicit-unverified`。
+
 ## 快照与回滚
 
 - 旧版本快照：`~/.yottaskills/snapshots/<slug>/<timestamp>-<version>-<随机后缀>/`；
