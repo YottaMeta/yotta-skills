@@ -28,7 +28,7 @@
       "slug": "yotta-memory",
       "name": "元忆",
       "pkg": "@yottameta/yotta-memory",
-      "version": "0.13.0",
+      "version": "0.13.1",
       "desc": "有权限边界的文件式智能体记忆（FACT/PREF/BOUND/COMMIT）"
     },
     {
@@ -77,7 +77,7 @@
       "slug": "yotta-logs",
       "name": "元史",
       "pkg": "@yottameta/yotta-logs",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "desc": "跨智能体历史会话 / 记忆日志检索"
     },
     {

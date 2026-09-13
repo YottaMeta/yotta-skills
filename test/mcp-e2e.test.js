@@ -15,8 +15,6 @@ function findPython() {
     const r = spawnSync(c, ['--version'], { encoding: 'utf8' });
     if (r.status === 0) return c;
   }
-  const scoop = 'D:\\Scoop\\Base\\apps\\python38\\current\\python.exe';
-  if (fs.existsSync(scoop)) return scoop;
   return 'python';
 }
 const PY = findPython();
