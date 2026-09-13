@@ -1,3 +1,14 @@
+## v0.10.0 (2026-09-13)
+
+**更新检查缓存与后台周检**：
+
+- 新增 `update --check --scheduled`：默认 7 天加 0 到 24 小时随机抖动，未到期不联网；到期只检查一次并把结果写入 `~/.yottaskills/update-check.json`。
+- 后台周检网络失败时文本模式静默、退出码 0；`--json` 保留 `error` / `cache` 诊断字段，不把后台调度失败变成用户噪音。
+- 手动 `update --check` 保持每次联网和 0 / 3 / 1 退出码；检查结果同样写入本地缓存，避免手动检查后立即重复周检。
+- `update --auto` 继续复用完整安装管线，`--skip-scan` 不能绕过元信门禁；`DO NOT INSTALL` 阻断、保留旧版本并写入证据。
+- SKILL / README / FAQ / 教程 / 走查同步：移除“会话开工默认联网检查”，明确手动检查与后台周检边界。
+- 新增 `lib/update-check.js`、`test/update-check-state.test.js`，并扩展 scheduled / auto 门禁回归。
+
 ## v0.9.0 (2026-09-13)
 
 **doctor / rollback 与自定义生命周期**：

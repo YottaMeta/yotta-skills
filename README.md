@@ -29,13 +29,13 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Orchestration routing** - <code>--route</code> turns a task summary into a candidate combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install command; it only suggests installation and never installs automatically.
 - **Install** — install everything (or a subset) into an agent's default user-level directory or any directory.
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
-- **Update check / auto-update** — <code>update --check</code> compares installed skill versions against the npm registry and reports (no changes; run manually or from doctor / release checks); <code>update --auto</code> upgrades the installed YottaMeta family to the latest (non-family skills are never auto-updated).
+- **Update check / auto-update** — <code>update --check</code> compares installed skill versions against the npm registry and reports; <code>update --check --scheduled</code> is the weekly background entry with a local cache and jitter, so it stays offline until due; <code>update --auto</code> upgrades the installed YottaMeta family to the latest (non-family skills are never auto-updated).
 - **Doctor / rollback** — <code>doctor</code> checks the installed skill directory, version, manifest, registry and custom doctor script without modifying it; <code>rollback</code> validates a snapshot and restores the latest install or update.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install gate** — family installs read the package manifest, bootstrap yotta-verify (元信) when it is missing, then scan each package. <code>DO NOT INSTALL</code> blocks; caution/review continue with visible risk. Old versions are snapshotted before replacement.
 - **Inventory / re-index** - scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand (e.g. at session start). An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code>; see <code>SKILL.md</code> for the config.
 
-Boundaries: it only downloads, places, gates and summarizes — it does **not** develop skill content, does **not** bundle any skill body, and does **not** use <code>-g</code> global installs. Besides the target directory, it keeps its registry, snapshots and install evidence under <code>~/.yottaskills</code>.
+Boundaries: it only downloads, places, gates and summarizes — it does **not** develop skill content, does **not** bundle any skill body, and does **not** use <code>-g</code> global installs. Besides the target directory, it keeps its registry, snapshots, install evidence and update-check cache under <code>~/.yottaskills</code>.
 
 ## Quick start
 
@@ -55,8 +55,11 @@ npx -y @yottameta/yotta-skills install yotta-memory yotta-verify --dir ~/my-skil
 # Incrementally update installed skills
 npx -y @yottameta/yotta-skills update --agent codex
 
-# Check for updates (read-only, no changes); good to run at session start
+# Check for updates manually (read-only, no changes)
 npx -y @yottameta/yotta-skills update --check
+
+# Weekly background entry (stays offline until due; writes ~/.yottaskills/update-check.json)
+npx -y @yottameta/yotta-skills update --check --scheduled
 
 # Check and auto-update the installed YottaMeta family (pre-install gate applies; non-family skills untouched)
 npx -y @yottameta/yotta-skills update --auto
@@ -93,6 +96,7 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `install <skill>... [--agent <name> \| --dir <path>]` | Install only the given skills |
 | `update [--agent <name> \| --dir <path>]` | Incremental update: add missing, upgrade version-skewed |
 | `update --check` | Read-only update check: compare installed versions against the npm registry and report (exit 0 = up to date, 3 = updates available, 1 = could not check; run with `--registry <url>` to target a mirror); no changes |
+| `update --check --scheduled` | Weekly background entry: no network until due, then one check and a local cache write; text mode stays quiet on failure, `--json` keeps diagnostics; always exits 0 |
 | `update --auto` | Check and automatically update the installed YottaMeta family to the latest (runs the pre-install gate; never auto-updates non-family skills) |
 | `--registry <url>` | npm registry to check against (default https://registry.npmjs.org/; `YOTTA_SKILLS_REGISTRY` overrides) |
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |

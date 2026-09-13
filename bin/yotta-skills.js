@@ -9,6 +9,7 @@
  *   npx -y @yottameta/yotta-skills install <skill> --dir <path>  # 装单个技能
  *   npx -y @yottameta/yotta-skills update --agent <name>  # 增量更新已装技能（补齐缺失/版本不一致）
  *   npx -y @yottameta/yotta-skills update --check         # 只读检查更新（联网对 npm 最新，不改动；退出码 0/3/1）
+ *   npx -y @yottameta/yotta-skills update --check --scheduled  # 后台周检（未到期不联网，到期单次检查并写缓存）
  *   npx -y @yottameta/yotta-skills update --auto          # 检查到家族更新后自动更新（仅 yotta-* 家族，含装前扫描）
  *   npx -y @yottameta/yotta-skills --dry-run              # 预览将安装清单（不联网、不改动）
  *
@@ -29,10 +30,11 @@ const gateLib = require('../lib/verify-gate');
 const healthLib = require('../lib/install-health');
 const lifecycleLib = require('../lib/install-lifecycle');
 const snapshotLib = require('../lib/install-snapshot');
+const updateCheckLib = require('../lib/update-check');
 const { createInstaller, isSafeTarEntry } = require('../lib/install-pipeline');
 
 const PKG_ROOT = path.join(__dirname, '..');
-let VERSION = '0.2.1';
+let VERSION = '0.10.0';
 try { VERSION = require(path.join(PKG_ROOT, 'package.json')).version; } catch (_) { /* keep fallback */ }
 
 function loadManifest() {
@@ -143,7 +145,7 @@ function parseArgs(argv) {
     help: false, version: false, agent: null, dir: null, npm: null,
     python: null, verify: null, command: null, skill: null, rest: [],
     inventory: false, reindex: false, noReindex: false, json: false, project: false, route: null,
-    check: false, auto: false, registry: null, slug: null,
+    check: false, auto: false, scheduled: false, registry: null, slug: null,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -181,6 +183,7 @@ function parseArgs(argv) {
     }
     else if (a === '--check') opts.check = true;
     else if (a === '--auto') opts.auto = true;
+    else if (a === '--scheduled') opts.scheduled = true;
     else if (a === '--registry') opts.registry = take('--registry');
     else if (a.startsWith('-')) die('未知参数: ' + a, 2, '可用 --help 查看支持的选项。');
     else positionals.push(a);
@@ -197,6 +200,9 @@ function parseArgs(argv) {
   // 直接给 slug 且无命令 → 视为 install 单个/多个
   if (!opts.command && opts.rest.length > 0) opts.command = 'install';
   opts.skills = opts.rest.map(s => s.toLowerCase());
+  if (opts.scheduled && (opts.command !== 'update' || !opts.check || opts.auto)) {
+    die('--scheduled 只能与 update --check 一起使用', 2, '请使用 update --check --scheduled；自动更新不使用后台调度入口。');
+  }
   return opts;
 }
 
@@ -297,15 +303,69 @@ async function runUpdateCheck(opts, dest) {
   var lines = [];
   var quiet = !!opts.json;
   function say(s) { if (!quiet) lines.push(s); }
-  say('yotta-skills（元阁）v' + VERSION + ' —— 检查更新（只读，不改动） -> ' + dest);
-  say('版本源: ' + (opts.registry || process.env.YOTTA_SKILLS_REGISTRY || 'https://registry.npmjs.org/'));
-  say('');
+  var scheduled = !!opts.scheduled;
+  var cache = updateCheckLib.readCache();
+  var target = cache.targets[updateCheckLib.targetKey(dest)] || null;
+  var due = updateCheckLib.isDue(target, Date.now());
+  if (!scheduled) {
+    say('yotta-skills（元阁）v' + VERSION + ' —— 检查更新（只读，不改动） -> ' + dest);
+    say('版本源: ' + (opts.registry || process.env.YOTTA_SKILLS_REGISTRY || 'https://registry.npmjs.org/'));
+    say('');
+  }
+  if (scheduled && !due) {
+    var cachedRows = (target && target.last_result && target.last_result.rows) || [];
+    var cachedPayload = {
+      dest: dest,
+      scheduled: true,
+      due: false,
+      checked: false,
+      updatable: cachedRows.filter(function (x) { return x.hasUpdate; }),
+      updates: (target && target.last_result && target.last_result.updates) || 0,
+      latest: (target && target.last_result && target.last_result.latest) || 0,
+      failed: 0,
+      nonFamily: (target && target.last_result && target.last_result.nonFamily) || 0,
+      cache: target,
+      error: null,
+    };
+    if (opts.json) out(JSON.stringify(cachedPayload, null, 2));
+    return {
+      code: 0,
+      scheduled: true,
+      due: false,
+      checked: false,
+      rows: cachedRows,
+      updates: cachedPayload.updates,
+      latest: cachedPayload.latest,
+      failed: 0,
+      nonFamily: cachedPayload.nonFamily,
+    };
+  }
   var installed = scanInstalledSlugs(dest);
   if (installed.length === 0) {
-    say('（' + dest + ' 下未发现已装技能目录）');
-    return { code: 0, rows: [], updates: 0, latest: 0, failed: 0, nonFamily: 0 };
+    var emptyResult = { updates: 0, latest: 0, failed: 0, nonFamily: 0, rows: [], errors: [] };
+    var emptyCacheRecord = null;
+    try {
+      emptyCacheRecord = updateCheckLib.recordCheck(os.homedir(), dest, { result: emptyResult, error: null });
+    } catch (_) { /* 缓存是后台优化的 best-effort，不阻断检查结果 */ }
+    if (!scheduled) {
+      say('（' + dest + ' 下未发现已装技能目录）');
+      for (var emptyIndex = 0; emptyIndex < lines.length; emptyIndex++) out(lines[emptyIndex]);
+    }
+    return {
+      code: 0,
+      scheduled: scheduled,
+      due: true,
+      checked: true,
+      rows: [],
+      updates: 0,
+      latest: 0,
+      failed: 0,
+      nonFamily: 0,
+      cache: emptyCacheRecord,
+    };
   }
   var rows = [];
+  var failures = [];
   var updates = 0, latest = 0, failed = 0, nonFamily = 0;
   for (var i = 0; i < installed.length; i++) {
     var it = installed[i];
@@ -318,6 +378,7 @@ async function runUpdateCheck(opts, dest) {
     var res = await fetchRegistryLatest(fam.pkg, opts);
     if (!res.ok) {
       failed++;
+      failures.push({ slug: it.slug, error: res.error });
       say('  ✘ ' + it.slug.padEnd(22) + '检查失败: ' + res.error);
       continue;
     }
@@ -336,11 +397,61 @@ async function runUpdateCheck(opts, dest) {
     }
     rows.push({ slug: it.slug, installed: cur, latest: current, pkg: fam.pkg, hasUpdate: !isUp, family: fam });
   }
-  say('');
-  say('汇总: 有更新 ' + updates + ' / 已最新 ' + latest + ' / 检查失败 ' + failed + ' / 非家族跳过 ' + nonFamily);
-  for (var j = 0; j < lines.length; j++) out(lines[j]);
+  var result = {
+    updates: updates,
+    latest: latest,
+    failed: failed,
+    nonFamily: nonFamily,
+    rows: rows,
+    errors: failures,
+  };
+  var lastError = failures.length > 0
+    ? failures.map(function (x) { return x.slug + ': ' + x.error; }).join('; ')
+    : null;
+  var cacheRecord = null;
+  try {
+    cacheRecord = updateCheckLib.recordCheck(os.homedir(), dest, { result: result, error: lastError });
+  } catch (_) { /* 缓存是后台优化的 best-effort，不阻断检查结果 */ }
   var code = (failed > 0) ? 1 : (updates > 0 ? 3 : 0);
-  return { code: code, rows: rows, updates: updates, latest: latest, failed: failed, nonFamily: nonFamily };
+  var updatable = rows.filter(function (x) { return x.hasUpdate; });
+  if (scheduled) {
+    if (updates > 0) {
+      for (var j = 0; j < updatable.length; j++) {
+        out('  ' + updatable[j].slug + '：本地 v' + (updatable[j].installed || '未知') + ' -> 最新 v' + updatable[j].latest);
+      }
+    }
+    if (opts.json) {
+      out(JSON.stringify({
+        dest: dest,
+        scheduled: true,
+        due: true,
+        checked: true,
+        updatable: updatable,
+        updates: updates,
+        latest: latest,
+        failed: failed,
+        nonFamily: nonFamily,
+        cache: cacheRecord,
+        error: lastError,
+      }, null, 2));
+    }
+    return { code: 0, scheduled: true, due: true, checked: true, rows: rows, updates: updates, latest: latest, failed: failed, nonFamily: nonFamily };
+  }
+  say('汇总: 有更新 ' + updates + ' / 已最新 ' + latest + ' / 检查失败 ' + failed + ' / 非家族跳过 ' + nonFamily);
+  for (var lineIndex = 0; lineIndex < lines.length; lineIndex++) out(lines[lineIndex]);
+  if (opts.json) {
+    out(JSON.stringify({
+      dest: dest,
+      updatable: updatable,
+      updates: updates,
+      latest: latest,
+      failed: failed,
+      nonFamily: nonFamily,
+      cache: cacheRecord,
+      error: lastError,
+    }, null, 2));
+  }
+  return { code: code, scheduled: false, due: true, checked: true, rows: rows, updates: updates, latest: latest, failed: failed, nonFamily: nonFamily };
 }
 
 async function runUpdateAuto(opts, dest) {
@@ -948,6 +1059,8 @@ function printHelp() {
   out('  yotta-skills install --dir <path>   装全家到指定目录');
   out('  yotta-skills install <skill> --dir <path>  装单个技能（可多个）');
   out('  yotta-skills update --agent <name>  增量更新已装技能（补齐缺失 / 版本不一致）');
+  out('  yotta-skills update --check         只读联网检查更新（退出码 0/3/1）');
+  out('  yotta-skills update --check --scheduled  后台周检（未到期不联网；到期单次检查并写缓存）');
   out('  yotta-skills doctor --dir <path>    只读自检技能目录（可加 --slug / --json）');
   out('  yotta-skills rollback --dir <path>  回滚最近一次技能安装或更新（--list 查看快照）');
   out('  yotta-skills --dry-run              预览将安装清单（不联网、不改动）');
@@ -968,6 +1081,7 @@ function printHelp() {
   out('  --slug <slug>     doctor / rollback 时只处理指定技能');
   out('  --route <需求>    静态编排路由（输出组合 / 顺序 / 依据 / 缺失技能建议）');
   out('  --check            update 时仅只读检查更新（联网对 npm 最新版本，不改动；退出码 0/3/1）');
+  out('  --scheduled        与 update --check 合用：后台周检入口（未到期不联网；到期单次检查并写缓存）');
   out('  --auto             update 时检查到家族更新后自动更新（仅 yotta-* 家族，含装前扫描）');
   out('  --registry <url>  npm registry 地址（默认 https://registry.npmjs.org/；YOTTA_SKILLS_REGISTRY 覆盖）');
   out('  --project         inventory / reindex 时附加扫描当前项目 .agents/skills / .codex/skills');
@@ -1138,9 +1252,6 @@ function main() {
     if (opts.check || opts.auto) {
       var runFn = opts.auto ? runUpdateAuto : runUpdateCheck;
       runFn(opts, dest).then(function (r) {
-        if (opts.json && !opts.auto) {
-          out(JSON.stringify({ dest: dest, updatable: r.rows.filter(function (x) { return x.hasUpdate; }), updates: r.updates, latest: r.latest, failed: r.failed, nonFamily: r.nonFamily }, null, 2));
-        }
         process.exitCode = r.code;
       });
     } else {

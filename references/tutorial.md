@@ -120,6 +120,8 @@ npx -y @yottameta/yotta-skills rollback --slug yotta-memory --agent codex
 - **doctor 报注册表版本不一致**：运行 `yotta-skills --reindex` 重扫注册表；doctor 本身不会写文件。
 - **需要撤销最近安装 / 更新**：先用 `rollback --list` 查看快照，再执行
   `rollback --slug <slug>`；恢复前会自动校验快照。
+- **后台更新检查没有输出**：`update --check --scheduled` 在未到期、已最新或网络失败时
+  文本模式保持静默；需要诊断时加 `--json`。
 
 ## 11. 盘点已装技能与 re-index（新装技能自动被发现）
 
@@ -134,6 +136,9 @@ npx -y @yottameta/yotta-skills --reindex
 - `install` / `update` 完成后会自动重扫注册表（`~/.yottaskills/registry.json`），新装 / 更新的
   技能随即出现在 `--inventory` / `--reindex` 里；`--no-reindex` 可关闭自动重扫。
 - 建议每会话开工先跑一次 `--reindex`（快速增量，只合并变化），让后装的技能自动被看见。
+- 更新检查不再作为会话开工默认动作：手动检查用 `update --check`；后台周检用
+  `update --check --scheduled`，未到期不联网，到期只检查一次并写
+  `~/.yottaskills/update-check.json`。
 
 ## 编排路由（--route）
 

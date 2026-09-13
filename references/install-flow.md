@@ -88,6 +88,15 @@
 - `--skip-scan` 只保留为人工应急路径，使用时输出 `explicit-unverified` 并写入证据；
 - `update --auto` 始终执行装前门禁，不接受 `--skip-scan`。
 
+## 更新检查缓存
+
+- 手动 `update --check`：每次联网，只读，保持退出码 0 / 3 / 1。
+- 后台周检 `update --check --scheduled`：默认 7 天加 0 到 24 小时随机抖动；未到期直接返回，
+  到期只检查一次；文本失败静默，`--json` 保留诊断。
+- 缓存文件：`~/.yottaskills/update-check.json`；按目标技能目录隔离记录，
+  字段包含 `last_checked`、`next_check`、`last_result`、`last_error`。
+- 本缓存只记录版本检查结果与网络错误，不记录技能内容或用户数据。
+
 ## 快照与回滚
 
 - 旧版本快照：`~/.yottaskills/snapshots/<slug>/<timestamp>-<version>-<随机后缀>/`；

@@ -11,6 +11,7 @@ const os = require('os');
 const path = require('path');
 const http = require('http');
 const { spawn } = require('child_process');
+const updateCheck = require('../lib/update-check');
 
 const ROOT = path.join(__dirname, '..');
 const BIN = path.join(ROOT, 'bin', 'yotta-skills.js');
@@ -19,11 +20,13 @@ const RUN_TIMEOUT = 20000;
 
 function startRegistry(versions) {
   const server = http.createServer((req, res) => {
+    server.requests++;
     const pkg = decodeURIComponent(req.url.replace(/^\//, ''));
     if (versions[pkg] === undefined) { res.writeHead(404, { 'content-type': 'application/json' }); res.end('{}'); return; }
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ name: pkg, 'dist-tags': { latest: versions[pkg] } }));
   });
+  server.requests = 0;
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(server)));
 }
 function free(server) { return new Promise((resolve) => server.close(resolve)); }
@@ -49,6 +52,17 @@ function writeSkill(dir, slug, version, name) {
   const d = path.join(dir, slug);
   fs.mkdirSync(d, { recursive: true });
   fs.writeFileSync(path.join(d, 'SKILL.md'), '---\nname: ' + (name || slug) + '\nversion: ' + version + '\ndescription: test\n---\n# ' + slug + '\n', 'utf8');
+}
+function seedScheduledCheck(home, dest, due, result) {
+  const now = due ? Date.now() - 8 * 24 * 60 * 60 * 1000 : Date.now();
+  updateCheck.recordCheck(home, dest, {
+    now,
+    random: () => 0,
+    result: result || null,
+  });
+}
+function readScheduledCheck(home, dest) {
+  return updateCheck.readCache(home).targets[updateCheck.targetKey(dest)];
 }
 
 test('update --check：家族技能有更新 -> 退出码 3 且报告', async () => {
@@ -122,5 +136,118 @@ test('update --auto：检查到家族更新后本地更新（仅自家家族，�
     const updated = fs.readFileSync(path.join(dest, 'yotta-memory', 'SKILL.md'), 'utf8');
     assert.match(updated, /version: 0\.11\.0/);
     assert.match(r.stdout, /自动更新汇总: 成功 1 \/ 失败 0/);
+  } finally { fs.rmSync(dest, { recursive: true, force: true }); fs.rmSync(home, { recursive: true, force: true }); await free(server); }
+});
+
+test('update --check --scheduled：未到期不联网且保持静默', async () => {
+  const server = await startRegistry({ '@yottameta/yotta-memory': '0.11.0' });
+  const dest = tmpdir('ys-scheduled-future-');
+  const home = tmpdir('ys-scheduled-future-home-');
+  try {
+    writeSkill(dest, 'yotta-memory', '0.10.0');
+    seedScheduledCheck(home, dest, false);
+    const r = await run(['update', '--check', '--scheduled', '--dir', dest], {
+      YOTTA_SKILLS_REGISTRY: 'http://127.0.0.1:' + server.address().port + '/',
+      USERPROFILE: home,
+      HOME: home,
+    });
+    assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+    assert.strictEqual(r.stdout, '');
+    assert.strictEqual(server.requests, 0);
+  } finally { fs.rmSync(dest, { recursive: true, force: true }); fs.rmSync(home, { recursive: true, force: true }); await free(server); }
+});
+
+test('update --check --scheduled：到期只检查一次并写缓存', async () => {
+  const server = await startRegistry({ '@yottameta/yotta-memory': '0.11.0' });
+  const dest = tmpdir('ys-scheduled-due-');
+  const home = tmpdir('ys-scheduled-due-home-');
+  try {
+    writeSkill(dest, 'yotta-memory', '0.10.0');
+    seedScheduledCheck(home, dest, true);
+    const env = {
+      YOTTA_SKILLS_REGISTRY: 'http://127.0.0.1:' + server.address().port + '/',
+      USERPROFILE: home,
+      HOME: home,
+    };
+    const first = await run(['update', '--check', '--scheduled', '--dir', dest], env);
+    assert.strictEqual(first.status, 0, first.stdout + first.stderr);
+    assert.match(first.stdout, /yotta-memory/);
+    assert.match(first.stdout, /本地 v0\.10\.0 -> 最新 v0\.11\.0/);
+    assert.strictEqual(server.requests, 1);
+
+    const second = await run(['update', '--check', '--scheduled', '--dir', dest], env);
+    assert.strictEqual(second.status, 0, second.stdout + second.stderr);
+    assert.strictEqual(second.stdout, '');
+    assert.strictEqual(server.requests, 1);
+    const cached = readScheduledCheck(home, dest);
+    assert.ok(cached.next_check && Date.parse(cached.next_check) > Date.now());
+    assert.strictEqual(cached.last_result.updates, 1);
+  } finally { fs.rmSync(dest, { recursive: true, force: true }); fs.rmSync(home, { recursive: true, force: true }); await free(server); }
+});
+
+test('update --check --scheduled：空目录到期也写缓存', async () => {
+  const server = await startRegistry({ '@yottameta/yotta-memory': '0.11.0' });
+  const dest = tmpdir('ys-scheduled-empty-');
+  const home = tmpdir('ys-scheduled-empty-home-');
+  try {
+    seedScheduledCheck(home, dest, true);
+    const r = await run(['update', '--check', '--scheduled', '--dir', dest], {
+      YOTTA_SKILLS_REGISTRY: 'http://127.0.0.1:' + server.address().port + '/',
+      USERPROFILE: home,
+      HOME: home,
+    });
+    assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+    assert.strictEqual(server.requests, 0);
+    const cached = readScheduledCheck(home, dest);
+    assert.ok(cached, '空目录也应有周检缓存记录');
+    assert.ok(Date.parse(cached.next_check) > Date.now());
+  } finally { fs.rmSync(dest, { recursive: true, force: true }); fs.rmSync(home, { recursive: true, force: true }); await free(server); }
+});
+
+test('update --check --scheduled：网络失败静默并记录错误', async () => {
+  const server = await startRegistry({});
+  const dest = tmpdir('ys-scheduled-fail-');
+  const home = tmpdir('ys-scheduled-fail-home-');
+  try {
+    writeSkill(dest, 'yotta-memory', '0.10.0');
+    seedScheduledCheck(home, dest, true);
+    const r = await run(['update', '--check', '--scheduled', '--dir', dest], {
+      YOTTA_SKILLS_REGISTRY: 'http://127.0.0.1:' + server.address().port + '/',
+      USERPROFILE: home,
+      HOME: home,
+    });
+    assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+    assert.strictEqual(r.stdout, '');
+    assert.strictEqual(server.requests, 1);
+    const cached = readScheduledCheck(home, dest);
+    assert.ok(cached.last_error, '失败原因应写入缓存');
+    assert.ok(Date.parse(cached.next_check) > Date.now());
+  } finally { fs.rmSync(dest, { recursive: true, force: true }); fs.rmSync(home, { recursive: true, force: true }); await free(server); }
+});
+
+test('update --auto：skip-scan 不能绕过 DO NOT INSTALL 门禁', async () => {
+  const server = await startRegistry({ '@yottameta/yotta-memory': '0.11.0' });
+  const dest = tmpdir('ys-auto-block-');
+  const home = tmpdir('ys-auto-block-home-');
+  try {
+    writeSkill(dest, 'yotta-memory', '0.10.0');
+    const r = await run(
+      ['update', '--auto', '--dir', dest, '--skip-scan', '--verify', path.join(ROOT, 'test', 'helpers', 'fake-verify.py')],
+      {
+        YOTTA_SKILLS_REGISTRY: 'http://127.0.0.1:' + server.address().port + '/',
+        YOTTA_SKILLS_NPM: FAKE_NPM,
+        YOTTA_SKILLS_FAKE_VERDICT: 'DO NOT INSTALL',
+        USERPROFILE: home,
+        HOME: home,
+        CODEX_HOME: path.join(home, '.codex'),
+        XDG_CONFIG_HOME: path.join(home, '.config'),
+      },
+    );
+    assert.strictEqual(r.status, 5, r.stdout + r.stderr);
+    const skill = fs.readFileSync(path.join(dest, 'yotta-memory', 'SKILL.md'), 'utf8');
+    assert.match(skill, /version: 0\.10\.0/);
+    const log = fs.readFileSync(path.join(home, '.yottaskills', 'install-log.jsonl'), 'utf8');
+    assert.match(log, /"decision":"block"/);
+    assert.match(log, /"verdict":"DO NOT INSTALL"/);
   } finally { fs.rmSync(dest, { recursive: true, force: true }); fs.rmSync(home, { recursive: true, force: true }); await free(server); }
 });

@@ -4,7 +4,7 @@
 
 - **安装目标**：未指定目标怎么办 · 支持哪些智能体 · 装完为什么看不到
 - **网络与源**：国内访问慢 · 镜像延迟 · 网络失败
-- **更新**：`update --check` 退出码 · 自动更新边界 · 幂等
+- **更新**：`update --check` 退出码 · 后台周检缓存 · 自动更新边界 · 幂等
 - **版本**：`--pin` 与默认策略 · 清单漂移 · 单技能安装
 - **安全**：装前扫描 · 目标目录校验 · 失败恢复
 
@@ -42,6 +42,13 @@ YOTTA_SKILLS_NPM_FLAGS="--registry=https://registry.npmmirror.com" npx -y @yotta
 - `1`：检查失败（网络或 registry 异常）
 
 该命令只读，不修改文件。
+
+## 4.1 `update --check --scheduled` 什么时候用？
+
+它是后台周检入口：默认 7 天加 0 到 24 小时随机抖动，未到期不联网；到期只检查一次，
+结果写入 `~/.yottaskills/update-check.json`。文本模式网络失败静默并退出 0，
+`--json` 可读取 `error` / `cache` 诊断字段。会话开工只建议做本地 `--reindex`，
+不默认联网更新检查。
 
 ## 5. `update --auto` 会更新所有技能吗？
 

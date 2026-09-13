@@ -1,7 +1,7 @@
 ---
 name: yotta-skills
-version: 0.9.0
-description: 元阁 -- 元阁全家技能的总编排策划 + 编排路由 + 一键安装器 + 技能盘点。路由层：--route / route_request 按需求摘要给出候选组合、调用顺序、角色、置信度、依据、已装/缺失状态与安装命令，只建议不自动安装；非元阁家族已装技能按 frontmatter description 机械匹配作并列候选（标注来源与未扫描状态，只读不自动调用）；策划层：按场景给出「该组合哪几个元技能、组合强在哪、怎么自动装+自动用」；安装层：一条命令把 YottaMeta 已发布的全部 yotta-* 技能装进指定智能体或目录；盘点层：--inventory / --reindex 扫描本机已装技能生成/更新注册表，新装技能自动被发现（install/update 后自动 re-index，会话开工可先跑 --reindex 与 update --check（联网只读检查更新）；自包含零依赖，不依赖任何元技能）；MCP 按需加载（可选：list_installed_skills/describe_skill/reindex/route_request，不常驻，未加载降级 CLI）。支持 --list 清单 / --route 路由 / install / update / update --check（只读检查）/ update --auto（家族自动更新）/ --inventory / --reindex / --dry-run 预览 / --pin 锁版本。触发：需要批量安装或更新元阁全家技能、按场景组合多个元技能、路由或判断该用哪些技能、盘点或查看本机已装技能、重扫技能注册表、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装、或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家/检查更新/自动更新/该用哪个技能/路由技能/盘点技能/查看已装技能 等。边界（Do NOT trigger）：只做「组合策划 + 静态路由建议 + 清单 + 下载 + 落位 + 汇总 + 盘点 + re-index」，不含技能本体、不做技能内容开发、不 -g 污染全局、不自动安装缺失技能；家族安装先自举或调用元信装前门禁，DO NOT INSTALL 阻断，非元阁家族包不自动安装。
+version: 0.10.0
+description: 元阁 -- 元阁全家技能的总编排策划 + 编排路由 + 一键安装器 + 技能盘点。路由层：--route / route_request 按需求摘要给出候选组合、调用顺序、角色、置信度、依据、已装/缺失状态与安装命令，只建议不自动安装；非元阁家族已装技能按 frontmatter description 机械匹配作并列候选（标注来源与未扫描状态，只读不自动调用）；策划层：按场景给出「该组合哪几个元技能、组合强在哪、怎么自动装+自动用」；安装层：一条命令把 YottaMeta 已发布的全部 yotta-* 技能装进指定智能体或目录；盘点层：--inventory / --reindex 扫描本机已装技能生成/更新注册表，新装技能自动被发现（install/update 后自动 re-index，会话开工只建议跑本地 --reindex；更新检查走手动 --check 或后台 --check --scheduled）；自包含零依赖，不依赖任何元技能；MCP 按需加载（可选：list_installed_skills/describe_skill/reindex/route_request，不常驻，未加载降级 CLI）。支持 --list 清单 / --route 路由 / install / update / update --check（只读检查）/ update --check --scheduled（后台周检）/ update --auto（家族自动更新）/ --inventory / --reindex / --dry-run 预览 / --pin 锁版本。触发：需要批量安装或更新元阁全家技能、按场景组合多个元技能、路由或判断该用哪些技能、盘点或查看本机已装技能、重扫技能注册表、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装、或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家/检查更新/自动更新/该用哪个技能/路由技能/盘点技能/查看已装技能 等。边界（Do NOT trigger）：只做「组合策划 + 静态路由建议 + 清单 + 下载 + 落位 + 汇总 + 盘点 + re-index」，不含技能本体、不做技能内容开发、不 -g 污染全局、不自动安装缺失技能；家族安装先自举或调用元信装前门禁，DO NOT INSTALL 阻断，非元阁家族包不自动安装。
 license: MIT
 metadata:
   zh_name: 元阁
@@ -16,8 +16,8 @@ metadata:
 **写入内容（逐字）**：
 
 > **元阁编排**：单技能是零件，组合才是系统。会话开工先跑一次 `yotta-skills --reindex`
-> （重扫本机技能注册表，新装技能自动被看见）；会话开工再跑一次 `yotta-skills update --check`
-> （联网只读检查本地已装技能是否有更新；有更新列清单，确认后 `update`，或 `update --auto` 仅自动更新自家 yotta-* 家族）。接到需求，先查「元阁编排策划」命中哪个组合
+> （重扫本机技能注册表，新装技能自动被看见）；更新检查走手动 `yotta-skills update --check`，
+> 或后台周检 `yotta-skills update --check --scheduled`（未到期不联网，到期单次检查并写缓存）。接到需求，先查「元阁编排策划」命中哪个组合
 > （输出呈现标准 / 长生命周期 / 交付质量门 / 装前安全门 / 造技能发版 / 安全事件响应 / 入口安装），
 > 再按需自动安装并应用。完整决策表见技能 `yotta-skills/references/orchestration.md`。
 
@@ -101,6 +101,9 @@ npx -y @yottameta/yotta-skills update --agent codex
 # 只读检查有没有更新（联网对 npm 最新，不改动；0=全部最新 / 3=有更新 / 1=查失败）
 npx -y @yottameta/yotta-skills update --check --agent codex
 
+# 后台周检入口（未到期不联网；到期只检查一次并写 ~/.yottaskills/update-check.json）
+npx -y @yottameta/yotta-skills update --check --scheduled --agent codex
+
 # 检查到家族更新后自动更新（仅 yotta-* 自家家族，含装前安全扫描）
 npx -y @yottameta/yotta-skills update --auto --agent codex
 
@@ -131,6 +134,7 @@ npx -y @yottameta/yotta-skills --reindex
 | `install <skill>... [--agent <name> \| --dir <path>]` | 只装指定的一个或多个技能 |
 | `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失技能、升级版本不一致的技能 |
 | `update --check [--agent <name> \| --dir <path>]` | 只读检查更新：联网对 npm 最新，不改动；退出码 0=全部最新 / 3=有更新 / 1=查失败 |
+| `update --check --scheduled [--agent <name> \| --dir <path>]` | 后台周检入口：未到期不联网；到期只检查一次并写本地缓存；文本失败静默，`--json` 保留诊断；始终退出 0 |
 | `update --auto [--agent <name> \| --dir <path>]` | 检查到家族更新后自动更新（仅 yotta-* 自家家族，含装前安全扫描） |
 | `doctor [--agent <name> \| --dir <path>] [--slug <slug>]` | 只读自检：SKILL / 版本 / manifest / 注册表 / 自定义 doctor；`--json` 输出稳定字段 |
 | `rollback [--agent <name> \| --dir <path>] [--slug <slug>]` | 校验并恢复最近一次快照；`--list` 只列快照；`--json` 输出机器可读结果 |
@@ -185,9 +189,16 @@ npx -y @yottameta/yotta-skills --inventory --dir ~/my-skills --project
 （含元信装前安全扫描）自动更新。**非元阁家族（非 yotta-*）技能绝不自动更新**（默认保守：`--check` 列清单，
 用户确认后再 `update`）。
 
+`--check --scheduled` 是后台周检入口：默认 7 天加 0 到 24 小时随机抖动，未到期不联网；
+到期只检查一次并把结果写入 `~/.yottaskills/update-check.json`。文本模式网络失败静默，
+`--json` 可读取 `error` / `cache` 诊断字段。它不作为会话开工默认动作。
+
 ```bash
 # 只读检查（0=全部最新 / 3=有更新 / 1=查失败）
 npx -y @yottameta/yotta-skills update --check --agent codex
+
+# 后台周检入口（未到期不联网；到期单次检查并写缓存）
+npx -y @yottameta/yotta-skills update --check --scheduled --agent codex
 
 # 检查到家族更新后自动更新（仅自家家族）
 npx -y @yottameta/yotta-skills update --auto --agent codex

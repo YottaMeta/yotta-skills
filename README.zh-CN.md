@@ -32,14 +32,14 @@
 - **编排路由**--`--route` 按需求摘要输出候选组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装命令；非元阁家族已装技能按 frontmatter description 机械匹配作并列候选（标注来源与未扫描状态，只读不自动调用）；只建议安装，不自动安装。
 - **安装**——装全家（或指定技能）到智能体默认用户级目录或任意目录。
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
-- **更新检查 / 自动更新**——<code>update --check</code> 只读比对已装技能版本与 npm 注册表并报告（不改动，手动或由 doctor / 发布前检查触发）；<code>update --auto</code> 检查后自动把已装元阁家族升到最新（非元阁家族技能绝不自动更新）。
+- **更新检查 / 自动更新**——<code>update --check</code> 只读比对已装技能版本与 npm 注册表并报告；<code>update --check --scheduled</code> 是后台周检入口，用本地缓存和随机抖动做到未到期不联网；<code>update --auto</code> 检查后自动把已装元阁家族升到最新（非元阁家族技能绝不自动更新）。
 - **自检 / 回滚**——<code>doctor</code> 只读检查技能目录、版本、manifest、注册表和自定义 doctor；<code>rollback</code> 校验快照后恢复最近一次安装或更新，恢复失败不会覆盖当前目录。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前门禁**——家族安装先读取包内 manifest，元信（yotta-verify）缺失时自动自举，再逐个扫描。`DO NOT INSTALL` 阻断；`CAUTION` / `REVIEW` 继续但显示风险。旧版本会先做快照再替换。
 - **盘点 / re-index**--扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。新装技能自动被发现：<code>install</code> / <code>update</code> 完成后自动重扫注册表，<code>--reindex</code> 可随时手动重扫（如会话开工）。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code> 四工具，配置见 <code>SKILL.md</code>。
 
 边界：只做「下载 + 落位 + 门禁 + 汇总」——**不**开发技能内容、**不**内置任何技能本体、**不**用 <code>-g</code>
-全局安装；除目标目录外，会在 <code>~/.yottaskills</code> 下保留注册表、快照与安装证据。
+全局安装；除目标目录外，会在 <code>~/.yottaskills</code> 下保留注册表、快照、安装证据与更新检查缓存。
 
 ## 快速使用
 
@@ -61,6 +61,9 @@ npx -y @yottameta/yotta-skills update --agent codex
 
 # 只读检查更新（不改动；手动或由 doctor / 发布前检查触发）
 npx -y @yottameta/yotta-skills update --check
+
+# 后台周检入口（未到期不联网；到期单次检查并写缓存）
+npx -y @yottameta/yotta-skills update --check --scheduled
 
 # 检查后自动更新已装元阁家族（含装前门禁；非元阁家族技能不自动更新）
 npx -y @yottameta/yotta-skills update --auto
@@ -97,6 +100,7 @@ npx -y @yottameta/yotta-skills --reindex
 | `install <skill>... [--agent <name> \| --dir <path>]` | 只装指定的一个或多个技能 |
 | `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失、升级版本不一致的技能 |
 | `update --check` | 只读更新检查：比对已装版本与 npm 注册表并报告（退出码 0=最新 / 3=有更新 / 1=无法检查；可用 `--registry <url>` 指定镜像）；不改动 |
+| `update --check --scheduled` | 后台周检入口：未到期不联网；到期只检查一次并写本地缓存；文本失败静默，`--json` 保留诊断；始终退出 0 |
 | `update --auto` | 检查后自动更新已装元阁家族到最新（含装前门禁；非元阁家族技能绝不自动更新） |
 | `--registry <url>` | 检查的 npm registry 地址（默认 https://registry.npmjs.org/；`YOTTA_SKILLS_REGISTRY` 覆盖） |
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
