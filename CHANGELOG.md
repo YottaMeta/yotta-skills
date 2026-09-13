@@ -1,3 +1,10 @@
+## v0.19.0 (2026-09-13)
+
+**元守家族分类假阳性修复**：
+
+- 元守 0.4.1 内置分类副本补入 `yotta-skills` 非安全家族排除，消除元阁 Defense Triple 假阳性。
+- `skills.json` / `references/skill-list.md` 同步 yotta-publish-guard 0.4.1。
+
 ## v0.18.0 (2026-09-13)
 
 **Advisory 仓库文档 hygiene 清理**：
