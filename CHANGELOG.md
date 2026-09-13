@@ -1,3 +1,11 @@
+## v0.16.0 (2026-09-13)
+
+**P0-4.6 元忆 after_milestone 试点**：
+
+- 元忆 manifest 声明 `after_milestone` / `remember_commit` / `fallback: explicit-unverified`。
+- 元阁真实 manifest 回归验证：有记忆文件证据时 allow/verified；缺证据或写入失败时 `explicit-unverified` + 一次纠偏。
+- `skills.json` / `references/skill-list.md` 同步 yotta-memory 0.13.0。
+
 ## v0.15.0 (2026-09-13)
 
 **P0-4.5 元守 before_publish 试点**：

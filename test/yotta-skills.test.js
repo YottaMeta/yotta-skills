@@ -113,12 +113,13 @@ test('install 幂等：第二次全部跳过（不再 pack）', () => {
 test('install 单个 + --pin 用精确版本', () => {
   const dest = tmpdir('ys-pin-');
   const log = logPath();
+  const memory = skills.find(s => s.slug === 'yotta-memory');
   const r = run(['install', 'yotta-memory', '--dir', dest, '--pin', '--skip-scan'], fakeEnv({ YOTTA_SKILLS_FAKE_LOG: log }));
   assert.strictEqual(r.status, 0, r.stdout + r.stderr);
   assert.ok(fs.existsSync(path.join(dest, 'yotta-memory', 'SKILL.md')));
   const lines = readLog(log);
   assert.strictEqual(lines.length, 1);
-  assert.ok(lines[0].includes('@yottameta/yotta-memory@0.12.1'), 'pin 应传精确版本: ' + lines[0]);
+  assert.ok(lines[0].includes(memory.pkg + '@' + memory.version), 'pin 应传精确版本: ' + lines[0]);
 });
 
 test('update：删除一个技能后补齐，其余跳过', () => {
@@ -182,7 +183,8 @@ test('install 后自动 re-index：注册表反映新装技能', () => {
     const reg = JSON.parse(fs.readFileSync(regPath, 'utf8'));
     const mem = reg.skills['yotta-memory'];
     assert.ok(mem, 'yotta-memory 应进入注册表');
-    assert.strictEqual(mem.version, '0.12.1');
+    const memory = skills.find(s => s.slug === 'yotta-memory');
+    assert.strictEqual(mem.version, memory.version);
   } finally {
     fs.rmSync(dest, { recursive: true, force: true });
     fs.rmSync(home, { recursive: true, force: true });

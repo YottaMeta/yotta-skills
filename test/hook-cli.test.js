@@ -263,3 +263,43 @@ test('yotta-publish-guard without wrapper is explicit-unverified', () => {
   assert.strictEqual(payload.verified, false);
   assert.match(payload.user_message, /explicit-unverified/);
 });
+
+test('yotta-memory after_milestone pilot requires memory file evidence', () => {
+  const home = tmpDir('ys-hook-memory-');
+  const manifest = path.join(ROOT, '..', 'yotta-memory', 'skill-manifest.json');
+  const ok = run([
+    'hook', 'evaluate',
+    '--host', 'codex',
+    '--event', 'after_milestone',
+    '--manifest', manifest,
+    '--context', JSON.stringify({
+      checks: {
+        remember_commit: {
+          ok: true,
+          evidence: { file_path: '.yottamemory/private/codex/commits/2026-09-13-0208.md.enc' },
+        },
+      },
+    }),
+    '--json',
+  ], home);
+  assert.strictEqual(ok.status, 0, ok.stdout + ok.stderr);
+  const okPayload = JSON.parse(ok.stdout);
+  assert.strictEqual(okPayload.decision, 'allow');
+  assert.strictEqual(okPayload.verified, true);
+
+  const failed = run([
+    'hook', 'evaluate',
+    '--host', 'codex',
+    '--event', 'after_milestone',
+    '--manifest', manifest,
+    '--context', JSON.stringify({
+      checks: { remember_commit: { ok: false } },
+    }),
+    '--json',
+  ], home);
+  assert.strictEqual(failed.status, 0, failed.stdout + failed.stderr);
+  const failedPayload = JSON.parse(failed.stdout);
+  assert.strictEqual(failedPayload.decision, 'unverified');
+  assert.strictEqual(failedPayload.correction, true);
+  assert.strictEqual(failedPayload.results[0].capability, 'native-audit');
+});
