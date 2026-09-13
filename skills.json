@@ -21,7 +21,7 @@
       "slug": "yotta-workflow",
       "name": "元序",
       "pkg": "@yottameta/yotta-workflow",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "desc": "跨会话/跨项目通用工作流协议（状态就近存）"
     },
     {

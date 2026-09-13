@@ -1,3 +1,11 @@
+## v0.14.0 (2026-09-13)
+
+**P0-4.4 元序 before_start / after_milestone 试点**：
+
+- 元序 manifest 声明 `before_start` / `read_state` 与 `after_milestone` / `write_state`。
+- 元阁真实 manifest 回归验证：有状态文件证据时 allow；缺证据或落盘失败时 `explicit-unverified` + 一次纠偏。
+- `skills.json` / `references/skill-list.md` 同步 yotta-workflow 0.4.1。
+
 ## v0.13.0 (2026-09-13)
 
 **P0-4.3 元盾 before_tool 试点**：

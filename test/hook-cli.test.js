@@ -177,3 +177,38 @@ test('yotta-guardian before_tool pilot records native-audit correction', () => {
   const log = fs.readFileSync(path.join(home, '.yottaskills', 'hook-log.jsonl'), 'utf8');
   assert.match(log, /"result":"unverified"/);
 });
+
+test('yotta-workflow start and milestone pilots preserve file evidence', () => {
+  const home = tmpDir('ys-hook-workflow-');
+  const manifest = path.join(ROOT, '..', 'yotta-workflow', 'skill-manifest.json');
+  const start = run([
+    'hook', 'evaluate',
+    '--host', 'codex',
+    '--event', 'before_start',
+    '--manifest', manifest,
+    '--context', JSON.stringify({
+      checks: { read_state: { ok: true, evidence: { file_path: '.workflow/STATE.md' } } },
+    }),
+    '--json',
+  ], home);
+  assert.strictEqual(start.status, 0, start.stdout + start.stderr);
+  const startPayload = JSON.parse(start.stdout);
+  assert.strictEqual(startPayload.decision, 'allow');
+  assert.strictEqual(startPayload.verified, true);
+
+  const milestone = run([
+    'hook', 'evaluate',
+    '--host', 'codex',
+    '--event', 'after_milestone',
+    '--manifest', manifest,
+    '--context', JSON.stringify({
+      checks: { write_state: { ok: false, evidence: { file_path: '.workflow/STATE.md' } } },
+    }),
+    '--json',
+  ], home);
+  assert.strictEqual(milestone.status, 0, milestone.stdout + milestone.stderr);
+  const milestonePayload = JSON.parse(milestone.stdout);
+  assert.strictEqual(milestonePayload.decision, 'unverified');
+  assert.strictEqual(milestonePayload.correction, true);
+  assert.strictEqual(milestonePayload.results[0].capability, 'native-audit');
+});
