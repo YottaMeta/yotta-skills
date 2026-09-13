@@ -26,7 +26,7 @@
 以前装元阁全家要逐个 <code>npx</code> 跑很多次。元阁把它变成一条命令：读内置清单（22 个已发布技能）、
 逐个从各自 npm 包下载、落位到目标技能目录、打印汇总（成功 / 跳过 / 失败）。
 
-元阁也是全家的**编排策划层**：接到需求先查「编排策划」组合表——该组合哪几个技能、按什么顺序、各自强在哪——再按需安装恰好那几个。决策表随包提供（<code>references/orchestration.md</code>），<code>SKILL.md</code> 中有摘要。
+元阁也是全家的**编排策划层**：接到需求先查「编排策划」组合表——该组合哪几个技能、按什么顺序、各自强在哪——然后给出安装与调用**建议**，由用户确认后执行。决策表随包提供（<code>references/orchestration.md</code>），<code>SKILL.md</code> 中有摘要。
 
 - **看清单**--全家技能一览：slug / 中文名 / 包名 / 版本 / 一句话说明。
 - **编排路由**--`--route` 按需求摘要输出候选组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装命令；非元阁家族已装技能按 frontmatter description 机械匹配作并列候选（标注来源与未扫描状态，只读不自动调用）；只建议安装，不自动安装。
@@ -89,7 +89,7 @@ npx -y @yottameta/yotta-skills --route "检查代码质量，别糊弄"
 # 盘点本机已装技能（自包含扫描，不依赖任何元技能）
 npx -y @yottameta/yotta-skills --inventory
 
-# 重扫注册表（会话开工 / 新装技能后，增量合并变化）
+# 重扫注册表（随时手动运行；install / update 完成后已自动重扫）
 npx -y @yottameta/yotta-skills --reindex
 ```
 
@@ -112,11 +112,12 @@ npx -y @yottameta/yotta-skills --reindex
 | `hook bind --host <name> --manifest <file>` / `hook unbind <id>` | 幂等注册或反注册 hook 声明 |
 | `--registry <url>` | 检查的 npm registry 地址（默认 https://registry.npmjs.org/；`YOTTA_SKILLS_REGISTRY` 覆盖） |
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
-| `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（会话开工 / 装技能后自动调用；`--rescan` 同义）；`--json` 输出 JSON |
+| `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（install / update 完成后自动重扫，也可随时手动运行；`--rescan` 同义）；`--json` 输出 JSON |
 | `--route <需求摘要>` | 静态编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--no-reindex` | 安装 / 更新后不自动重扫注册表 |
 | `--dry-run` | 预览将执行的安装 / 更新清单；不联网、不改动 |
-| `--pin` | 锁死清单精确版本（默认 range：跟随同 major 最新 patch） |
+| `--pin` | 锁死清单精确版本（默认） |
+| `--range` | 跟随同 major 最新 patch（非默认：显式指定后才浮动跟随） |
 | `--force` | 已是最新也重新安装 |
 | `--skip-scan` | 人工应急路径：跳过元信门禁并标记 `explicit-unverified`；`update --auto` 不使用该开关 |
 | `--npm <path>` | 指定 npm 可执行文件 |
@@ -132,8 +133,8 @@ npx -y @yottameta/yotta-skills --reindex
 
 ## 版本策略
 
-- 默认 `range`：`npm pack <pkg>@<major>.x`——取清单同 major 的最新 patch，维护性更新随最新；
-- `--pin`：锁死清单精确版本，完全可复现；
+- 默认 `pin`：`npm pack <pkg>@<清单精确版本>`——完全可复现，不会静默跟随 npm 上的浮动版本；
+- `--range`（可选）：`npm pack <pkg>@<major>.x`——取清单同 major 的最新 patch，仅在你明确要求跟随 patch 时使用；
 - 是否「已是最新」由目标 `<dir>/<slug>/SKILL.md` 的 frontmatter `version` 与清单比对，一致即跳过。
 
 ## 安装

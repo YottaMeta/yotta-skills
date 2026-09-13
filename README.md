@@ -34,9 +34,10 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Runtime hook adapter** — manifests declare six lifecycle requirements; <code>hook capabilities / evaluate / bind / unbind</code> probe host support, apply deterministic decisions, record evidence, and never overstate audit-only hosts as enforced.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install gate** — family installs read the package manifest, bootstrap yotta-verify (元信) when it is missing, then scan each package. <code>DO NOT INSTALL</code> blocks; caution/review continue with visible risk. Old versions are snapshotted before replacement.
-- **Inventory / re-index** - scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand (e.g. at session start). An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code>; see <code>SKILL.md</code> for the config.
+- **Inventory / re-index** - scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand. An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code>; see <code>SKILL.md</code> for the config.
+- **No silent writes** - 元阁 only suggests. Installing skills, adding a client <code>mcpServers</code> entry, and writing an agent's global memory each require explicit user confirmation beforehand; declining never blocks the plain CLI workflow.
 
-Boundaries: it only downloads, places, gates and summarizes — it does **not** develop skill content, does **not** bundle any skill body, and does **not** use <code>-g</code> global installs. Besides the target directory, it keeps its registry, snapshots, install evidence and update-check cache under <code>~/.yottaskills</code>.
+Boundaries: it only downloads, places, gates and summarizes — it does **not** develop skill content, does **not** bundle any skill body, does **not** use <code>-g</code> global installs, and does **not** silently write host configuration or agent global memory. Besides the target directory, it keeps its registry, snapshots, install evidence and update-check cache under <code>~/.yottaskills</code>.
 
 ## Quick start
 
@@ -85,7 +86,7 @@ npx -y @yottameta/yotta-skills --route "Review this code carefully before releas
 # Inventory installed skills on this machine (self-contained scan, no other skills needed)
 npx -y @yottameta/yotta-skills --inventory
 
-# Re-index the registry (session start / after installing skills; incremental)
+# Re-index the registry (on demand; install / update re-index automatically)
 npx -y @yottameta/yotta-skills --reindex
 ```
 
@@ -108,11 +109,12 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `hook bind --host <name> --manifest <file>` / `hook unbind <id>` | Idempotently register or remove hook declarations |
 | `--registry <url>` | npm registry to check against (default https://registry.npmjs.org/; `YOTTA_SKILLS_REGISTRY` overrides) |
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
-| `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (session start / after installing skills; `--rescan` is a synonym); `--json` for JSON |
+| `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (on demand; `install` / `update` re-index automatically; `--rescan` is a synonym); `--json` for JSON |
 | `--route <task-summary>` | Static orchestration routing: return a combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install suggestion; also lists other installed (non-YottaMeta) skills as candidates matched mechanically against their frontmatter description, tagged "not scanned", read-only and never auto-invoked; `--json` for JSON, `--project` adds project-level dirs |
 | `--no-reindex` | Do not re-index the registry automatically after `install` / `update` |
 | `--dry-run` | Preview the install / update list; no network, no changes |
-| `--pin` | Lock the exact manifest versions (default: range, latest patch of the same major) |
+| `--pin` | Lock the exact manifest versions (default) |
+| `--range` | Follow the latest patch of the same major (opt-in; the default stays pinned) |
 | `--force` | Reinstall even when already at the latest version |
 | `--skip-scan` | Manual escape hatch: skip the verifier gate and mark the result `explicit-unverified`; never used by `update --auto` |
 | `--npm <path>` | Specify the npm executable |
@@ -126,8 +128,8 @@ Supported agent keys (17): `claude` `cursor` `codex` `gemini` `goose` `amp` `ope
 
 ## Version strategy
 
-- Default `range`: `npm pack <pkg>@<major>.x` — the latest patch of the same major in the manifest, so maintenance releases are picked up automatically.
-- `--pin`: exact manifest versions, fully reproducible.
+- Default `pin`: `npm pack <pkg>@<exact manifest version>` — fully reproducible, no silent drift onto a floating version.
+- `--range` (opt-in): `npm pack <pkg>@<major>.x` — the latest patch of the same major, for users who explicitly want to follow patch releases.
 - "Already at the latest" is determined by comparing the frontmatter `version` in `<dir>/<slug>/SKILL.md` with the manifest; matching versions are skipped.
 
 ## Installation

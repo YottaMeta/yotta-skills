@@ -72,7 +72,7 @@ test('install --dry-run --dir 显示目标路径', () => {
   assert.ok(r.stdout.includes(dest));
 });
 
-test('install 全家到临时目录：22 个 SKILL.md 落位 + skip 集合 + range spec', () => {
+test('install 全家到临时目录：22 个 SKILL.md 落位 + skip 集合 + 默认 pin spec', () => {
   const dest = tmpdir('ys-install-');
   const log = logPath();
   const r = run(['install', '--dir', dest, '--skip-scan'], fakeEnv({ YOTTA_SKILLS_FAKE_LOG: log }));
@@ -88,13 +88,13 @@ test('install 全家到临时目录：22 个 SKILL.md 落位 + skip 集合 + ran
     const marker = fs.readFileSync(path.join(dir, 'assets', 'marker.txt'), 'utf8');
     assert.ok(marker.includes(s.slug) && marker.includes(s.version), 'marker 内容: ' + s.slug);
   }
-  // range spec：日志记录 @major.x（不锁 patch）
+  // 默认 pin：日志记录清单精确版本（不跟随浮动版本）
   const lines = readLog(log);
   assert.strictEqual(lines.length, skills.length, 'pack 调用数');
   for (const s of skills) {
-    const major = s.version.split('.')[0];
-    assert.ok(lines.some(l => l.includes(s.pkg + '@' + major + '.x')), 'range spec 缺失: ' + s.pkg);
+    assert.ok(lines.some(l => l.includes(s.pkg + '@' + s.version)), '默认 pin spec 缺失: ' + s.pkg);
   }
+  assert.ok(!lines.some(l => /@\d+\.x(\s|$)/.test(l)), '默认不应出现浮动 range spec');
   assert.match(r.stdout, /汇总: 成功 22 \/ 跳过\(已是最新\) 0 \/ 失败 0/);
 });
 
@@ -110,16 +110,17 @@ test('install 幂等：第二次全部跳过（不再 pack）', () => {
   assert.strictEqual(readLog(log2).length, 0, '第二次不应触发 pack');
 });
 
-test('install 单个 + --pin 用精确版本', () => {
+test('install 单个 + --range 用浮动 range spec（显式选择才跟随 patch）', () => {
   const dest = tmpdir('ys-pin-');
   const log = logPath();
   const memory = skills.find(s => s.slug === 'yotta-memory');
-  const r = run(['install', 'yotta-memory', '--dir', dest, '--pin', '--skip-scan'], fakeEnv({ YOTTA_SKILLS_FAKE_LOG: log }));
+  const r = run(['install', 'yotta-memory', '--dir', dest, '--range', '--skip-scan'], fakeEnv({ YOTTA_SKILLS_FAKE_LOG: log }));
   assert.strictEqual(r.status, 0, r.stdout + r.stderr);
   assert.ok(fs.existsSync(path.join(dest, 'yotta-memory', 'SKILL.md')));
   const lines = readLog(log);
   assert.strictEqual(lines.length, 1);
-  assert.ok(lines[0].includes(memory.pkg + '@' + memory.version), 'pin 应传精确版本: ' + lines[0]);
+  const major = memory.version.split('.')[0];
+  assert.ok(lines[0].includes(memory.pkg + '@' + major + '.x'), '--range 应传浮动范围: ' + lines[0]);
 });
 
 test('update：删除一个技能后补齐，其余跳过', () => {

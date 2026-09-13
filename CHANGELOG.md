@@ -1,3 +1,13 @@
+## v0.19.2 (2026-09-13)
+
+**授权边界整改（平台安全评估反馈）**：
+
+- SKILL.md「使用须知」由「首次使用必须写入宿主全局记忆」改为**可选步骤 + 显式确认**：写入前展示目标文件、完整文本与后果，用户拒绝则不写任何文件并保持 CLI 用法。
+- 删除常驻授权表述：可选注入文本不再要求每个会话无条件重扫或代用户安装、调用其他技能；组合建议统一改为「先建议、经用户确认后安装与调用」。
+- MCP 配置写入改为显式确认后落盘；用户拒绝或无法改配置时继续 CLI 降级。
+- 安装版本策略默认改为 `--pin`（清单精确版本，可复现）；`--range` 为显式可选项，不再默认跟随浮动 patch。
+- 同步 SKILL.md / README 中英 / FAQ / 教程 / 编排表 / install-flow / MCP server 说明；新增文档授权边界回归测试。
+
 ## v0.19.1 (2026-09-13)
 
 - 文档去本机硬编码：Codex 永久记忆写入位置从本机绝对路径改为 `$CODEX_HOME/AGENTS.md`（未设置时 `~/.codex/AGENTS.md`）。
@@ -142,7 +152,7 @@ skills.json 清单同步（评测批 2 六技能升版后，元阁安装清单�
 **更新检查 / 自动更新（`update --check` / `update --auto`）**：元阁 CLI 新增联网只读检查本地已装技能是否有更新（对 npm `dist-tags.latest`，版本源唯一），
 按本地 `SKILL.md` 版本对比，无论技能源自哪个安装渠道（npm / git clone / 本地拷贝等）都兼容。`--check` 只读列清单，退出码 0=全部最新 / 3=有更新 / 1=查失败；
 `--auto` 检测到家族（`yotta-*` / 清单内）可更新时走安装管线（含元信装前安全扫描）自动更新，非元阁家族（非 yotta-*）技能绝不自动更新。
-新增 `--registry <url>` 自定义版本源；网络异常优雅降级（不阻塞会话）。SKILL.md「使用须知」注入文本同步加入「会话开工跑 `update --check`」规则。
+新增 `--registry <url>` 自定义版本源；网络异常优雅降级（不阻塞会话）。SKILL.md「使用须知」注入文本同步加入「会话开工跑 `update --check`」规则。（v0.19.2 起：该规则已从注入文本移除，改为用户确认后的可选说明。）
 测试：新增 update-check / update-auto 本地 HTTP registry 离线用例，npm test 47/47。
 ## v0.6.1 (2026-09-06)
 
@@ -183,9 +193,9 @@ skills.json 三处滞后同步修复（yotta-skills 0.5.0→0.5.1）：元真 0.
 
 阶段 B（D2 re-index 自动钩子）：新装技能自动被发现。
 
-- 新增 CLI `--reindex`：重扫所有技能目录并增量合并注册表，变化聚焦输出（文本 / `--json` 机器可读），供会话开工与钩子调用；`--rescan` 为同义别名。
+- 新增 CLI `--reindex`：重扫所有技能目录并增量合并注册表，变化聚焦输出（文本 / `--json` 机器可读），供钩子与手动调用；`--rescan` 为同义别名。
 - 装技能后自动 re-index：`install` / `update` 完成后自动重扫注册表，把本次落位结果反映进 `~/.yottaskills/registry.json`（新增 / 更新 / 消失随输出列出）；`--no-reindex` 可关闭。
-- 会话开工 re-scan：SKILL.md「使用须知」护栏补「会话开工先跑一次 `yotta-skills --reindex`」；注册表 `note` 口径同步 `--inventory / --reindex`。
+- 会话开工 re-scan：SKILL.md「使用须知」护栏补「会话开工先跑一次 `yotta-skills --reindex`」；注册表 `note` 口径同步 `--inventory / --reindex`。（v0.19.2 起：该常驻要求已移除，改为可选提示。）
 - MCP `reindex` 工具改走 `--reindex --json`（同一套扫描核心）；CLI 等价命令注明。
 - 文档：SKILL.md / README 中英 / references/install-flow.md / tutorial.md 同步 re-index 用法。
 - 测试：新增 `--reindex`（含幂等）与装后自动 re-index（含 `--no-reindex` 关闭）用例；全量用例全绿。
@@ -195,7 +205,7 @@ skills.json 三处滞后同步修复（yotta-skills 0.5.0→0.5.1）：元真 0.
 
 MCP 配置说明补全（按需加载口径）。
 
-- SKILL.md「技能盘点」节补「MCP：按需加载（可选）」：明确本技能与 MCP 均为按需触发、不走常驻；mcpServers 配置 JSON 示例、按需写入步骤（用后可移除）、重启/重载提示、未加载降级 CLI 兜底；frontmatter description 同步按需加载口径。
+- SKILL.md「技能盘点」节补「MCP：按需加载（可选）」：明确本技能与 MCP 均为按需触发、不走常驻；mcpServers 配置 JSON 示例、配置步骤（用后可移除）、重启/重载提示、未加载降级 CLI 兜底；frontmatter description 同步按需加载口径。（v0.19.2 起：写入客户端配置前必须先获得用户明确同意。）
 - 测试：mcp-e2e serverInfo.version 断言改为动态读 package.json；python 探测加候选兜底（YOTTA_TEST_PYTHON / python / python3 / Scoop python38），Windows 无需手动设环境变量。
 - 版本升至 0.2.1。
 
@@ -214,7 +224,7 @@ MCP 配置说明补全（按需加载口径）。
 
 编排策划层升级：元阁从「一键安装器」升级为「总编排策划 + 一键安装器」两层。
 
-- SKILL.md 重写：新增「使用须知（先做这一步）」——首次使用将「元阁编排策划」护栏写入客户端永久记忆，使下个会话自动注入；新增「编排策划」节（7 组组合矩阵 + 场景映射 + AI 自动安装与组合规则金标准）；frontmatter description 同步「总编排策划 + 一键安装器」定位与触发语。
+- SKILL.md 重写：新增「使用须知」节——提供「元阁编排策划」护栏文本，供用户确认后写入客户端全局记忆；新增「编排策划」节（7 组组合矩阵 + 场景映射 + 组合建议规则）；frontmatter description 同步「总编排策划 + 一键安装器」定位与触发语。（v0.19.2 起：写入改为可选步骤 + 显式确认，并移除常驻授权表述。）
 - 新增 references/orchestration.md：编排策划决策表（技能家族全景 / 组合矩阵 / 场景映射 / 自动安装规则）。
 - skills.json 清单版本同步（2026-08-30：yotta-memory 0.8.5 / yotta-security-audit 0.2.2 / yotta-vetter 0.2.3 / yotta-security-testing 0.2.4 等六处）。
 - README 中英版定位同步「编排策划 + 一键安装」两层。
