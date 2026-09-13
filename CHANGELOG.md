@@ -1,3 +1,11 @@
+## v0.15.0 (2026-09-13)
+
+**P0-4.5 元守 before_publish 试点**：
+
+- 元守 manifest 声明 `before_publish` / `publish_gate` / `fallback: wrapper`。
+- 元阁真实 manifest 回归验证：wrapper 已注册且门禁失败时 block；wrapper 未注册时 `explicit-unverified`。
+- `skills.json` / `references/skill-list.md` 同步 yotta-publish-guard 0.4.0。
+
 ## v0.14.0 (2026-09-13)
 
 **P0-4.4 元序 before_start / after_milestone 试点**：

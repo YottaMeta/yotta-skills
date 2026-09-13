@@ -105,7 +105,7 @@
       "slug": "yotta-publish-guard",
       "name": "元守",
       "pkg": "@yottameta/yotta-publish-guard",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "desc": "工坊「守」：发布前守门（版本四件对齐 + 三通道查重）"
     },
     {

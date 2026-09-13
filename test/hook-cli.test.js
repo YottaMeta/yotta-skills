@@ -212,3 +212,54 @@ test('yotta-workflow start and milestone pilots preserve file evidence', () => {
   assert.strictEqual(milestonePayload.correction, true);
   assert.strictEqual(milestonePayload.results[0].capability, 'native-audit');
 });
+
+test('yotta-publish-guard wrapper blocks failed publish gate', () => {
+  const home = tmpDir('ys-hook-publish-');
+  const manifest = path.join(ROOT, '..', 'yotta-publish-guard', 'skill-manifest.json');
+  const r = run([
+    'hook', 'evaluate',
+    '--host', 'codex',
+    '--event', 'before_publish',
+    '--manifest', manifest,
+    '--context', JSON.stringify({
+      wrapperRegistered: true,
+      checks: {
+        publish_gate: {
+          ok: false,
+          evidence: { exit_code: 2, audit_log: 'publish-audit.jsonl' },
+        },
+      },
+    }),
+    '--json',
+  ], home);
+  assert.strictEqual(r.status, 3, r.stdout + r.stderr);
+  const payload = JSON.parse(r.stdout);
+  assert.strictEqual(payload.decision, 'block');
+  assert.strictEqual(payload.results[0].capability, 'wrapper-only');
+});
+
+test('yotta-publish-guard without wrapper is explicit-unverified', () => {
+  const home = tmpDir('ys-hook-publish-');
+  const manifest = path.join(ROOT, '..', 'yotta-publish-guard', 'skill-manifest.json');
+  const r = run([
+    'hook', 'evaluate',
+    '--host', 'codex',
+    '--event', 'before_publish',
+    '--manifest', manifest,
+    '--context', JSON.stringify({
+      wrapperRegistered: false,
+      checks: {
+        publish_gate: {
+          ok: false,
+          evidence: { exit_code: 2, audit_log: 'publish-audit.jsonl' },
+        },
+      },
+    }),
+    '--json',
+  ], home);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  const payload = JSON.parse(r.stdout);
+  assert.strictEqual(payload.decision, 'unverified');
+  assert.strictEqual(payload.verified, false);
+  assert.match(payload.user_message, /explicit-unverified/);
+});
