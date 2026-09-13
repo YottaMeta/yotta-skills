@@ -148,3 +148,32 @@ test('yotta-present before_send pilot records explicit-unverified on Codex', () 
   const log = fs.readFileSync(path.join(home, '.yottaskills', 'hook-log.jsonl'), 'utf8');
   assert.match(log, /"result":"unverified"/);
 });
+
+test('yotta-guardian before_tool pilot records native-audit correction', () => {
+  const home = tmpDir('ys-hook-guardian-');
+  const manifest = path.join(ROOT, '..', 'yotta-guardian', 'skill-manifest.json');
+  const r = run([
+    'hook', 'evaluate',
+    '--host', 'codex',
+    '--event', 'before_tool',
+    '--manifest', manifest,
+    '--context', JSON.stringify({
+      checks: {
+        guard_check: {
+          ok: false,
+          evidence: { audit_log: 'guardian-audit.jsonl' },
+        },
+      },
+    }),
+    '--json',
+  ], home);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  const payload = JSON.parse(r.stdout);
+  assert.strictEqual(payload.decision, 'unverified');
+  assert.strictEqual(payload.verified, false);
+  assert.strictEqual(payload.correction, true);
+  assert.strictEqual(payload.results[0].capability, 'native-audit');
+  assert.match(payload.user_message, /explicit-unverified/);
+  const log = fs.readFileSync(path.join(home, '.yottaskills', 'hook-log.jsonl'), 'utf8');
+  assert.match(log, /"result":"unverified"/);
+});

@@ -1,3 +1,11 @@
+## v0.13.0 (2026-09-13)
+
+**P0-4.3 元盾 before_tool 试点**：
+
+- 元盾 manifest 声明 `before_tool` / `guard_check` / `fallback: explicit-unverified`。
+- 元阁真实 manifest 回归验证 Codex `native-audit` 只输出纠偏与 `unverified`，不宣称动作前硬拦截。
+- `skills.json` / `references/skill-list.md` 同步 yotta-guardian 0.1.3。
+
 ## v0.12.0 (2026-09-13)
 
 **P0-4.1 元信 before_install 试点**：
