@@ -59,6 +59,43 @@ test('safe pipeline blocks DO NOT INSTALL without touching target', () => {
   assert.strictEqual(fs.readFileSync(path.join(target, 'SKILL.md'), 'utf8'), 'old');
 });
 
+test('before_install hook blocks scan failure and records hook evidence', () => {
+  const hookEvidence = [];
+  const { installer, dest } = fixture({
+    manifest: {
+      manifestVersion: 1,
+      slug: 'yotta-demo',
+      name: '元示例',
+      package: '@yottameta/yotta-demo',
+      version: '1.0.0',
+      trust: 'yottameta',
+      install: { idempotent: true },
+      permissions: { filesystem: 'user-skills-dir', network: 'none' },
+      hooks: [{
+        event: 'before_install',
+        require_tool: 'scan_skill',
+        on_fail: 'block',
+        fallback: 'wrapper',
+        evidence: ['audit_log'],
+      }],
+    },
+    scanTarget: () => ({ ok: true, verdict: 'DO NOT INSTALL', counts: { critical: 1 } }),
+    appendHookEvidence: (entry) => hookEvidence.push(entry),
+  });
+  const target = path.join(dest, skill.slug);
+  fs.mkdirSync(target, { recursive: true });
+  fs.writeFileSync(path.join(target, 'SKILL.md'), 'old', 'utf8');
+
+  const result = installer(skill, dest, {});
+  assert.strictEqual(result.status, 'fail');
+  assert.match(result.note, /before_install|DO NOT INSTALL/);
+  assert.strictEqual(fs.readFileSync(path.join(target, 'SKILL.md'), 'utf8'), 'old');
+  assert.strictEqual(hookEvidence.length, 1);
+  assert.strictEqual(hookEvidence[0].event, 'before_install');
+  assert.strictEqual(hookEvidence[0].result, 'block');
+  assert.strictEqual(hookEvidence[0].evidence.audit_log, 'install-log.jsonl');
+});
+
 test('safe pipeline preserves target when staged copy fails', () => {
   const { installer, dest } = fixture({
     copyDir: (src, dst) => {

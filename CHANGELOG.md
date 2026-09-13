@@ -1,3 +1,12 @@
+## v0.12.0 (2026-09-13)
+
+**P0-4.1 元信 before_install 试点**：
+
+- 安装管线接入统一 hook 适配器：包内 `before_install` 声明在落位前评估，manifest 声明 `on_fail: block` 时扫描失败会阻断并保留旧版本。
+- 适配器证据写入 `~/.yottaskills/hook-log.jsonl`；`--skip-scan` 仍走人工应急路径，标记 `explicit-unverified`，不会被误报为已验证。
+- `skills.json` / `references/skill-list.md` 同步 yotta-verify 0.3.0。
+- 新增安装管线 hook 阻断回归；真实 yotta-verify manifest 随 0.3.0 发布。
+
 ## v0.11.0 (2026-09-13)
 
 **P0-3 运行时 hook 适配层**：

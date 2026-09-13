@@ -243,6 +243,28 @@ test('install bootstraps verifier before installing another family skill', () =>
   assert.match(log, /bootstrap_scan/);
 });
 
+test('install yotta-verify records before_install hook evidence', () => {
+  const dest = tmpdir('ys-hook-install-');
+  const home = tmpdir('ys-hook-install-home-');
+  const r = run(
+    ['install', 'yotta-verify', '--dir', dest, '--pin', '--no-reindex'],
+    {
+      YOTTA_SKILLS_NPM: FAKE_NPM,
+      YOTTA_SKILLS_FAKE_VERDICT: 'SAFE TO INSTALL',
+      YOTTA_SKILLS_FAKE_MANIFEST_FILE: path.join(ROOT, '..', 'yotta-verify', 'skill-manifest.json'),
+      USERPROFILE: home,
+      HOME: home,
+      CODEX_HOME: path.join(home, '.codex'),
+      XDG_CONFIG_HOME: path.join(home, '.config'),
+    },
+  );
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  const hookLog = fs.readFileSync(path.join(home, '.yottaskills', 'hook-log.jsonl'), 'utf8');
+  assert.match(hookLog, /"event":"before_install"/);
+  assert.match(hookLog, /"result":"allow"/);
+  assert.ok(fs.existsSync(path.join(dest, 'yotta-verify', 'skill-manifest.json')));
+});
+
 test('DO NOT INSTALL blocks family install and preserves old target', () => {
   const dest = tmpdir('ys-block-');
   const old = path.join(dest, 'yotta-memory');
