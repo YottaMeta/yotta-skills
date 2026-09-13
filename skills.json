@@ -42,7 +42,7 @@
       "slug": "yotta-security-audit",
       "name": "元安",
       "pkg": "@yottameta/yotta-security-audit",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "desc": "安全扫描引擎：13 类检测器 + 系统安全基线"
     },
     {
@@ -56,7 +56,7 @@
       "slug": "yotta-recon",
       "name": "元析",
       "pkg": "@yottameta/yotta-recon",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "desc": "跨智能体网络侦察：零依赖端口/服务/版本指纹探测"
     },
     {
@@ -98,7 +98,7 @@
       "slug": "yotta-skill-creator",
       "name": "元造",
       "pkg": "@yottameta/yotta-skill-creator",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "desc": "工坊「造」：端到端造技能脚手架"
     },
     {
@@ -112,7 +112,7 @@
       "slug": "yotta-logwatch",
       "name": "元察",
       "pkg": "@yottameta/yotta-logwatch",
-      "version": "0.2.7",
+      "version": "0.2.8",
       "desc": "安全日志分析检测引擎（攻击链识别/告警聚合）"
     },
     {
@@ -140,7 +140,7 @@
       "slug": "yotta-triage",
       "name": "元鉴",
       "pkg": "@yottameta/yotta-triage",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "desc": "恶意样本静态初筛引擎（哈希/熵/字符串/PE-ELF）"
     },
     {
