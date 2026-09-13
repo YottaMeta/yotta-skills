@@ -1,6 +1,6 @@
 ---
 name: yotta-skills
-version: 0.8.0
+version: 0.9.0
 description: 元阁 -- 元阁全家技能的总编排策划 + 编排路由 + 一键安装器 + 技能盘点。路由层：--route / route_request 按需求摘要给出候选组合、调用顺序、角色、置信度、依据、已装/缺失状态与安装命令，只建议不自动安装；非元阁家族已装技能按 frontmatter description 机械匹配作并列候选（标注来源与未扫描状态，只读不自动调用）；策划层：按场景给出「该组合哪几个元技能、组合强在哪、怎么自动装+自动用」；安装层：一条命令把 YottaMeta 已发布的全部 yotta-* 技能装进指定智能体或目录；盘点层：--inventory / --reindex 扫描本机已装技能生成/更新注册表，新装技能自动被发现（install/update 后自动 re-index，会话开工可先跑 --reindex 与 update --check（联网只读检查更新）；自包含零依赖，不依赖任何元技能）；MCP 按需加载（可选：list_installed_skills/describe_skill/reindex/route_request，不常驻，未加载降级 CLI）。支持 --list 清单 / --route 路由 / install / update / update --check（只读检查）/ update --auto（家族自动更新）/ --inventory / --reindex / --dry-run 预览 / --pin 锁版本。触发：需要批量安装或更新元阁全家技能、按场景组合多个元技能、路由或判断该用哪些技能、盘点或查看本机已装技能、重扫技能注册表、给某个智能体或目录一次性铺齐 yotta-* 技能、预览安装清单、锁版本安装、或用户说 元阁/装全家/一次装齐/yotta-skills/install-all/更新全家/检查更新/自动更新/该用哪个技能/路由技能/盘点技能/查看已装技能 等。边界（Do NOT trigger）：只做「组合策划 + 静态路由建议 + 清单 + 下载 + 落位 + 汇总 + 盘点 + re-index」，不含技能本体、不做技能内容开发、不 -g 污染全局、不自动安装缺失技能；家族安装先自举或调用元信装前门禁，DO NOT INSTALL 阻断，非元阁家族包不自动安装。
 license: MIT
 metadata:
@@ -32,7 +32,7 @@ metadata:
 
 - **路由层（该用哪几个）**：`--route "<需求摘要>"` / MCP `route_request` 查本地注册表与静态编排 playbook，输出候选组合、调用顺序、每个技能角色、置信度、依据、已装/缺失状态与安装命令；非元阁家族已装技能按 frontmatter description 机械匹配作并列候选（标注来源与未扫描状态，只读不自动调用）；只建议安装，不自动安装。
 - **策划层（怎么用）**：接到需求，先按「编排策划」定位命中哪个组合——哪些元技能搭配起来最强、适合什么场景、AI 该怎么自动装并自动用起来。
-- **安装层（怎么装）**：一条 `npx -y @yottameta/yotta-skills` 把组合/全家装进指定智能体或目录——`--list` 看清单、`install` 装、`update` 增量更新、`update --check` 只读检查更新、`update --auto` 家族自动更新、`--dry-run` 预览、`--pin` 锁版本。
+- **安装层（怎么装）**：一条 `npx -y @yottameta/yotta-skills` 把组合/全家装进指定智能体或目录——`--list` 看清单、`install` 装、`update` 增量更新、`doctor` 只读自检、`rollback` 恢复快照、`--dry-run` 预览、`--pin` 锁版本。
 - **盘点层（已装了什么）**：`--inventory` / `--reindex` 扫描本机各智能体技能目录，生成/更新本地注册表；装技能后自动 re-index，新装技能自动被发现——自包含扫描，不依赖任何元技能。
 
 每个技能仍走各自独立的 npm 包（版本源唯一）；本包只做「清单 + 下载 + 落位 + 汇总」，**不内置任何技能本体**。
@@ -104,6 +104,13 @@ npx -y @yottameta/yotta-skills update --check --agent codex
 # 检查到家族更新后自动更新（仅 yotta-* 自家家族，含装前安全扫描）
 npx -y @yottameta/yotta-skills update --auto --agent codex
 
+# 只读检查已装技能（不修改目录；可加 --json 输出机器可读结果）
+npx -y @yottameta/yotta-skills doctor --agent codex
+
+# 查看可用快照 / 回滚最近一次安装或更新
+npx -y @yottameta/yotta-skills rollback --list --agent codex
+npx -y @yottameta/yotta-skills rollback --slug yotta-memory --agent codex
+
 # 预览将安装清单（不联网、不改动）
 npx -y @yottameta/yotta-skills --dry-run
 
@@ -125,6 +132,8 @@ npx -y @yottameta/yotta-skills --reindex
 | `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失技能、升级版本不一致的技能 |
 | `update --check [--agent <name> \| --dir <path>]` | 只读检查更新：联网对 npm 最新，不改动；退出码 0=全部最新 / 3=有更新 / 1=查失败 |
 | `update --auto [--agent <name> \| --dir <path>]` | 检查到家族更新后自动更新（仅 yotta-* 自家家族，含装前安全扫描） |
+| `doctor [--agent <name> \| --dir <path>] [--slug <slug>]` | 只读自检：SKILL / 版本 / manifest / 注册表 / 自定义 doctor；`--json` 输出稳定字段 |
+| `rollback [--agent <name> \| --dir <path>] [--slug <slug>]` | 校验并恢复最近一次快照；`--list` 只列快照；`--json` 输出机器可读结果 |
 | `--inventory` | 盘点本机已装技能：扫描技能目录生成/更新注册表（自包含，不依赖元技能）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（会话开工 / 装技能后自动调用）；`--json` 输出 JSON、`--project` 附扫项目级目录；`--rescan` 同义 |
 | `--route <需求摘要>` | 静态编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；`--json` 输出 JSON、`--project` 附扫项目级目录 |
@@ -136,6 +145,7 @@ npx -y @yottameta/yotta-skills --reindex
 | `--npm <path>` | 指定 npm 可执行文件 |
 | `--python <path>` | 指定 python 可执行文件（元信 scan 用） |
 | `--verify <path>` | 指定 yotta_verify.py 路径 |
+| `--slug <slug>` | doctor / rollback 时只处理指定技能 |
 | `-h, --help` / `-v, --version` | 帮助 / 版本 |
 
 不带命令直接给技能名时，等价于 `install <skill>`。
@@ -182,6 +192,34 @@ npx -y @yottameta/yotta-skills update --check --agent codex
 # 检查到家族更新后自动更新（仅自家家族）
 npx -y @yottameta/yotta-skills update --auto --agent codex
 ```
+
+## doctor 与 rollback
+
+`doctor` 是只读自检，不会修改技能目录或注册表。它检查目标技能目录、`SKILL.md`、
+frontmatter 版本、manifest 身份、本地注册表记录，以及包内声明的自定义 doctor 脚本。
+`--json` 返回稳定字段，适合脚本和智能体消费。
+
+```bash
+npx -y @yottameta/yotta-skills doctor --agent codex --slug yotta-memory
+npx -y @yottameta/yotta-skills doctor --dir ~/my-skills --json
+```
+
+`rollback` 只恢复已经存在的本机快照。恢复前会校验快照（新快照校验 SHA-256 元数据，
+旧快照按结构校验）；恢复过程中先在同盘暂存，再替换目标，失败时保留当前目录。
+快照默认保留，不会被回滚操作删除。
+
+```bash
+# 查看当前有哪些快照（--slug 可只看一个技能）
+npx -y @yottameta/yotta-skills rollback --list --agent codex
+
+# 回滚最近一次安装或更新；也可用 --slug 指定技能
+npx -y @yottameta/yotta-skills rollback --slug yotta-memory --agent codex
+```
+
+包内 manifest 可声明 `install.setup`、`install.doctor`、`install.rollback`，
+值必须是包内相对路径。安装时先执行 setup，再执行内置 doctor 和自定义 doctor；
+任一步失败都会恢复旧版本并留下安装证据。元阁只执行元阁家族包内的生命周期脚本，
+不使用 shell，也不接受绝对路径或 `..` 路径。
 
 ## 编排路由（--route）
 

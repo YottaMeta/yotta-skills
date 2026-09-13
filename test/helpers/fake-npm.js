@@ -12,6 +12,7 @@ const { spawnSync } = require('child_process');
 
 const logFile = process.env.YOTTA_SKILLS_FAKE_LOG || null;
 const manifestFile = process.env.YOTTA_SKILLS_FAKE_MANIFEST_FILE || null;
+const lifecycleDir = process.env.YOTTA_SKILLS_FAKE_LIFECYCLE_DIR || null;
 const args = process.argv.slice(2);
 if (logFile) fs.appendFileSync(logFile, JSON.stringify(args) + '\n');
 
@@ -48,6 +49,16 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fake-npm-'));
 const pkgRoot = path.join(tmp, 'package');
 for (const d of ['references', 'scripts', 'assets', 'bin']) fs.mkdirSync(path.join(pkgRoot, d), { recursive: true });
 
+function copyTree(src, dst) {
+  fs.mkdirSync(dst, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const from = path.join(src, entry.name);
+    const to = path.join(dst, entry.name);
+    if (entry.isDirectory()) copyTree(from, to);
+    else if (entry.isFile()) fs.copyFileSync(from, to);
+  }
+}
+
 const skill = [
   '---', 'name: ' + bare, 'version: ' + version,
   'description: fake skill for offline yotta-skills tests (slug ' + bare + ')',
@@ -64,6 +75,9 @@ fs.writeFileSync(path.join(pkgRoot, 'package.json'), JSON.stringify({ name: pkg,
 fs.writeFileSync(path.join(pkgRoot, 'bin', 'extra.js'), '#!/usr/bin/env node\nconsole.log(1);\n', 'utf8');
 if (manifestFile && fs.existsSync(manifestFile)) {
   fs.copyFileSync(manifestFile, path.join(pkgRoot, 'skill-manifest.json'));
+}
+if (lifecycleDir && fs.existsSync(lifecycleDir)) {
+  copyTree(lifecycleDir, path.join(pkgRoot, 'scripts', 'lifecycle'));
 }
 if (bare === 'yotta-verify') {
   fs.copyFileSync(

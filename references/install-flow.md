@@ -14,7 +14,7 @@
 5. 校验 slug / package / version / 权限 / 生命周期脚本路径；
 6. 元信装前扫描：已有元信则直接扫描；没有则自动安装元信自身，再扫描；
 7. 通过后创建旧版本快照，把新版本复制到同盘暂存目录，再原子切换到目标目录；
-8. setup / doctor 阶段执行内置检查；P0-2.1 不执行自定义生命周期脚本；
+8. 依次执行包内 setup、内置 doctor、包内自定义 doctor；任一步失败自动恢复旧版本；
 9. 汇总报告：✔ 成功 / - 跳过（已是最新）/ ✘ 失败；
 10. 全部成功后自动 re-index 本地技能注册表（`~/.yottaskills/registry.json`）：重扫技能根目录并增量合并，
    新装 / 更新的技能随即进入注册表（`--no-reindex` 可关闭；`--dry-run` 不触发）。
@@ -37,6 +37,16 @@
 
 没有 manifest 时使用家族默认契约：来源 `yottameta`、幂等安装、自动应用模式 `route`，
 不声明 MCP、hook 或自定义生命周期脚本。
+
+## 自定义生命周期脚本
+
+包内 `skill-manifest.json` 可声明 `install.setup` / `install.doctor` /
+`install.rollback`，值必须是包内相对路径，不能是绝对路径或包含 `..`。
+
+元阁用当前 Node.js 直接执行脚本，不经过 shell。脚本接收 `--skill-dir` /
+`--package-dir` / `--dest`，rollback 另接收 `--snapshot`，并始终追加 `--json`；
+脚本必须输出一个 JSON 对象，至少包含 `ok`。setup 或 doctor 失败时，先恢复旧版本，
+再在声明了 rollback 时调用它。生命周期结果、回滚结果和快照路径都会写入安装证据。
 
 ## re-index（装技能后自动重扫注册表）
 
@@ -81,10 +91,32 @@
 ## 快照与回滚
 
 - 旧版本快照：`~/.yottaskills/snapshots/<slug>/<timestamp>-<version>-<随机后缀>/`；
+- 新快照同时写入 `<快照目录>.meta.json`，包含 SHA-256 摘要、版本、文件数和来源；
+- 无元数据的旧快照仍可按 `SKILL.md` 做结构校验；
 - 新版本先落在 `<dest>/.yottaskills-staging/<slug>-<随机后缀>/`；
 - 旧目标先重命名为同盘备份，再把暂存目录切到目标；切换失败时恢复备份；
 - 证据写入失败会触发回滚，不把安装标记为成功；
 - Windows 上对 `EPERM` / `EACCES` / `EBUSY` 做短重试，避免杀毒或索引服务造成的瞬时锁。
+
+回滚命令：
+
+```bash
+yotta-skills rollback --list --dir <skills-dir>
+yotta-skills rollback --slug <slug> --dir <skills-dir>
+```
+
+恢复前校验快照摘要；恢复时先在目标目录同盘暂存，再替换当前目录。恢复成功后执行
+内置 doctor 和自定义 doctor，并保留原快照供再次恢复。
+
+## doctor
+
+```bash
+yotta-skills doctor --dir <skills-dir> --slug <slug>
+yotta-skills doctor --dir <skills-dir> --json
+```
+
+doctor 只读检查目录、`SKILL.md`、版本、manifest 身份、注册表记录和自定义 doctor，
+不会修改目标目录或注册表。注册表版本不一致属于 warning，可用 `--reindex` 修复。
 
 ## 安装证据
 

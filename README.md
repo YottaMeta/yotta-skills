@@ -30,6 +30,7 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Install** — install everything (or a subset) into an agent's default user-level directory or any directory.
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
 - **Update check / auto-update** — <code>update --check</code> compares installed skill versions against the npm registry and reports (no changes; run manually or from doctor / release checks); <code>update --auto</code> upgrades the installed YottaMeta family to the latest (non-family skills are never auto-updated).
+- **Doctor / rollback** — <code>doctor</code> checks the installed skill directory, version, manifest, registry and custom doctor script without modifying it; <code>rollback</code> validates a snapshot and restores the latest install or update.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install gate** — family installs read the package manifest, bootstrap yotta-verify (元信) when it is missing, then scan each package. <code>DO NOT INSTALL</code> blocks; caution/review continue with visible risk. Old versions are snapshotted before replacement.
 - **Inventory / re-index** - scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand (e.g. at session start). An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code>; see <code>SKILL.md</code> for the config.
@@ -59,6 +60,13 @@ npx -y @yottameta/yotta-skills update --check
 
 # Check and auto-update the installed YottaMeta family (pre-install gate applies; non-family skills untouched)
 npx -y @yottameta/yotta-skills update --auto
+
+# Read-only health check (optionally with --slug / --json)
+npx -y @yottameta/yotta-skills doctor --dir ~/my-skills --slug yotta-memory
+
+# List snapshots; restore the latest install or update
+npx -y @yottameta/yotta-skills rollback --list --dir ~/my-skills
+npx -y @yottameta/yotta-skills rollback --slug yotta-memory --dir ~/my-skills
 
 # Preview what would be installed (no network, no changes)
 npx -y @yottameta/yotta-skills --dry-run

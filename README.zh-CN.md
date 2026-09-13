@@ -33,6 +33,7 @@
 - **安装**——装全家（或指定技能）到智能体默认用户级目录或任意目录。
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
 - **更新检查 / 自动更新**——<code>update --check</code> 只读比对已装技能版本与 npm 注册表并报告（不改动，手动或由 doctor / 发布前检查触发）；<code>update --auto</code> 检查后自动把已装元阁家族升到最新（非元阁家族技能绝不自动更新）。
+- **自检 / 回滚**——<code>doctor</code> 只读检查技能目录、版本、manifest、注册表和自定义 doctor；<code>rollback</code> 校验快照后恢复最近一次安装或更新，恢复失败不会覆盖当前目录。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前门禁**——家族安装先读取包内 manifest，元信（yotta-verify）缺失时自动自举，再逐个扫描。`DO NOT INSTALL` 阻断；`CAUTION` / `REVIEW` 继续但显示风险。旧版本会先做快照再替换。
 - **盘点 / re-index**--扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；自包含，不需要任何其他技能。新装技能自动被发现：<code>install</code> / <code>update</code> 完成后自动重扫注册表，<code>--reindex</code> 可随时手动重扫（如会话开工）。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code> 四工具，配置见 <code>SKILL.md</code>。
@@ -63,6 +64,13 @@ npx -y @yottameta/yotta-skills update --check
 
 # 检查后自动更新已装元阁家族（含装前门禁；非元阁家族技能不自动更新）
 npx -y @yottameta/yotta-skills update --auto
+
+# 只读检查已装技能（可加 --slug / --json）
+npx -y @yottameta/yotta-skills doctor --dir ~/my-skills --slug yotta-memory
+
+# 查看快照；恢复最近一次安装或更新
+npx -y @yottameta/yotta-skills rollback --list --dir ~/my-skills
+npx -y @yottameta/yotta-skills rollback --slug yotta-memory --dir ~/my-skills
 
 # 预览将安装清单（不联网、不改动）
 npx -y @yottameta/yotta-skills --dry-run
@@ -170,7 +178,8 @@ bash install.sh --list           # 列出智能体 -> 默认目录
 ## 工作原理
 
 对清单里每个技能：`npm pack <pkg>@<spec>` 到临时目录 → `tar -xzf` 解压 → 读取 manifest →
-元信装前门禁 → 快照旧版本并暂存新版本 → 原子替换 `<dest>/<slug>` → 汇总报告。`install` / `update` 完成后自动重扫本地技能注册表，
+元信装前门禁 → 快照旧版本并暂存新版本 → 原子替换 `<dest>/<slug>` → setup / doctor → 汇总报告；
+任一步失败会恢复旧版本。`rollback` 可校验并恢复已有快照。`install` / `update` 完成后自动重扫本地技能注册表，
 新装技能随即出现在 `--inventory` / `--reindex` 里（可用 `--no-reindex` 关闭）。
 细节见 `references/install-flow.md`；新手中文教程见 `references/tutorial.md`。
 

@@ -89,6 +89,15 @@ npx -y @yottameta/yotta-skills install --agent codex --skip-scan # 人工应急�
 `~/.yottaskills/install-log.jsonl`。`--skip-scan` 只用于人工应急，会输出
 `explicit-unverified` 并留证，`update --auto` 不会使用它。
 
+安装阶段还会按包内 manifest 执行 setup / doctor；setup 或 doctor 失败时自动恢复旧版本。
+可以用 `doctor` 只读自检，用 `rollback` 校验并恢复最近快照：
+
+```bash
+npx -y @yottameta/yotta-skills doctor --agent codex --slug yotta-memory
+npx -y @yottameta/yotta-skills rollback --list --agent codex
+npx -y @yottameta/yotta-skills rollback --slug yotta-memory --agent codex
+```
+
 ## 9. 验证安装结果
 
 - 看安装汇总：成功 N / 跳过 N / 失败 N；
@@ -108,6 +117,9 @@ npx -y @yottameta/yotta-skills install --agent codex --skip-scan # 人工应急�
 - **目标未指定**：当前目录没有项目级技能目录时报错（退出码 4），加 `--agent` 或
   `--dir`。
 - **已有旧版本**：默认按 range 覆盖升级到最新 patch；`--pin` 则锁定清单版本。
+- **doctor 报注册表版本不一致**：运行 `yotta-skills --reindex` 重扫注册表；doctor 本身不会写文件。
+- **需要撤销最近安装 / 更新**：先用 `rollback --list` 查看快照，再执行
+  `rollback --slug <slug>`；恢复前会自动校验快照。
 
 ## 11. 盘点已装技能与 re-index（新装技能自动被发现）
 

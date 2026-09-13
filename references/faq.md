@@ -76,8 +76,16 @@ npx -y @yottameta/yotta-skills install yotta-memory yotta-workflow --agent codex
 
 ## 11. 安装失败后如何恢复？
 
-查看汇总中的失败原因。旧版本快照保存在 `~/.yottaskills/snapshots/`，当前版本失败时
-新版本不会替换旧版本。先修复目录权限或网络，再单独安装失败技能：
+查看汇总中的失败原因。setup / doctor 失败时元阁会自动恢复旧版本；旧版本快照仍保存在
+`~/.yottaskills/snapshots/`。可以先用 `doctor` 自检，再用 `rollback` 恢复最近快照：
+
+```bash
+npx -y @yottameta/yotta-skills doctor --dir /path/to/skills --slug <slug>
+npx -y @yottameta/yotta-skills rollback --list --dir /path/to/skills
+npx -y @yottameta/yotta-skills rollback --slug <slug> --dir /path/to/skills
+```
+
+如果只是安装源或网络问题，再单独安装失败技能：
 
 ```bash
 npx -y @yottameta/yotta-skills install <slug> --dir /path/to/skills

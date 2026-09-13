@@ -26,6 +26,9 @@ const http = require('http');
 const https = require('https');
 const evidenceLib = require('../lib/install-evidence');
 const gateLib = require('../lib/verify-gate');
+const healthLib = require('../lib/install-health');
+const lifecycleLib = require('../lib/install-lifecycle');
+const snapshotLib = require('../lib/install-snapshot');
 const { createInstaller, isSafeTarEntry } = require('../lib/install-pipeline');
 
 const PKG_ROOT = path.join(__dirname, '..');
@@ -140,7 +143,7 @@ function parseArgs(argv) {
     help: false, version: false, agent: null, dir: null, npm: null,
     python: null, verify: null, command: null, skill: null, rest: [],
     inventory: false, reindex: false, noReindex: false, json: false, project: false, route: null,
-    check: false, auto: false, registry: null,
+    check: false, auto: false, registry: null, slug: null,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -169,15 +172,22 @@ function parseArgs(argv) {
     else if (a === '--npm') opts.npm = take('--npm');
     else if (a === '--python') opts.python = take('--python');
     else if (a === '--verify') opts.verify = take('--verify');
+    else if (a === '--slug') {
+      const value = take('--slug').toLowerCase();
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(value)) {
+        die('--slug 格式非法', 2, '只允许小写字母、数字和连字符，例如 yotta-memory。');
+      }
+      opts.slug = value;
+    }
     else if (a === '--check') opts.check = true;
     else if (a === '--auto') opts.auto = true;
     else if (a === '--registry') opts.registry = take('--registry');
     else if (a.startsWith('-')) die('未知参数: ' + a, 2, '可用 --help 查看支持的选项。');
     else positionals.push(a);
   }
-  // 命令解析：install / update，其余位置参数 = 技能 slug（可多个）
+  // 命令解析：install / update / doctor / rollback，其余位置参数 = 技能 slug（可多个）
   for (const p of positionals) {
-    if (p === 'install' || p === 'update') {
+    if (p === 'install' || p === 'update' || p === 'doctor' || p === 'rollback') {
       if (opts.command && opts.command !== p) die('命令冲突：' + opts.command + ' 与 ' + p);
       opts.command = p;
     } else {
@@ -626,6 +636,296 @@ function runUpdate(opts, dest) {
   return { failed, exitCode };
 }
 
+// ── doctor / rollback ─────────────────────────────────────────────────────
+function readInstalledManifest(target) {
+  const file = path.join(target, 'skill-manifest.json');
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (_) {
+    return null;
+  }
+}
+
+function runCustomDoctor(skillDir, dest) {
+  const manifest = readInstalledManifest(skillDir);
+  if (!manifest || !manifest.install || !manifest.install.doctor) {
+    return { ok: true, skipped: true, error: null, result: null };
+  }
+  if (manifest.trust !== 'yottameta') {
+    return {
+      ok: false,
+      skipped: false,
+      error: 'manifest trust 不是 yottameta，拒绝执行自定义 doctor',
+      result: null,
+    };
+  }
+  return lifecycleLib.runPhase(skillDir, manifest, 'doctor', {
+    skillDir,
+    packageDir: skillDir,
+    dest,
+  });
+}
+
+function doctorTargets(opts, dest) {
+  if (opts.slug) {
+    const skill = familySkillFor(opts.slug);
+    return skill ? [skill] : [];
+  }
+  if (opts.skills.length) {
+    return opts.skills.map((slug) => familySkillFor(slug)).filter(Boolean);
+  }
+  const found = [];
+  let entries;
+  try { entries = fs.readdirSync(dest, { withFileTypes: true }); } catch (_) { return found; }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !/^yotta-/.test(entry.name)) continue;
+    const skill = familySkillFor(entry.name);
+    if (skill) found.push(skill);
+  }
+  return found;
+}
+
+function doctorExitCode(payload) {
+  if (payload.ok) return 0;
+  const manifestFailure = payload.results.some((result) =>
+    (result.checks || []).some((check) =>
+      (check.id === 'manifest' || check.id === 'manifest_trust') && !check.ok));
+  return manifestFailure ? 6 : 1;
+}
+
+function runDoctor(opts, dest) {
+  const scan = require('../lib/skills-scan');
+  const registry = scan.readRegistry();
+  const targets = doctorTargets(opts, dest);
+  const results = [];
+  const errors = [];
+  const warnings = [];
+  const fixes = [];
+
+  if (targets.length === 0) {
+    errors.push(opts.slug ? '未找到技能: ' + opts.slug : '目标目录下没有可检查的元阁家族技能');
+  }
+
+  for (const skill of targets) {
+    const target = path.join(dest, skill.slug);
+    const result = healthLib.checkInstalledSkill({
+      slug: skill.slug,
+      target,
+      expectedVersion: skill.version || null,
+      expectedPackage: skill.pkg || null,
+      registry,
+    });
+    const custom = runCustomDoctor(target, dest);
+    result.custom_doctor = {
+      ok: !!custom.ok,
+      skipped: !!custom.skipped,
+      error: custom.error || null,
+      result: custom.result || null,
+    };
+    if (!custom.ok) {
+      result.ok = false;
+      result.errors.push('自定义 doctor 失败: ' + (custom.error || '未知错误'));
+      result.checks.push({
+        id: 'custom_doctor',
+        ok: false,
+        severity: 'error',
+        message: '自定义 doctor 失败: ' + (custom.error || '未知错误'),
+        hint: '修复技能包内的 doctor 脚本后重试',
+      });
+    } else if (!custom.skipped) {
+      result.checks.push({
+        id: 'custom_doctor',
+        ok: true,
+        severity: 'info',
+        message: '自定义 doctor 通过',
+        hint: null,
+      });
+    }
+    results.push(result);
+    errors.push.apply(errors, result.errors);
+    warnings.push.apply(warnings, result.warnings);
+    fixes.push.apply(fixes, result.fixes);
+  }
+
+  const payload = {
+    ok: errors.length === 0,
+    dir: dest,
+    checked: results.length,
+    results,
+    errors,
+    warnings,
+    fixes: Array.from(new Set(fixes)),
+  };
+  const code = doctorExitCode(payload);
+  if (opts.json) {
+    out(JSON.stringify(payload, null, 2));
+  } else {
+    out('yotta-skills（元阁）v' + VERSION + ' —— doctor');
+    out('目标: ' + dest);
+    for (const result of results) {
+      out('');
+      out((result.ok ? '✔ ' : '✘ ') + result.slug + ' v' + (result.version || '未知'));
+      for (const check of result.checks) {
+        out('  ' + (check.ok ? '✔' : '✘') + ' ' + check.message + (check.hint ? '（修复: ' + check.hint + '）' : ''));
+      }
+    }
+    for (const item of warnings) out('[警告] ' + item);
+    for (const item of fixes) out('[建议] ' + item);
+    if (!payload.ok) out('doctor 未通过：请按上面的修复建议处理后重试。');
+  }
+  process.exitCode = code;
+  return payload;
+}
+
+function latestRollbackTarget(home) {
+  const file = path.join(home, '.yottaskills', 'install-log.jsonl');
+  let lines;
+  try { lines = fs.readFileSync(file, 'utf8').split(/\r?\n/).filter(Boolean); } catch (_) { return null; }
+  for (let i = lines.length - 1; i >= 0; i--) {
+    let entry;
+    try { entry = JSON.parse(lines[i]); } catch (_) { continue; }
+    if (!entry.skill || !entry.snapshot) continue;
+    if (!fs.existsSync(entry.snapshot)) continue;
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(entry.skill)) continue;
+    const expectedRoot = path.resolve(snapshotLib.snapshotRoot(home, entry.skill)) + path.sep;
+    if (!path.resolve(entry.snapshot).startsWith(expectedRoot)) continue;
+    const validation = snapshotLib.validateSnapshot(entry.snapshot);
+    if (validation.ok) return { slug: entry.skill, snapshot: entry.snapshot };
+  }
+  return null;
+}
+
+function runRollback(opts, dest) {
+  const home = os.homedir();
+  const requestedSlug = opts.slug || (opts.skills.length ? opts.skills[0] : null);
+
+  if (opts.list) {
+    const rows = snapshotLib.listSnapshots(home, requestedSlug);
+    const payload = {
+      ok: true,
+      dir: dest || null,
+      slug: requestedSlug || null,
+      count: rows.filter((row) => row.valid).length,
+      snapshots: rows,
+    };
+    if (opts.json) out(JSON.stringify(payload, null, 2));
+    else {
+      out('yotta-skills（元阁）v' + VERSION + ' —— rollback 快照');
+      for (const row of rows) {
+        out('  ' + (row.valid ? '✔' : '✘') + ' ' + row.slug + ' v' + (row.version || '未知') + '  ' + row.path + (row.reason ? '（' + row.reason + '）' : ''));
+      }
+      out('可用快照: ' + payload.count + ' / ' + rows.length);
+    }
+    return payload;
+  }
+
+  let slug = requestedSlug;
+  let selected = null;
+  if (slug) {
+    const rows = snapshotLib.listSnapshots(home, slug);
+    selected = rows.find((row) => row.valid) || rows[0] || null;
+  } else {
+    const latest = latestRollbackTarget(home);
+    if (latest) {
+      slug = latest.slug;
+      selected = snapshotLib.listSnapshots(home, slug).find((row) => row.path === latest.snapshot && row.valid) || null;
+    }
+  }
+
+  if (!slug) {
+    const payload = { ok: false, dir: dest, slug: null, errors: ['安装记录中没有可回滚的技能快照'] };
+    if (opts.json) out(JSON.stringify(payload, null, 2));
+    else out('回滚失败：安装记录中没有可回滚的技能快照。');
+    process.exitCode = 1;
+    return payload;
+  }
+  if (!selected || !selected.valid) {
+    const payload = {
+      ok: false,
+      dir: dest,
+      slug,
+      errors: [selected && selected.reason ? '选中的快照不可用: ' + selected.reason : '没有可用快照'],
+    };
+    if (opts.json) out(JSON.stringify(payload, null, 2));
+    else out('回滚失败：' + payload.errors[0]);
+    process.exitCode = 1;
+    return payload;
+  }
+
+  const target = path.join(dest, slug);
+  const restored = snapshotLib.restoreSnapshot(selected.path, target);
+  if (!restored.ok) {
+    const payload = { ok: false, dir: dest, slug, snapshot: selected.path, errors: [restored.error] };
+    if (opts.json) out(JSON.stringify(payload, null, 2));
+    else out('回滚失败：' + restored.error);
+    process.exitCode = 1;
+    return payload;
+  }
+
+  const family = familySkillFor(slug);
+  const scan = require('../lib/skills-scan');
+  const doctor = healthLib.checkInstalledSkill({
+    slug,
+    target,
+    expectedVersion: restored.version && restored.version !== 'unknown' ? restored.version : null,
+    expectedPackage: family ? family.pkg : null,
+    registry: scan.readRegistry(),
+  });
+  const custom = runCustomDoctor(target, dest);
+  if (!custom.ok) {
+    doctor.ok = false;
+    doctor.errors.push('自定义 doctor 失败: ' + (custom.error || '未知错误'));
+  }
+
+  const payload = {
+    ok: doctor.ok,
+    dir: dest,
+    slug,
+    snapshot: selected.path,
+    version: restored.version,
+    doctor,
+    errors: doctor.errors,
+    warnings: doctor.warnings,
+    fixes: doctor.fixes,
+    reindexed: false,
+  };
+  try {
+    evidenceLib.appendEvidence({
+      event: 'rollback',
+      skill: slug,
+      package: family ? family.pkg : null,
+      version: restored.version,
+      decision: doctor.ok ? 'ok' : 'fail',
+      snapshot: selected.path,
+    }, { homeDir: home });
+  } catch (error) {
+    payload.ok = false;
+    payload.errors.push('回滚证据写入失败: ' + error.message);
+  }
+  if (payload.ok && !opts.noReindex) {
+    try {
+      reindexRegistry({ ...opts, dir: dest });
+      payload.reindexed = true;
+    } catch (error) {
+      payload.warnings.push('回滚完成，但注册表重扫失败: ' + error.message);
+    }
+  }
+
+  if (opts.json) {
+    out(JSON.stringify(payload, null, 2));
+  } else {
+    out('yotta-skills（元阁）v' + VERSION + ' —— rollback');
+    out('技能: ' + slug);
+    out('快照: ' + selected.path);
+    out('结果: ' + (payload.ok ? '✔ 已恢复 v' + (restored.version || '未知') : '✘ 恢复后 doctor 未通过'));
+    if (payload.errors.length) out('错误: ' + payload.errors.join('; '));
+    if (payload.warnings.length) out('警告: ' + payload.warnings.join('; '));
+    if (payload.reindexed) out('已重扫本地技能注册表。');
+  }
+  process.exitCode = payload.ok ? 0 : 1;
+  return payload;
+}
+
 // ── 展示 ───────────────────────────────────────────────────────────────────
 function printList(opts) {
   const skills = opts.skills.length ? selectSkills(opts) : MANIFEST;
@@ -648,6 +948,8 @@ function printHelp() {
   out('  yotta-skills install --dir <path>   装全家到指定目录');
   out('  yotta-skills install <skill> --dir <path>  装单个技能（可多个）');
   out('  yotta-skills update --agent <name>  增量更新已装技能（补齐缺失 / 版本不一致）');
+  out('  yotta-skills doctor --dir <path>    只读自检技能目录（可加 --slug / --json）');
+  out('  yotta-skills rollback --dir <path>  回滚最近一次技能安装或更新（--list 查看快照）');
   out('  yotta-skills --dry-run              预览将安装清单（不联网、不改动）');
   out('  yotta-skills --inventory            盘点本机已装技能（自研扫描，不依赖任何元技能）');
   out('  yotta-skills --reindex              重扫注册表（会话开工 / 装技能后自动调用；增量合并）');
@@ -662,7 +964,8 @@ function printHelp() {
   out('  --npm <path>     指定 npm 可执行文件（默认 npm / npm.cmd）');
   out('  --python <path>  指定 python 可执行文件（元信 scan 用）');
   out('  --verify <path>  指定 yotta_verify.py 路径（默认找目标目录已装的元信）');
-  out('  --json            inventory / reindex / route 时输出 JSON');
+  out('  --json            inventory / reindex / route / doctor / rollback 时输出 JSON');
+  out('  --slug <slug>     doctor / rollback 时只处理指定技能');
   out('  --route <需求>    静态编排路由（输出组合 / 顺序 / 依据 / 缺失技能建议）');
   out('  --check            update 时仅只读检查更新（联网对 npm 最新版本，不改动；退出码 0/3/1）');
   out('  --auto             update 时检查到家族更新后自动更新（仅 yotta-* 家族，含装前扫描）');
@@ -796,15 +1099,19 @@ function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (opts.help) { printHelp(); return; }
   if (opts.version) { out('yotta-skills v' + VERSION); return; }
-  if (opts.list) { printList(opts); return; }
+  if (opts.list && !opts.command) { printList(opts); return; }
   if (opts.inventory && !opts.command) { runInventory(opts); return; }
   if (opts.reindex && !opts.command) { runReindex(opts); return; }
   if (opts.route && !opts.command) { runRoute(opts); return; }
 
   const command = opts.command || 'install';
+  if (command === 'rollback' && opts.list) {
+    runRollback(opts, null);
+    return;
+  }
   let dest = resolveTargetDir(opts);
   if (!dest && !opts.dryRun) dest = detectProjectDir();
-  if (!dest && command === 'install' && !opts.dryRun) {
+  if (!dest && (command === 'install' || command === 'doctor' || command === 'rollback') && !opts.dryRun) {
     die('未指定目标：请用 --agent <name> 或 --dir <path>（当前目录未检测到项目级技能目录）。', 4, '未收录智能体也可用 --dir 指定其技能目录。');
   }
 
@@ -823,7 +1130,11 @@ function main() {
     return;
   }
 
-  if (command === 'update') {
+  if (command === 'doctor') {
+    runDoctor(opts, dest);
+  } else if (command === 'rollback') {
+    runRollback(opts, dest);
+  } else if (command === 'update') {
     if (opts.check || opts.auto) {
       var runFn = opts.auto ? runUpdateAuto : runUpdateCheck;
       runFn(opts, dest).then(function (r) {
