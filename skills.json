@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "updated": "2026-09-10",
+  "updated": "2026-09-14",
   "note": "清单同步要求：每次技能发布新版本后，按 YottaSkills 技能登记表更新本文件（登记表为内部台账，不随包分发）。",
   "skills": [
     {
@@ -98,7 +98,7 @@
       "slug": "yotta-skill-creator",
       "name": "元造",
       "pkg": "@yottameta/yotta-skill-creator",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "desc": "工坊「造」：端到端造技能脚手架"
     },
     {
@@ -154,7 +154,7 @@
       "slug": "yotta-verify",
       "name": "元信",
       "pkg": "@yottameta/yotta-verify",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "desc": "装前安全扫描器 + audited 徽章（prompt injection + 危险模式）"
     }
   ]
