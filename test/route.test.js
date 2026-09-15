@@ -54,6 +54,31 @@ test('routeRequest：输出呈现场景命中组合并保持调用顺序', () =>
   assert.strictEqual(result.skills[1].role.length > 0, true);
 });
 
+test('routeRequest：多副本技能保留代表版本与冲突信息', () => {
+  const registry = {
+    skills: {
+      'yotta-present': {
+        slug: 'yotta-present',
+        version: '0.2.0',
+        sources: ['Codex', 'WorkBuddy'],
+        variants: [
+          { source: 'Codex', dir: '/codex/yotta-present', version: '0.2.0', description: 'new' },
+          { source: 'WorkBuddy', dir: '/workbuddy/yotta-present', version: '0.1.9', description: 'old' },
+        ],
+        conflicts: [{ source: 'WorkBuddy', dir: '/workbuddy/yotta-present', version: '0.1.9' }],
+        status: 'known',
+      },
+    },
+  };
+  const result = routeRequest('帮我润色输出，要规范可复制，别有 AI 味', { registry });
+  const present = result.skills.find((skill) => skill.slug === 'yotta-present');
+  assert.ok(present);
+  assert.strictEqual(present.version, '0.2.0');
+  assert.strictEqual(present.variants.length, 2);
+  assert.strictEqual(present.conflicts.length, 1);
+  assert.strictEqual(present.conflicts[0].source, 'WorkBuddy');
+});
+
 test('routeRequest：缺失技能只建议安装，不自动安装', () => {
   const result = routeRequest('检查这段代码质量，别糊弄，发布前也要守门', {
     registry: registryWith('yotta-code-quality'),

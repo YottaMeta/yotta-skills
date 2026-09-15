@@ -105,10 +105,44 @@ test('scanRoots：多根扫描去重合并 + 版本冲突记录 + 缺失目录�
     assert.deepStrictEqual(common.sources, ['A', 'B']);
     const ver = res.skills.find((s) => s.slug === 'ver-skill');
     assert.ok(ver.conflicts && ver.conflicts.length === 1);
-    assert.strictEqual(ver.version, '1.2.3'); // 首个来源版本
+    assert.strictEqual(ver.version, '9.9.9'); // 多副本选择最高版本
+    assert.strictEqual(ver.variants.length, 2);
+    assert.strictEqual(ver.conflicts[0].source, 'A');
+    assert.strictEqual(ver.conflicts[0].version, '1.2.3');
   } finally {
     fs.rmSync(rootA, { recursive: true, force: true });
     fs.rmSync(rootB, { recursive: true, force: true });
+  }
+});
+
+test('scanRoots：多副本按最高合法 semver 选择代表版本', () => {
+  const rootA = fs.mkdtempSync(path.join(os.tmpdir(), 'yotta-scan-semver-a-'));
+  const rootB = fs.mkdtempSync(path.join(os.tmpdir(), 'yotta-scan-semver-b-'));
+  const rootC = fs.mkdtempSync(path.join(os.tmpdir(), 'yotta-scan-semver-c-'));
+  try {
+    mkSkill(rootA, 'semver-skill');
+    mkSkill(rootB, 'semver-skill');
+    mkSkill(rootC, 'semver-skill');
+    fs.writeFileSync(path.join(rootA, 'semver-skill', 'SKILL.md'),
+      '---\nname: semver-skill\nversion: 1.0.0\ndescription: A\n---\n', 'utf8');
+    fs.writeFileSync(path.join(rootB, 'semver-skill', 'SKILL.md'),
+      '---\nname: semver-skill\nversion: 1.0.1-beta.2\ndescription: B\n---\n', 'utf8');
+    fs.writeFileSync(path.join(rootC, 'semver-skill', 'SKILL.md'),
+      '---\nname: semver-skill\nversion: 1.0.1\ndescription: C\n---\n', 'utf8');
+    const res = scan.scanRoots([
+      { dir: rootA, label: 'A' },
+      { dir: rootB, label: 'B' },
+      { dir: rootC, label: 'C' },
+    ]);
+    const skill = res.skills.find((item) => item.slug === 'semver-skill');
+    assert.strictEqual(skill.version, '1.0.1');
+    assert.strictEqual(skill.description, 'C');
+    assert.strictEqual(skill.variants.length, 3);
+    assert.deepStrictEqual(skill.conflicts.map((item) => item.version).sort(), ['1.0.0', '1.0.1-beta.2']);
+  } finally {
+    fs.rmSync(rootA, { recursive: true, force: true });
+    fs.rmSync(rootB, { recursive: true, force: true });
+    fs.rmSync(rootC, { recursive: true, force: true });
   }
 });
 
@@ -121,16 +155,24 @@ test('mergeRegistry：新增 / 更新 / 消失 / 幂等', () => {
   };
   const scanResult = {
     skills: [
-      { slug: 'keep-skill', version: '2.0.0', description: 'd', sources: ['X'], source_dirs: ['/x'] },
+      {
+        slug: 'keep-skill',
+        version: '2.0.0',
+        description: 'd',
+        sources: ['X'],
+        source_dirs: ['/x'],
+        variants: [{ source: 'X', dir: '/x', version: '2.0.0', description: 'd' }],
+      },
       { slug: 'new-skill', version: '3.0.0', description: 'n', sources: ['Y'], source_dirs: ['/y'] },
     ],
   };
   const m1 = scan.mergeRegistry(scanResult, prev);
   assert.deepStrictEqual(m1.changes.added, ['new-skill']);
   assert.deepStrictEqual(m1.changes.gone, ['old-skill']);
-  assert.deepStrictEqual(m1.changes.updated, []);
+  assert.deepStrictEqual(m1.changes.updated, ['keep-skill']); // 旧记录补充 variants 视为一次更新
   assert.strictEqual(m1.registry.skills['old-skill'].status, 'gone');
   assert.strictEqual(m1.registry.skills['keep-skill'].status, 'known');
+  assert.strictEqual(m1.registry.skills['keep-skill'].variants.length, 1);
   // 幂等：再合并一次（同状态）应无变化
   const m2 = scan.mergeRegistry(scanResult, m1.registry);
   assert.deepStrictEqual(m2.changes.added, []);

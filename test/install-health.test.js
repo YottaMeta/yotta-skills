@@ -99,6 +99,36 @@ test('doctor reports a registry version mismatch as a warning with a fix', () =>
   assert.ok(result.fixes.some((item) => /--reindex/.test(item)));
 });
 
+test('doctor matches the registry copy by target directory in multi-source installs', () => {
+  const root = tmpdir('ys-health-multi-');
+  const target = path.join(root, 'yotta-demo');
+  const other = path.join(root, 'yotta-demo-new');
+  writeSkill(target, { version: '0.19.3' });
+  writeSkill(other, { version: '0.19.4' });
+  const result = health.checkInstalledSkill({
+    slug: 'yotta-demo',
+    target,
+    expectedVersion: '0.19.3',
+    registry: {
+      skills: {
+        'yotta-demo': {
+          version: '0.19.4',
+          variants: [
+            { source: 'WorkBuddy', dir: target, version: '0.19.3', description: '旧副本' },
+            { source: 'Codex', dir: other, version: '0.19.4', description: '新副本' },
+          ],
+          conflicts: [{ source: 'WorkBuddy', dir: target, version: '0.19.3' }],
+        },
+      },
+    },
+  });
+  assert.strictEqual(result.ok, true);
+  assert.strictEqual(result.warnings.length, 0);
+  const registryCheck = result.checks.find((check) => check.id === 'registry');
+  assert.ok(registryCheck);
+  assert.strictEqual(registryCheck.ok, true);
+});
+
 test('doctor rejects a non-family manifest trust level', () => {
   const target = path.join(tmpdir('ys-health-'), 'yotta-demo');
   writeSkill(target, {

@@ -1189,7 +1189,15 @@ function runRoute(opts) {
   out('');
   out('调用顺序:');
   for (const skill of result.skills) {
-    out('  ' + skill.order + '. ' + skill.slug + ' [' + (skill.installed ? '已装' : '缺失') + '] - ' + skill.role);
+    const status = skill.installed
+      ? '已装' + (skill.version ? ' v' + skill.version : '')
+      : '缺失';
+    const conflictHint = skill.conflicts && skill.conflicts.length
+      ? '（其他副本: ' + skill.conflicts
+        .map((item) => (item.source || '其他') + ' v' + (item.version || '?'))
+        .join('、') + '）'
+      : '';
+    out('  ' + skill.order + '. ' + skill.slug + ' [' + status + '] - ' + skill.role + conflictHint);
   }
   if (result.missing_skills.length) {
     out('');

@@ -47,6 +47,43 @@ test('CLI --inventory：文本输出含技能与计数', () => {
   }
 });
 
+test('CLI --inventory：多源同名技能显示最高版本与副本摘要', () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'yotta-cli-multi-home-'));
+  const workbuddy = path.join(home, '.workbuddy', 'skills', 'yotta-skills');
+  const codex = path.join(home, '.codex', 'skills', 'yotta-skills');
+  fs.mkdirSync(workbuddy, { recursive: true });
+  fs.mkdirSync(codex, { recursive: true });
+  fs.writeFileSync(path.join(workbuddy, 'SKILL.md'),
+    '---\nname: yotta-skills\nversion: 0.19.3\ndescription: WorkBuddy 副本\n---\n# old\n', 'utf8');
+  fs.writeFileSync(path.join(codex, 'SKILL.md'),
+    '---\nname: yotta-skills\nversion: 0.19.4\ndescription: Codex 副本\n---\n# new\n', 'utf8');
+  const env = {
+    ...process.env,
+    USERPROFILE: home,
+    HOME: home,
+    CODEX_HOME: path.join(home, '.codex'),
+    XDG_CONFIG_HOME: path.join(home, '.config'),
+  };
+  try {
+    const jsonResult = spawnSync(process.execPath, [BIN, '--inventory', '--json'], { encoding: 'utf8', env });
+    assert.strictEqual(jsonResult.status, 0, 'exit: ' + jsonResult.status + '\n' + jsonResult.stderr);
+    const data = JSON.parse(jsonResult.stdout);
+    const record = data.skills.find((skill) => skill.slug === 'yotta-skills');
+    assert.ok(record);
+    assert.strictEqual(record.version, '0.19.4');
+    assert.strictEqual(record.variants.length, 2);
+    assert.strictEqual(record.conflicts.length, 1);
+    assert.strictEqual(record.conflicts[0].version, '0.19.3');
+
+    const textResult = spawnSync(process.execPath, [BIN, '--inventory'], { encoding: 'utf8', env });
+    assert.strictEqual(textResult.status, 0, 'exit: ' + textResult.status + '\n' + textResult.stderr);
+    assert.ok(textResult.stdout.includes('yotta-skills  v0.19.4'));
+    assert.ok(textResult.stdout.includes('多副本: WorkBuddy v0.19.3, Codex v0.19.4'));
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
 test('CLI --reindex：重扫 + 增量合并（JSON 输出 + 幂等）', () => {
   const { home, skills, env } = setupEnv();
   try {
@@ -87,7 +124,11 @@ test('CLI --route：JSON 输出组合、顺序、缺失安装建议与应用模�
   try {
     fs.mkdirSync(path.join(skills, 'yotta-present'), { recursive: true });
     fs.writeFileSync(path.join(skills, 'yotta-present', 'SKILL.md'),
-      '---\nname: yotta-present\nversion: 0.1.2\ndescription: 输出呈现\n---\n# yotta-present\n', 'utf8');
+      '---\nname: yotta-present\nversion: 0.2.0\ndescription: 输出呈现\n---\n# yotta-present\n', 'utf8');
+    const oldPresent = path.join(home, '.workbuddy', 'skills', 'yotta-present');
+    fs.mkdirSync(oldPresent, { recursive: true });
+    fs.writeFileSync(path.join(oldPresent, 'SKILL.md'),
+      '---\nname: yotta-present\nversion: 0.1.9\ndescription: 旧输出呈现\n---\n# old\n', 'utf8');
     const r = spawnSync(process.execPath,
       [BIN, '--route', '帮我润色输出，要规范可复制，别有 AI 味', '--dir', skills, '--json'],
       { encoding: 'utf8', env });
@@ -97,8 +138,18 @@ test('CLI --route：JSON 输出组合、顺序、缺失安装建议与应用模�
     assert.deepStrictEqual(data.skills.map((s) => s.slug), ['yotta-present', 'yotta-humanize']);
     assert.strictEqual(data.skills[0].installed, true);
     assert.strictEqual(data.skills[1].installed, false);
+    assert.strictEqual(data.skills[0].version, '0.2.0');
+    assert.strictEqual(data.skills[0].conflicts.length, 1);
+    assert.strictEqual(data.skills[0].conflicts[0].source, 'WorkBuddy');
     assert.ok(data.install_command.includes('install yotta-humanize'));
     assert.strictEqual(data.application_mode.default, 'explicit');
+
+    const text = spawnSync(process.execPath,
+      [BIN, '--route', '帮我润色输出，要规范可复制，别有 AI 味', '--dir', skills],
+      { encoding: 'utf8', env });
+    assert.strictEqual(text.status, 0, 'exit: ' + text.status + '\n' + text.stderr);
+    assert.ok(text.stdout.includes('yotta-present [已装 v0.2.0]'));
+    assert.ok(text.stdout.includes('其他副本: WorkBuddy v0.1.9'));
   } finally {
     fs.rmSync(home, { recursive: true, force: true });
   }
