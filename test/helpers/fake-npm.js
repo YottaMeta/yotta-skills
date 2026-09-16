@@ -90,7 +90,8 @@ fs.mkdirSync(path.join(pkgRoot, 'scripts', '__pycache__'), { recursive: true });
 fs.writeFileSync(path.join(pkgRoot, 'scripts', '__pycache__', 'demo.cpython-38.pyc'), 'x', 'utf8');
 fs.writeFileSync(path.join(pkgRoot, 'stray.pyc'), 'x', 'utf8');
 
-const res = spawnSync('tar', ['-czf', tgz, '-C', tmp, 'package'], { encoding: 'utf8' });
+// 传相对输出名给 tar，避免 Windows 盘符被 MSYS tar 当成远端 host。
+const res = spawnSync('tar', ['-czf', fname, '-C', tmp, 'package'], { cwd: outDir, encoding: 'utf8' });
 fs.rmSync(tmp, { recursive: true, force: true });
 if (res.status !== 0) { process.stderr.write('fake-npm: tar 失败 ' + (res.stderr || res.stdout) + '\n'); process.exit(1); }
 process.stdout.write(fname + '\n');

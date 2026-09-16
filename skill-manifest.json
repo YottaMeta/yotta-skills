@@ -3,7 +3,7 @@
   "slug": "yotta-skills",
   "name": "元阁",
   "package": "@yottameta/yotta-skills",
-  "version": "0.19.5",
+  "version": "0.19.6",
   "trust": "yottameta",
   "install": {
     "idempotent": true
