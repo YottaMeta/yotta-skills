@@ -64,10 +64,20 @@ resolve_user() {
 }
 
 install_to() {
-  mkdir -p "$1/$SKILL_NAME"
-  cp -r "$SOURCE_DIR/." "$1/$SKILL_NAME/"
-  rm -rf "$1/$SKILL_NAME/.git"
-  echo "installed -> $1/$SKILL_NAME"
+  local dest="$1/$SKILL_NAME"
+  local item
+  mkdir -p "$dest"
+
+  # 只安装技能本体与运行时需要的 MCP/清单资产。
+  for item in .git .github .gitignore .npmignore bin lib test package.json package-lock.json install.sh; do
+    rm -rf -- "$dest/$item"
+  done
+  for item in SKILL.md skill-manifest.json references scripts assets skills.json LICENSE NOTICE README.md README.zh-CN.md CHANGELOG.md USER_GUIDE.md; do
+    if [ -e "$SOURCE_DIR/$item" ]; then
+      cp -r "$SOURCE_DIR/$item" "$dest/"
+    fi
+  done
+  echo "installed -> $dest"
 }
 
 list() {

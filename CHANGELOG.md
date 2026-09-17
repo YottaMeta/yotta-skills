@@ -1,3 +1,14 @@
+## v0.19.7 (2026-09-17)
+
+**MCP registry 按 agent 隔离**
+
+- 新增 `YOTTA_SKILLS_REGISTRY_FILE`：CLI 与 MCP 统一读取该环境变量，允许为不同 agent 指定独立 `registry.json`；未设置时保持 `~/.yottaskills/registry.json`。
+- MCP `list_installed_skills` / `reindex` 返回实际注册表路径，便于宿主核对隔离位置。
+- OpenCode 锁文件将配置 `<dataDir>/yottaskills/<agentId>/registry.json`，避免多 agent 共用同一注册表。
+- `install.sh --dir` 改为只安装技能本体与 MCP / 清单资产，清理旧的 `.github`、`bin`、`lib`、`test`、`package.json` 等开发文件；新增自用安装回归。
+- 同步清单中的元质 `0.4.1`、元伴 `0.2.1`、元引 `0.2.1` 与元忆 `0.15.0` 候选版本。
+- 本里程碑只隔离 registry；安装快照、安装证据、更新缓存和 hook 绑定仍保持现有用户级位置。
+
 ## v0.19.6 (2026-09-16)
 
 - 清单同步：yotta-memory 0.13.2（调用者认证 / agent_key 绑定安全修复）。

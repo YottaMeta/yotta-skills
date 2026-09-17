@@ -198,3 +198,16 @@ test('saveRegistry / readRegistry / formatInventory：临时文件往返', () =>
   assert.ok(text.includes(tmp));
   fs.rmSync(path.dirname(tmp), { recursive: true, force: true });
 });
+
+test('registryPath：YOTTA_SKILLS_REGISTRY_FILE 覆盖默认注册表路径', () => {
+  const previous = process.env.YOTTA_SKILLS_REGISTRY_FILE;
+  const custom = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'yotta-reg-env-')), 'agent-a', 'registry.json');
+  try {
+    process.env.YOTTA_SKILLS_REGISTRY_FILE = custom;
+    assert.strictEqual(scan.registryPath(), custom);
+  } finally {
+    if (previous === undefined) delete process.env.YOTTA_SKILLS_REGISTRY_FILE;
+    else process.env.YOTTA_SKILLS_REGISTRY_FILE = previous;
+    fs.rmSync(path.dirname(path.dirname(custom)), { recursive: true, force: true });
+  }
+});

@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "updated": "2026-09-16",
+  "updated": "2026-09-17",
   "note": "清单同步要求：每次技能发布新版本后，按 YottaSkills 技能登记表更新本文件（登记表为内部台账，不随包分发）。",
   "skills": [
     {
@@ -14,7 +14,7 @@
       "slug": "yotta-code-quality",
       "name": "元质",
       "pkg": "@yottameta/yotta-code-quality",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "desc": "结对式代码质量评审（十二类腐化风险 + 0-100 健康分）"
     },
     {
@@ -28,7 +28,7 @@
       "slug": "yotta-memory",
       "name": "元忆",
       "pkg": "@yottameta/yotta-memory",
-      "version": "0.13.2",
+      "version": "0.15.0",
       "desc": "有权限边界的文件式智能体记忆（FACT/PREF/BOUND/COMMIT）"
     },
     {
@@ -147,7 +147,7 @@
       "slug": "yotta-prompt",
       "name": "元引",
       "pkg": "@yottameta/yotta-prompt",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "desc": "意图澄清 + 生态入口（常驻注入，map 串联元阁全家）"
     },
     {

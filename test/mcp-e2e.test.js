@@ -117,3 +117,25 @@ test('MCP 2026-07-28：modern discover + tools/list + 版本不支持 -32022', (
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+test('MCP：YOTTA_SKILLS_REGISTRY_FILE 使用 agent 隔离注册表', () => {
+  const { home, env } = setupEnv();
+  const registry = path.join(home, 'agent-state', 'codex', 'registry.json');
+  env.YOTTA_SKILLS_REGISTRY_FILE = registry;
+  try {
+    const req = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: { name: 'list_installed_skills', arguments: {} },
+    }) + '\n';
+    const r = runMcp(req, env);
+    assert.strictEqual(r.status, 0, 'exit: ' + r.status + '\n' + r.stderr);
+    const line = JSON.parse(r.stdout.trim().split('\n')[0]);
+    const payload = JSON.parse(line.result.content[0].text);
+    assert.strictEqual(payload.registry, registry);
+    assert.strictEqual(fs.existsSync(registry), true);
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
