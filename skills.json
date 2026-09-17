@@ -35,7 +35,7 @@
       "slug": "yotta-learn",
       "name": "元习",
       "pkg": "@yottameta/yotta-learn",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "desc": "学习沉淀 CLI：错误/纠正/洞见沉淀为 .learnings/ 条目"
     },
     {
@@ -84,7 +84,7 @@
       "slug": "yotta-security-testing",
       "name": "元测",
       "pkg": "@yottameta/yotta-security-testing",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "desc": "有纪律的 AI 安全测试方法论 + Scope Guard 五道防线"
     },
     {
@@ -105,7 +105,7 @@
       "slug": "yotta-publish-guard",
       "name": "元守",
       "pkg": "@yottameta/yotta-publish-guard",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "desc": "工坊「守」：发布前守门（版本四件对齐 + 三通道查重）"
     },
     {
@@ -133,21 +133,21 @@
       "slug": "yotta-chain",
       "name": "元链",
       "pkg": "@yottameta/yotta-chain",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "desc": "供应链依赖校验引擎"
     },
     {
       "slug": "yotta-triage",
       "name": "元鉴",
       "pkg": "@yottameta/yotta-triage",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "desc": "恶意样本静态初筛引擎（哈希/熵/字符串/PE-ELF）"
     },
     {
       "slug": "yotta-prompt",
       "name": "元引",
       "pkg": "@yottameta/yotta-prompt",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "desc": "意图澄清 + 生态入口（常驻注入，map 串联元阁全家）"
     },
     {
