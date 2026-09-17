@@ -133,7 +133,7 @@
       "slug": "yotta-chain",
       "name": "元链",
       "pkg": "@yottameta/yotta-chain",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "desc": "供应链依赖校验引擎"
     },
     {
