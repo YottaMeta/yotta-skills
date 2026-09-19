@@ -6,13 +6,13 @@ const os = require('os');
 const path = require('path');
 const gate = require('../lib/verify-gate');
 
-test('findVerifier prefers explicit path and then destination engine', () => {
+test('findVerifier prefers explicit path; bare destination engine is no longer trusted', () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ys-gate-'));
   const dest = path.join(home, 'skills');
   const engine = path.join(dest, 'yotta-verify', 'scripts', 'yotta_verify.py');
   fs.mkdirSync(path.dirname(engine), { recursive: true });
   fs.writeFileSync(engine, '# fake\n', 'utf8');
-  assert.strictEqual(gate.findVerifier({ dest, opts: {} }), engine);
+  assert.strictEqual(gate.findVerifier({ dest, opts: {} }), null);
   assert.strictEqual(gate.findVerifier({ dest, opts: { verify: engine } }), engine);
 });
 

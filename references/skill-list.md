@@ -13,7 +13,7 @@
 | `yotta-security-audit` | 元安 | `@yottameta/yotta-security-audit` | 0.2.4 | 安全扫描引擎：13 类检测器 + 系统安全基线 |
 | `yotta-vetter` | 元审 | `@yottameta/yotta-vetter` | 0.2.5 | 安全审查协议：四阶段 review + SAFE TO INSTALL 判定 |
 | `yotta-recon` | 元析 | `@yottameta/yotta-recon` | 0.1.7 | 跨智能体网络侦察：零依赖端口/服务/版本指纹探测 |
-| `yotta-guardian` | 元盾 | `@yottameta/yotta-guardian` | 0.1.4 | 跨智能体危险调用拦截护栏：确定性规则 + 可插拔意图验证 |
+| `yotta-guardian` | 元盾 | `@yottameta/yotta-guardian` | 0.1.5 | 跨智能体危险调用拦截护栏：确定性规则 + 可插拔意图验证 |
 | `yotta-humanize` | 元真 | `@yottameta/yotta-humanize` | 0.2.1 | 去 AI 味中文写作编辑：检测器引擎 |
 | `yotta-logs` | 元史 | `@yottameta/yotta-logs` | 0.3.1 | 跨智能体历史会话 / 记忆日志检索 |
 | `yotta-security-testing` | 元测 | `@yottameta/yotta-security-testing` | 0.3.1 | 有纪律的 AI 安全测试方法论 + Scope Guard 五道防线 |
@@ -26,7 +26,7 @@
 | `yotta-chain` | 元链 | `@yottameta/yotta-chain` | 0.1.4 | 供应链依赖校验引擎 |
 | `yotta-triage` | 元鉴 | `@yottameta/yotta-triage` | 0.1.3 | 恶意样本静态初筛引擎（哈希/熵/字符串/PE-ELF） |
 | `yotta-prompt` | 元引 | `@yottameta/yotta-prompt` | 0.2.2 | 意图澄清 + 生态入口（常驻注入，map 串联元阁全家） |
-| `yotta-verify` | 元信 | `@yottameta/yotta-verify` | 0.3.1 | 装前安全扫描器 + audited 徽章（prompt injection + 危险模式） |
+| `yotta-verify` | 元信 | `@yottameta/yotta-verify` | 0.3.2 | 装前安全扫描器 + audited 徽章（prompt injection + 危险模式） |
 
 ## 家族分布
 

@@ -1,3 +1,26 @@
+## v0.19.13 (2026-09-19)
+
+**安全修复：校验器（元信）发现改为「受信安装记录 + 身份 + 摘要」三重绑定。**
+
+- 背景（平台扫描发现，T07 工具劫持）：旧实现通过本地技能注册表里 `slug=yotta-verify` 的
+  `source_dirs` 发现扫描引擎，而注册表身份来自被扫描技能自己 `SKILL.md` frontmatter 的 `name`。
+  任意目录只要自称 `yotta-verify` 并提供 `scripts/yotta_verify.py`，就会被当作引擎执行——
+  既可直接执行任意代码，也能伪造 `SAFE TO INSTALL` 放行后续安装。
+- 修复：
+  - 新增 `lib/trusted-verifier.js`：受信记录 `~/.yottaskills/trusted-verifier.json`
+    （与注册表同目录，支持 `YOTTA_SKILLS_REGISTRY_FILE` 多 agent 隔离），只在安装管线
+    校验通过、元信安装 / 更新成功后写入。
+  - `findVerifier` 只认两类来源：用户显式指定（`--verify` / `YOTTA_SKILLS_VERIFY`）与
+    受信记录；候选须通过「路径 realpath 无符号链接跳转 + 包身份（slug / package / trust /
+    SKILL.md 与 manifest 版本一致）+ 引擎 SHA-256 与记录一致」。
+  - 任一环节不满足即 fail-closed：不再回退到注册表 / 目标目录里的同名引擎，改走自举安装
+    （从 npm 重装一份干净的元信，装完立即写记录）。
+  - 自举安装后新增身份 / 摘要复核，未通过不返回引擎。
+- 测试：新增 `test/trusted-verifier.test.js` 8 项（含 T07 回归、摘要不符、身份不符、版本不符、
+  裸引擎不被采用、记录读写往返）；测试夹具 `test/helpers/fake-npm.js` 按真实元信包形态
+  生成 manifest；`node --test "test/*.test.js"` 180/180。
+- 清单同步：`skills.json` 元信 0.3.1 → 0.3.2（`references/skill-list.md` 同步）。
+
 ## v0.19.12 (2026-09-19)
 
 同步家族维护批次清单版本：元安全 0.2.6 / 元盾 0.1.4 / 元察 0.2.9 / 元析 0.1.7 / 元安 0.2.4 / 元审 0.2.5。

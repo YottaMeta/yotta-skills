@@ -63,7 +63,7 @@
       "slug": "yotta-guardian",
       "name": "元盾",
       "pkg": "@yottameta/yotta-guardian",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "desc": "跨智能体危险调用拦截护栏：确定性规则 + 可插拔意图验证"
     },
     {
@@ -154,7 +154,7 @@
       "slug": "yotta-verify",
       "name": "元信",
       "pkg": "@yottameta/yotta-verify",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "desc": "装前安全扫描器 + audited 徽章（prompt injection + 危险模式）"
     }
   ]

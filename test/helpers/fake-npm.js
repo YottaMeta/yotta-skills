@@ -75,6 +75,24 @@ fs.writeFileSync(path.join(pkgRoot, 'package.json'), JSON.stringify({ name: pkg,
 fs.writeFileSync(path.join(pkgRoot, 'bin', 'extra.js'), '#!/usr/bin/env node\nconsole.log(1);\n', 'utf8');
 if (manifestFile && fs.existsSync(manifestFile)) {
   fs.copyFileSync(manifestFile, path.join(pkgRoot, 'skill-manifest.json'));
+} else if (bare === 'yotta-verify') {
+  // 元信是受信校验器：安装记录要求 manifest 身份齐备（slug / package / trust / 版本一致）。
+  // 夹具按真实包形态生成，避免测试绕过 v0.19.13 起的身份校验。
+  fs.writeFileSync(path.join(pkgRoot, 'skill-manifest.json'), JSON.stringify({
+    manifestVersion: 1,
+    slug: 'yotta-verify',
+    name: '元信',
+    package: '@yottameta/yotta-verify',
+    version: version,
+    trust: 'yottameta',
+    install: { idempotent: true, network: 'none' },
+    permissions: {
+      filesystem: 'user-skills-dir',
+      network: 'none',
+      process: 'child-process',
+      note: '夹具：仅用于离线测试的元信包形态。',
+    },
+  }, null, 2) + '\n', 'utf8');
 }
 if (lifecycleDir && fs.existsSync(lifecycleDir)) {
   copyTree(lifecycleDir, path.join(pkgRoot, 'scripts', 'lifecycle'));
