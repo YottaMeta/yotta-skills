@@ -28,7 +28,7 @@
       "slug": "yotta-memory",
       "name": "元忆",
       "pkg": "@yottameta/yotta-memory",
-      "version": "0.16.0",
+      "version": "0.16.1",
       "desc": "有权限边界的文件式智能体记忆（FACT/PREF/BOUND/COMMIT）"
     },
     {
@@ -70,7 +70,7 @@
       "slug": "yotta-humanize",
       "name": "元真",
       "pkg": "@yottameta/yotta-humanize",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "desc": "去 AI 味中文写作编辑：检测器引擎"
     },
     {

@@ -211,3 +211,19 @@ test('registryPath：YOTTA_SKILLS_REGISTRY_FILE 覆盖默认注册表路径', ()
     fs.rmSync(path.dirname(path.dirname(custom)), { recursive: true, force: true });
   }
 });
+
+test('defaultRoots：识别 OpenClaw / QClaw 技能目录（含 OPENCLAW_STATE_DIR 覆盖）', () => {
+  const previous = process.env.OPENCLAW_STATE_DIR;
+  const fake = fs.mkdtempSync(path.join(os.tmpdir(), 'openclaw-state-'));
+  try {
+    process.env.OPENCLAW_STATE_DIR = fake;
+    const roots = scan.defaultRoots({});
+    const target = roots.find((r) => r.label === 'OpenClaw / QClaw');
+    assert.ok(target, '缺少 OpenClaw / QClaw 根目录');
+    assert.strictEqual(target.dir, path.resolve(path.join(fake, 'skills')));
+  } finally {
+    if (previous === undefined) delete process.env.OPENCLAW_STATE_DIR;
+    else process.env.OPENCLAW_STATE_DIR = previous;
+    fs.rmSync(fake, { recursive: true, force: true });
+  }
+});

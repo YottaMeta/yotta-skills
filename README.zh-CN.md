@@ -180,6 +180,16 @@ bash install.sh --list           # 列出智能体 -> 默认目录
 
 - `install.sh` 把「元阁安装器技能」本身装进智能体 / 目录，让代理能调用元阁；要装齐 22 个技能，再执行 `node bin/yotta-skills.js install --agent <name>`（或 `--dir <path>`）。
 
+### 方式五：OpenClaw / QClaw（宿主官方命令）
+
+```text
+openclaw skills install @yottameta/yotta-skills   # 安装（含 ClawHub 安全审计）
+openclaw skills update @yottameta/yotta-skills    # 更新
+```
+
+- QClaw 基于 OpenClaw，两者共用 `~/.openclaw/skills` 技能目录；元阁的 `--inventory` / `--reindex` 已能识别该目录（含 `OPENCLAW_STATE_DIR` 覆盖）。
+- 走宿主官方命令可保留 ClawHub 安全审计卡与更新追踪（`openclaw skills update` 只覆盖 ClawHub 追踪安装的技能）。
+
 > 方式一走 npm 源（npmmirror / npmjs），不依赖 GitHub；方式二 / 三走 GitHub，国内无代理可能失败。
 
 ## 全家技能清单

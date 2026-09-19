@@ -1,3 +1,10 @@
+## v0.19.11 (2026-09-19)
+
+**OpenClaw / QClaw 目录识别 + 清单同步**
+
+- `--inventory` / `--reindex` 等盘点能力新增识别 OpenClaw / QClaw 技能目录（`~/.openclaw/skills`，支持 `OPENCLAW_STATE_DIR` 覆盖）——QClaw 基于 OpenClaw，同一目录下的技能现在可被盘点、去重与路由覆盖；新增 `test/skills-scan.test.js` 用例。
+- 清单同步：`skills.json` 与 `references/skill-list.md` 更新元真 `0.2.1`（位置参数修复）与元忆 `0.16.1`（维护性重发）。
+
 ## v0.19.10 (2026-09-19)
 
 **台账口径维护**

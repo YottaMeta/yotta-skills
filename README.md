@@ -175,6 +175,16 @@ bash install.sh --list           # list agents -> default directories
 
 - `install.sh` places the **元阁 installer skill** itself so an agent can invoke the family installer. To install the 22 skills, run `node bin/yotta-skills.js install --agent <name>` (or `--dir <path>`).
 
+### Method 5: OpenClaw / QClaw (host-native commands)
+
+```text
+openclaw skills install @yottameta/yotta-skills   # install (with ClawHub security audit)
+openclaw skills update @yottameta/yotta-skills    # update
+```
+
+- QClaw is built on OpenClaw; both share the `~/.openclaw/skills` directory, which `--inventory` / `--reindex` now recognize (including `OPENCLAW_STATE_DIR` override).
+- Host-native commands keep ClawHub's security-audit card and update tracking (`openclaw skills update` only covers ClawHub-tracked installs).
+
 > Method 1 uses the npm registry (npmmirror / npmjs) and does not depend on GitHub; Methods 2/3 use GitHub and may fail without a proxy in China.
 
 ## Included skills
