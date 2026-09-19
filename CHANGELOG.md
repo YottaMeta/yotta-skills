@@ -1,3 +1,11 @@
+## v0.19.10 (2026-09-19)
+
+**台账口径维护**
+
+- `references/skill-list.md` 元忆行由 `0.15.0` 更正为 `0.16.0`，清单更新日期改为 `2026-09-19`；`skills.json` 为机器权威源，`test/skill-list.test.js` 强制两者一致。
+- 更正 v0.19.7 条目表述：元伴 `yotta-partner` 不在全家清单内（`skills.json` 与 `skill-list.md` 均未收录该技能，元伴通过自带安装器单独安装）。
+- 本次只维护清单口径与文档表述，不改变安装器、路由、hook 契约与清单技能集合（仍为 22 项）。
+
 ## v0.19.9 (2026-09-18)
 
 - 同步元链 `0.1.4` 到 skills.json / skill-list：新增 `scannedFiles` 扫描输入证据，统一 stdout / stderr UTF-8。
