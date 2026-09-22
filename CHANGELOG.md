@@ -1,3 +1,11 @@
+## v0.19.16 (2026-09-22)
+
+**清单同步：元忆 0.16.4（agent-key 提示范围修复）**
+
+- `skills.json` / `references/skill-list.md` 的 yotta-memory 版本 0.16.3 → 0.16.4，清单更新日期 → 2026-09-22。
+- 同步元忆缺 `--agent-key-file` 的提示范围修复，确保全家安装按清单取得正确版本。
+- 版本对齐：package.json / SKILL.md frontmatter / skill-manifest.json / 引擎 VERSION / CHANGELOG = 0.19.16。
+
 ## v0.19.15 (2026-09-22)
 
 **清单同步：元忆 0.16.3（迁移授权最短路径）**
