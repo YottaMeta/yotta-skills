@@ -1,3 +1,11 @@
+## v0.19.17 (2026-09-22)
+
+**清单同步：元忆 0.16.5（doctor JSON 稳定契约）**
+
+- `skills.json` / `references/skill-list.md` 的 yotta-memory 版本 0.16.4 → 0.16.5。
+- 同步 `doctor --json` 顶层 `schemaVersion` / `encryption` / `migration_required` 契约，确保全家安装取得正确版本。
+- 版本对齐：package.json / SKILL.md frontmatter / skill-manifest.json / 引擎 VERSION / CHANGELOG = 0.19.17。
+
 ## v0.19.16 (2026-09-22)
 
 **清单同步：元忆 0.16.4（agent-key 提示范围修复）**
