@@ -1,3 +1,12 @@
+## v0.19.18 (2026-09-23)
+
+**插件载荷完整性修复：lib/ + skills.json**
+
+- `tools/build_standalone_plugins.py` 的 `PAYLOAD_DIRS` 补 `lib`，插件载荷含元阁 12 个运行时模块；新增 `PAYLOAD_EXTRA_FILES` 把 `skills.json` 带入载荷。
+- 修复插件内 `reindex` / `route_request` 报 `Cannot find module '../lib/install-evidence'` 与清单读取失败。
+- 新增回归 `tools/test_plugin_payload_runtime.py`：构建后插件载荷必须跑通 reindex + route_request。
+- 清单同步元忆 0.16.6；版本对齐 package.json / SKILL.md frontmatter / skill-manifest.json / 引擎 VERSION / CHANGELOG = 0.19.18。
+
 ## v0.19.17 (2026-09-22)
 
 **清单同步：元忆 0.16.5（doctor JSON 稳定契约）**
