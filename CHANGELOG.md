@@ -1,3 +1,11 @@
+## v0.19.19 (2026-09-23)
+
+**清单同步：元忆 0.16.7（迁移口令安全 + view 根指纹）**
+
+- `skills.json` / `references/skill-list.md` 的 yotta-memory 版本 0.16.6 → 0.16.7。
+- 同步元忆迁移文档的编码安全修正，以及 `view` 端口复用前的 memory_home 指纹校验。
+- 版本对齐：package.json / SKILL.md frontmatter / skill-manifest.json / 引擎 VERSION / CHANGELOG = 0.19.19。
+
 ## v0.19.18 (2026-09-23)
 
 **插件载荷完整性修复：lib/ + skills.json**
