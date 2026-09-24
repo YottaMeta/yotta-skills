@@ -189,7 +189,7 @@
       "slug": "yotta-school-doc",
       "name": "元公",
       "pkg": "@yottameta/yotta-school-doc",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "desc": "本地确定性学校公文可信起草与校验（文种规则包 / 可复算骨架 / 12 类缺口）"
     }
   ]
