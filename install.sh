@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # yotta-skills（元阁）多智能体安装脚本（YottaSkills）
 # 用途：把「元阁安装器技能」本身装进智能体/目录（它自带 SKILL.md，让代理能调用元阁）。
-# 注意：这**不是**把 22 个 yotta-* 技能一并装齐——装全家需再跑
+# 注意：这**不是**把 27 个 yotta-* 技能一并装齐——装全家需再跑
 #       `node bin/yotta-skills.js install --agent <name>`（或 --dir <path>）。
 # 用法:
 #   bash install.sh --agent <name>  # 把安装器技能装到智能体默认用户级目录

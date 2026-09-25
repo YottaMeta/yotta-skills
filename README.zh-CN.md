@@ -7,7 +7,7 @@
 <h1 align="center">yotta-skills · 元阁 (YuanGe)</h1>
 
 <p align="center">YottaMeta 的<b>技能生态编排路由 + 全家一键安装器 + 技能盘点</b>：先按需求路由该组合哪几个技能，再一条 <code>npx</code> 命令把已发布的全部
-<code>yotta-*</code> 技能（当前 <b>22</b> 个）装进指定智能体或目录。</p>
+<code>yotta-*</code> 技能（当前 <b>27</b> 个）装进指定智能体或目录。</p>
 <p align="center">看清单、路由组合、装全家、增量更新、<code>--dry-run</code> 预览、<code>--pin</code> 锁版本--
 幂等、零依赖（Node.js 18+）、纯 npm 生态。</p>
 <p align="center">本包<b>不含任何技能本体</b>——只做「清单 + 下载 + 落位 + 汇总」；每个技能仍走各自 npm 包。</p>
@@ -23,7 +23,7 @@
 
 ## 这是什么
 
-以前装元阁全家要逐个 <code>npx</code> 跑很多次。元阁把它变成一条命令：读内置清单（22 个已发布技能）、
+以前装元阁全家要逐个 <code>npx</code> 跑很多次。元阁把它变成一条命令：读内置清单（27 个已发布技能）、
 逐个从各自 npm 包下载、落位到目标技能目录、打印汇总（成功 / 跳过 / 失败）。
 
 元阁也是全家的**编排策划层**：接到需求先查「编排策划」组合表——该组合哪几个技能、按什么顺序、各自强在哪——然后给出安装与调用**建议**，由用户确认后执行。决策表随包提供（<code>references/orchestration.md</code>），<code>SKILL.md</code> 中有摘要。
@@ -139,7 +139,7 @@ npx -y @yottameta/yotta-skills --reindex
 
 ## 安装
 
-> **先分清两层**：`yotta-skills`（元阁）是「全家技能安装器」，本身**不含任何技能本体**。它所做的事是把已发布的 22 个 `yotta-*` 技能从各自 npm 包装进目标目录，所以「拿到元阁」不等于「已装齐技能」——拿到后还需运行一次 `install`，才会把全家真正放进目标目录。单个技能（如 `@yottameta/yotta-memory`）是各自独立的 npm 包、装自己即可；元阁是「一次装齐全家」的管理器，安装方式与此不同。
+> **先分清两层**：`yotta-skills`（元阁）是「全家技能安装器」，本身**不含任何技能本体**。它所做的事是把已发布的 27 个 `yotta-*` 技能从各自 npm 包装进目标目录，所以「拿到元阁」不等于「已装齐技能」——拿到后还需运行一次 `install`，才会把全家真正放进目标目录。单个技能（如 `@yottameta/yotta-memory`）是各自独立的 npm 包、装自己即可；元阁是「一次装齐全家」的管理器，安装方式与此不同。
 
 下面四种方式任选，顺序即推荐优先级；本包一律从 **npm** 获取（GitHub 无代理较慢，npm 支持镜像）。方式二 / 三只「拿到安装器」；方式四只把「安装器技能」本身装进智能体目录——都仍需再跑一次 `install` 才装齐全家。
 
@@ -168,7 +168,7 @@ node bin/yotta-skills.js install --dir <你的技能目录>
 
 ### 方式三：GitHub 下载压缩包（手动 / 无 git 环境）
 
-在 GitHub 仓库 `YottaMeta/yotta-skills` 点 **Code → Download ZIP**，解压后跑 `node bin/yotta-skills.js install --dir <你的技能目录>` 装齐全家。把 `yotta-skills` 文件夹放进智能体技能目录只让**安装器技能**本身可被调用（它有自己的 `SKILL.md`），并不会把 22 个技能一并带进去——那仍需跑 `install`。
+在 GitHub 仓库 `YottaMeta/yotta-skills` 点 **Code → Download ZIP**，解压后跑 `node bin/yotta-skills.js install --dir <你的技能目录>` 装齐全家。把 `yotta-skills` 文件夹放进智能体技能目录只让**安装器技能**本身可被调用（它有自己的 `SKILL.md`），并不会把 27 个技能一并带进去——那仍需跑 `install`。
 
 ### 方式四：install.sh（多智能体一键脚本）
 
@@ -178,7 +178,7 @@ bash install.sh --dir <path>     # 把「安装器技能」本身装到指定目
 bash install.sh --list           # 列出智能体 -> 默认目录
 ```
 
-- `install.sh` 把「元阁安装器技能」本身装进智能体 / 目录，让代理能调用元阁；要装齐 22 个技能，再执行 `node bin/yotta-skills.js install --agent <name>`（或 `--dir <path>`）。
+- `install.sh` 把「元阁安装器技能」本身装进智能体 / 目录，让代理能调用元阁；要装齐 27 个技能，再执行 `node bin/yotta-skills.js install --agent <name>`（或 `--dir <path>`）。
 
 ### 方式五：OpenClaw / QClaw（宿主官方命令）
 
@@ -194,7 +194,7 @@ openclaw skills update @yottameta/yotta-skills    # 更新
 
 ## 全家技能清单
 
-22 个技能的 slug / 中文名 / 包名 / 版本 / 说明见 `references/skill-list.md`（机器权威源为
+27 个技能的 slug / 中文名 / 包名 / 版本 / 说明见 `references/skill-list.md`（机器权威源为
 `skills.json`）。家族分布：安全与护栏（12）/ 质量与工程（4）/ 记忆与上下文（3）/ 写作与表达（1）/
 工作流（1）/ 入口与引导（1）。
 

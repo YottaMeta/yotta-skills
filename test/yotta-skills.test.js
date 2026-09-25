@@ -39,10 +39,10 @@ function readLog(log) {
   return fs.readFileSync(log, 'utf8').trim().split(/\r?\n/).filter(Boolean);
 }
 
-test('--list 列出全部 22 技能 + 版本 + 说明', () => {
+test('--list 列出全部清单技能 + 版本 + 说明', () => {
   const r = run(['--list']);
   assert.strictEqual(r.status, 0, r.stderr);
-  assert.match(r.stdout, /全家技能清单（22 个）/);
+  assert.match(r.stdout, new RegExp('全家技能清单（' + skills.length + ' 个）'));
   for (const s of skills) {
     assert.ok(r.stdout.includes(s.slug), '缺 slug: ' + s.slug);
     assert.ok(r.stdout.includes(s.version), '缺版本 ' + s.version + ' : ' + s.slug);
@@ -72,7 +72,7 @@ test('install --dry-run --dir 显示目标路径', () => {
   assert.ok(r.stdout.includes(dest));
 });
 
-test('install 全家到临时目录：22 个 SKILL.md 落位 + skip 集合 + 默认 pin spec', () => {
+test('install 全家到临时目录：清单技能 SKILL.md 落位 + skip 集合 + 默认 pin spec', () => {
   const dest = tmpdir('ys-install-');
   const log = logPath();
   const r = run(['install', '--dir', dest, '--skip-scan'], fakeEnv({ YOTTA_SKILLS_FAKE_LOG: log }));
@@ -95,7 +95,7 @@ test('install 全家到临时目录：22 个 SKILL.md 落位 + skip 集合 + 默
     assert.ok(lines.some(l => l.includes(s.pkg + '@' + s.version)), '默认 pin spec 缺失: ' + s.pkg);
   }
   assert.ok(!lines.some(l => /@\d+\.x(\s|$)/.test(l)), '默认不应出现浮动 range spec');
-  assert.match(r.stdout, /汇总: 成功 22 \/ 跳过\(已是最新\) 0 \/ 失败 0/);
+  assert.match(r.stdout, new RegExp('汇总: 成功 ' + skills.length + ' \\/ 跳过\\(已是最新\\) 0 \\/ 失败 0'));
 });
 
 test('install 幂等：第二次全部跳过（不再 pack）', () => {
@@ -106,7 +106,7 @@ test('install 幂等：第二次全部跳过（不再 pack）', () => {
   const log2 = logPath();
   const r2 = run(['install', '--dir', dest, '--skip-scan'], fakeEnv({ YOTTA_SKILLS_FAKE_LOG: log2 }));
   assert.strictEqual(r2.status, 0, r2.stdout + r2.stderr);
-  assert.match(r2.stdout, /汇总: 成功 0 \/ 跳过\(已是最新\) 22 \/ 失败 0/);
+  assert.match(r2.stdout, new RegExp('汇总: 成功 0 \\/ 跳过\\(已是最新\\) ' + skills.length + ' \\/ 失败 0'));
   assert.strictEqual(readLog(log2).length, 0, '第二次不应触发 pack');
 });
 
@@ -131,7 +131,7 @@ test('update：删除一个技能后补齐，其余跳过', () => {
   const r2 = run(['update', '--dir', dest, '--skip-scan'], fakeEnv({ YOTTA_SKILLS_FAKE_LOG: logPath() }));
   assert.strictEqual(r2.status, 0, r2.stdout + r2.stderr);
   assert.ok(fs.existsSync(path.join(dest, 'yotta-memory', 'SKILL.md')), 'update 应补齐缺失技能');
-  assert.match(r2.stdout, /汇总: 更新 1 \/ 已是最新 21 \/ 失败 0/);
+  assert.match(r2.stdout, new RegExp('汇总: 更新 1 \\/ 已是最新 ' + (skills.length - 1) + ' \\/ 失败 0'));
 });
 
 test('未知智能体 -> 退出码 2 且提示', () => {

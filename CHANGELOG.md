@@ -1,3 +1,12 @@
+## v0.19.20 (2026-09-25)
+
+**清单同步：元忆 0.17.0 + 信任层四件 + 元公 0.1.2**
+
+- `skills.json` / `references/skill-list.md` 的 yotta-memory 版本 0.16.7 → 0.17.0；清单更新日期 → 2026-09-25。
+- 补记信任层四件（元规 0.1.0 / 元镜 0.1.0 / 元案 0.1.0 / 元题 0.1.0）与元公 0.1.2，人工可读清单从 22 技能补齐到 27 技能，并补「合规与信任」「教育与学习」两个家族分区。
+- 修正 `skill-list.md` 与 `skills.json` 的技能集合 / 版本一致性回归；`--list`、install、install 幂等、update 的测试计数改为读取清单长度，后续新增技能不再硬编码数量。
+- 版本对齐：package.json / SKILL.md frontmatter / skill-manifest.json / 引擎 VERSION / MCP VERSION / CHANGELOG = 0.19.20。
+
 ## v0.19.19 (2026-09-23)
 
 **清单同步：元忆 0.16.7（迁移口令安全 + view 根指纹）**

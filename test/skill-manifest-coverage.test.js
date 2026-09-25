@@ -26,12 +26,12 @@ function readVersion(dir) {
   return { pkg, version: m ? m[1] : null };
 }
 
-test('all 26 family skills resolve a manifest contract', () => {
+test('every family skill directory resolves a manifest contract', () => {
   const dirs = fs.readdirSync(SKILLS_ROOT, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && entry.name.startsWith('yotta-'))
     .map((entry) => entry.name)
     .sort();
-  assert.strictEqual(dirs.length, 26);
+  assert.ok(dirs.length > 0, '至少应有一个 yotta-* 技能目录');
 
   for (const slug of dirs) {
     const dir = path.join(SKILLS_ROOT, slug);

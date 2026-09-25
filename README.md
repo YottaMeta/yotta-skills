@@ -6,7 +6,7 @@
 
 <h1 align="center">yotta-skills · 元阁 (YuanGe)</h1>
 
-<p align="center">YottaMeta's skill-family <b>orchestration router, inventory, and one-command installer</b>: route which skills to combine for a task, then one <code>npx</code> line installs the published <code>yotta-*</code> skills (currently <b>22</b>) into any agent or directory.</p>
+<p align="center">YottaMeta's skill-family <b>orchestration router, inventory, and one-command installer</b>: route which skills to combine for a task, then one <code>npx</code> line installs the published <code>yotta-*</code> skills (currently <b>27</b>) into any agent or directory.</p>
 <p align="center">List the family, route a task, install everything, incrementally update, preview with <code>--dry-run</code>, pin exact versions - idempotent and zero-dependency (Node.js 18+), pure npm ecosystem.</p>
 <p align="center">This package contains <b>no skill bodies</b> — only a manifest, a downloader, a placer and a summary. Each skill still comes from its own npm package.</p>
 
@@ -21,7 +21,7 @@
 
 ## What it is
 
-Installing the whole YottaMeta family used to mean running <code>npx</code> for each skill one by one. 元阁 turns it into a single command: it reads a built-in manifest (22 published skills), downloads each from its own npm package, places it into the target skills directory, and prints a summary (success / skipped / failed).
+Installing the whole YottaMeta family used to mean running <code>npx</code> for each skill one by one. 元阁 turns it into a single command: it reads a built-in manifest (27 published skills), downloads each from its own npm package, places it into the target skills directory, and prints a summary (success / skipped / failed).
 
 元阁 is also the **family orchestration planner**: given a task, check the orchestration table first — which skills to combine, in what order, and why — then install exactly those. The decision table ships in the package as <code>references/orchestration.md</code> and is summarized in <code>SKILL.md</code>.
 
@@ -134,7 +134,7 @@ Supported agent keys (17): `claude` `cursor` `codex` `gemini` `goose` `amp` `ope
 
 ## Installation
 
-> **Two layers first**: `yotta-skills` (元阁) is a **family installer**, not a skill itself — it ships no skill bodies. It pulls each of the 22 published `yotta-*` skills from its own npm package into your target directory, so **getting 元阁 is not the same as having the skills**. After you have the installer, run `install` once to actually place the whole family. A single skill (e.g. `@yottameta/yotta-memory`) is its own npm package and installs by itself; 元阁 is the **install everything at once** manager, so its install path is different.
+> **Two layers first**: `yotta-skills` (元阁) is a **family installer**, not a skill itself — it ships no skill bodies. It pulls each of the 27 published `yotta-*` skills from its own npm package into your target directory, so **getting 元阁 is not the same as having the skills**. After you have the installer, run `install` once to actually place the whole family. A single skill (e.g. `@yottameta/yotta-memory`) is its own npm package and installs by itself; 元阁 is the **install everything at once** manager, so its install path is different.
 
 Pick any of the four methods below; the order is the recommended priority. The package always comes from **npm** (GitHub can be slow without a proxy; npm supports mirrors). Methods 2/3 only fetch the **installer**; method 4 places only the **installer skill** into an agent's skills directory — in each case you still run `install` to bring the whole family.
 
@@ -163,7 +163,7 @@ node bin/yotta-skills.js install --dir <your-skills-dir>
 
 ### Method 3: GitHub Download ZIP (manual / no git)
 
-On the GitHub repository `YottaMeta/yotta-skills`, click **Code → Download ZIP**, unzip it, then run `node bin/yotta-skills.js install --dir <your-skills-dir>`. Copying the `yotta-skills` folder into an agent's skills directory only makes the **installer skill** itself callable (it has its own `SKILL.md`) — it does not bring the 22 skills; run `install` for that.
+On the GitHub repository `YottaMeta/yotta-skills`, click **Code → Download ZIP**, unzip it, then run `node bin/yotta-skills.js install --dir <your-skills-dir>`. Copying the `yotta-skills` folder into an agent's skills directory only makes the **installer skill** itself callable (it has its own `SKILL.md`) — it does not bring the 27 skills; run `install` for that.
 
 ### Method 4: install.sh (multi-agent one-liner script)
 
@@ -173,7 +173,7 @@ bash install.sh --dir <path>     # install the master installer skill to the giv
 bash install.sh --list           # list agents -> default directories
 ```
 
-- `install.sh` places the **元阁 installer skill** itself so an agent can invoke the family installer. To install the 22 skills, run `node bin/yotta-skills.js install --agent <name>` (or `--dir <path>`).
+- `install.sh` places the **元阁 installer skill** itself so an agent can invoke the family installer. To install the 27 skills, run `node bin/yotta-skills.js install --agent <name>` (or `--dir <path>`).
 
 ### Method 5: OpenClaw / QClaw (host-native commands)
 
@@ -189,7 +189,7 @@ openclaw skills update @yottameta/yotta-skills    # update
 
 ## Included skills
 
-The full 22-skill manifest with Chinese names, package names, versions and descriptions is in `references/skill-list.md` (the machine-readable source is `skills.json`). Family coverage: Security & Guardrails (12), Quality & Engineering (4), Memory & Context (3), Writing & Expression (1), Workflow (1), Entry & Guidance (1).
+The full 27-skill manifest with Chinese names, package names, versions and descriptions is in `references/skill-list.md` (the machine-readable source is `skills.json`). Family coverage: Security & Guardrails (12), Quality & Engineering (4), Memory & Context (3), Writing & Expression (1), Workflow (1), Entry & Guidance (1), Compliance & Trust (1), Education & Learning (4).
 
 ## How it works
 
