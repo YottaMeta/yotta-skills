@@ -1,9 +1,17 @@
-## v0.19.21 (2026-09-25)
+## v0.19.22 (2026-09-25)
+
+口径修正：安装 / 更新权限边界写清楚（ClawHub LLM 复核）。
+
+- SKILL.md 新增权限边界：`install` / `update` 属有副作用操作，执行前先用 `--dry-run` 展示目标目录与技能清单、由用户确认；批量安装不是一次性授权，新增目标目录要重新确认；不静默写宿主配置、不自动安装缺失技能、不 `-g` 污染全局。
+- 安装器加固：拒绝对符号链接目标写入、不做整目录删除；批量安装（`-g`）必须显式加 `--yes`。
+- 元忆清单一并同步 0.17.2。
 
 **清单同步：元忆 0.17.1**
 
 - `skills.json` / `references/skill-list.md` 的 yotta-memory 版本 0.17.0 → 0.17.1，承接「view 删除 AI 身份时输入错误 ID 无提示」修复。
 - 版本对齐：package.json / SKILL.md frontmatter / skill-manifest.json / 引擎 VERSION / MCP VERSION / CHANGELOG = 0.19.21。
+
+## v0.19.21 (2026-09-25)
 
 ## v0.19.20 (2026-09-25)
 
