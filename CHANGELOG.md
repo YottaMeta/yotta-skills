@@ -1,3 +1,10 @@
+## v0.19.21 (2026-09-25)
+
+**清单同步：元忆 0.17.1**
+
+- `skills.json` / `references/skill-list.md` 的 yotta-memory 版本 0.17.0 → 0.17.1，承接「view 删除 AI 身份时输入错误 ID 无提示」修复。
+- 版本对齐：package.json / SKILL.md frontmatter / skill-manifest.json / 引擎 VERSION / MCP VERSION / CHANGELOG = 0.19.21。
+
 ## v0.19.20 (2026-09-25)
 
 **清单同步：元忆 0.17.0 + 信任层四件 + 元公 0.1.2**
