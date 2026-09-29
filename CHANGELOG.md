@@ -1,3 +1,11 @@
+## v0.20.1 (2026-09-29)
+- 家族安装接入 scanPolicy 例外复核：元信判 `DO NOT INSTALL` 时，按包内 `scan-policy.json` 的已审查例外（逐条绑定技能 + 版本 + treeHash + 规则 + 路径）复核，豁免检测规则表 / 攻防样例 / 文档说明类命中；复核后无阻断级发现则继续安装。
+- 修复元忆 / 元察 / 元鉴从元阁安装时被元信自指误报阻断的问题（检测类技能自带规则表字面量）；例外表与 handoff / OpenCode 的 scanPolicy 同源，由 `tools/build_scan_policy.py` 生成。
+- 技能升版或内容变化后旧例外自动失效（treeHash 绑定，fail-closed），安装回到元信原始判定。
+- 安装日志新增 `scan_policy` 字段（是否应用 / 豁免条数 / version / treeHash）。
+- 元信扫描输出解析失败（空输出 / 截断 / 子进程抖动）自动重试一次；仍失败时报错带退出码与 stderr 摘要。
+- 静态 playbook / 路由 / hook 契约零变更。
+
 ## v0.20.0 (2026-09-28)
 - 新增 `o1.route` 动态扩展口：`--route` / MCP `route_request` 可选调用用户配置的本地扩展提供方（provider），在已装注册表白名单内增补 / 重排路由结果。
 - 静态 playbook 结果先算必算；未配置或未授权 / 超时 / 非法输出时一律回落静态结果，文本输出与历史一致，`--json` 增加 `dynamic` 状态块。

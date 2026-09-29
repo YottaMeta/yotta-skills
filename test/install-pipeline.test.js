@@ -47,6 +47,40 @@ test('safe pipeline installs a new package', () => {
   assert.ok(fs.existsSync(path.join(dest, skill.slug, 'SKILL.md')));
 });
 
+test('install evidence carries scan policy review details and context', () => {
+  const evidence = [];
+  let seenContext = null;
+  const { installer, dest } = fixture({
+    appendEvidence: (entry) => {
+      evidence.push(entry);
+      return '/tmp/install-log.jsonl';
+    },
+    scanTarget: (engine, dir, context) => {
+      seenContext = context;
+      return {
+        ok: true,
+        verdict: 'SAFE TO INSTALL',
+        counts: { critical: 0, high: 0, medium: 0, low: 2, info: 0 },
+        policy: {
+          applied: true,
+          reason: 'applied',
+          excluded: 10,
+          excludedFindings: [],
+          version: '1.0.0',
+          treeHash: 'sha256:test',
+        },
+      };
+    },
+  });
+  const result = installer(skill, dest, {});
+  assert.strictEqual(result.status, 'ok');
+  assert.deepStrictEqual(seenContext, { slug: skill.slug, version: '1.0.0' });
+  const before = evidence.find((entry) => entry.event === 'before_install' && entry.skill === skill.slug);
+  assert.ok(before, '缺少 before_install 证据');
+  assert.strictEqual(before.scan_policy.applied, true);
+  assert.strictEqual(before.scan_policy.excluded, 10);
+});
+
 test('safe pipeline blocks DO NOT INSTALL without touching target', () => {
   const { installer, dest } = fixture({
     scanTarget: () => ({ ok: true, verdict: 'DO NOT INSTALL', counts: { critical: 1 } }),

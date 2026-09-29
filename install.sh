@@ -89,7 +89,7 @@ install_to() {
       rm -rf -- "$dest/$item"
     fi
   done
-  for item in SKILL.md skill-manifest.json references scripts assets skills.json LICENSE NOTICE README.md README.zh-CN.md CHANGELOG.md USER_GUIDE.md; do
+  for item in SKILL.md skill-manifest.json references scripts assets skills.json scan-policy.json LICENSE NOTICE README.md README.zh-CN.md CHANGELOG.md USER_GUIDE.md; do
     if [ -e "$SOURCE_DIR/$item" ]; then
       cp -RP "$SOURCE_DIR/$item" "$dest/"
     fi
