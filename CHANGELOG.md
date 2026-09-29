@@ -1,3 +1,9 @@
+## v0.20.2 (2026-09-29)
+- 家族安装的 npm 拉包新增镜像回退：默认源返回 404（国内镜像未同步该版本 tarball）时自动改用官方源 `https://registry.npmjs.org/` 重试一次；安装输出显示回退行，安装证据新增 `npm_registry_fallback` 字段。
+- 两次都失败时给出可直接复制的修复提示（`npm_config_registry` / `YOTTA_SKILLS_NPM_FLAGS`）；已显式指定 registry 或设置 `YOTTA_SKILLS_NO_FALLBACK=1` 时不回退。
+- 非 404 错误（网络超时等）不触发回退，保持原失败信息。
+- 静态 playbook / 路由 / hook / scanPolicy 契约零变更。
+
 ## v0.20.1 (2026-09-29)
 - 家族安装接入 scanPolicy 例外复核：元信判 `DO NOT INSTALL` 时，按包内 `scan-policy.json` 的已审查例外（逐条绑定技能 + 版本 + treeHash + 规则 + 路径）复核，豁免检测规则表 / 攻防样例 / 文档说明类命中；复核后无阻断级发现则继续安装。
 - 修复元忆 / 元察 / 元鉴从元阁安装时被元信自指误报阻断的问题（检测类技能自带规则表字面量）；例外表与 handoff / OpenCode 的 scanPolicy 同源，由 `tools/build_scan_policy.py` 生成。
