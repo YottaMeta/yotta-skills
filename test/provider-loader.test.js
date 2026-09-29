@@ -157,3 +157,32 @@ test('command 指向不存在的可执行：error，不阻断调用方', () => {
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+test('provider 子进程透传授权库环境变量，且不泄露到审计', () => {
+  const home = tmpHome();
+  const keys = ['YOTTA_LICENSE_HOME', 'YOTTA_LICENSE_KEYS_DIR', 'YOTTA_LICENSE_BASE_URL', 'YOTTA_LICENSE_SERVER_ID'];
+  const saved = {};
+  for (const key of keys) saved[key] = process.env[key];
+  try {
+    process.env.YOTTA_LICENSE_HOME = path.join(home, 'license-home');
+    process.env.YOTTA_LICENSE_KEYS_DIR = path.join(home, 'license-keys');
+    process.env.YOTTA_LICENSE_BASE_URL = 'http://127.0.0.1:18979';
+    process.env.YOTTA_LICENSE_SERVER_ID = 'test-server';
+    writeConfig(home, [baseProvider(withMode('env'))]);
+    const result = withHome(home, 'env', () => provider.runCapability('o1.route', {}));
+    assert.strictEqual(result.status, 'active');
+    assert.deepStrictEqual(result.data.env, {
+      home: process.env.YOTTA_LICENSE_HOME,
+      keys: process.env.YOTTA_LICENSE_KEYS_DIR,
+      baseUrl: process.env.YOTTA_LICENSE_BASE_URL,
+      serverId: process.env.YOTTA_LICENSE_SERVER_ID,
+    });
+    const auditText = fs.readFileSync(path.join(home, 'provider-audit.jsonl'), 'utf8');
+    assert.ok(!auditText.includes(process.env.YOTTA_LICENSE_HOME), '审计不得记录授权库路径');
+  } finally {
+    for (const key of keys) {
+      if (saved[key] === undefined) delete process.env[key]; else process.env[key] = saved[key];
+    }
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});

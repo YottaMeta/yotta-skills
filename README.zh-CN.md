@@ -30,6 +30,7 @@
 
 - **看清单**--全家技能一览：slug / 中文名 / 包名 / 版本 / 一句话说明。
 - **编排路由**--`--route` 按需求摘要输出候选组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装命令；非元阁家族已装技能按 frontmatter description 机械匹配作并列候选（标注来源与未扫描状态，只读不自动调用）；只建议安装，不自动安装。可选本地扩展提供方可在已装白名单内增补 / 重排（未配置时行为不变），协议见 `references/provider-protocol.md`。
+- **M1 记忆裁决**--`decide-memory` 输出技能 `promote / hold / demote` 只读建议、分数与信号明细；评分由用户显式配置的本地 provider（capability `m1.adjudicate`）完成。默认只读，`--promote` 只写本地建议文件，不写元忆、不删除内容。`usage` 默认关闭，显式开启后才记录结构化使用信号（不含需求原文）。
 - **安装**——装全家（或指定技能）到智能体默认用户级目录或任意目录。
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
 - **更新检查 / 自动更新**——<code>update --check</code> 只读比对已装技能版本与 npm 注册表并报告；<code>update --check --scheduled</code> 是后台周检入口，用本地缓存和随机抖动做到未到期不联网；<code>update --auto</code> 检查后自动把已装元阁家族升到最新（非元阁家族技能绝不自动更新）。
@@ -37,7 +38,7 @@
 - **运行时 hook 适配层**——技能 manifest 只声明六个生命周期要求；<code>hook capabilities / evaluate / bind / unbind</code> 负责宿主能力探测、确定性决策、结构化证据和降级标注，不把 audit 能力夸大为强制。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前门禁**——家族安装先读取包内 manifest，元信（yotta-verify）缺失时自动自举，再逐个扫描。`DO NOT INSTALL` 阻断；`CAUTION` / `REVIEW` 继续但显示风险。旧版本会先做快照再替换。
-- **盘点 / re-index**--扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；可用 <code>YOTTA_SKILLS_REGISTRY_FILE</code> 为不同 agent 指定独立注册表；自包含，不需要任何其他技能。新装技能自动被发现：<code>install</code> / <code>update</code> 完成后自动重扫注册表，<code>--reindex</code> 可随时手动重扫（如会话开工）。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code> 四工具，配置见 <code>SKILL.md</code>。
+- **盘点 / re-index**--扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；可用 <code>YOTTA_SKILLS_REGISTRY_FILE</code> 为不同 agent 指定独立注册表；自包含，不需要任何其他技能。新装技能自动被发现：<code>install</code> / <code>update</code> 完成后自动重扫注册表，<code>--reindex</code> 可随时手动重扫（如会话开工）。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code> / <code>decide_memory</code> 五工具，配置见 <code>SKILL.md</code>。
 
 边界：只做「下载 + 落位 + 门禁 + 汇总」——**不**开发技能内容、**不**内置任何技能本体、**不**用 <code>-g</code>
 全局安装；除目标目录外，会在 <code>~/.yottaskills</code> 下保留注册表、快照、安装证据与更新检查缓存。
@@ -86,6 +87,14 @@ npx -y @yottameta/yotta-skills --dry-run
 # 按需求摘要给出组合、顺序与缺失技能安装建议
 npx -y @yottameta/yotta-skills --route "检查代码质量，别糊弄"
 
+# 查看 / 开启本地使用记录（默认关闭）
+npx -y @yottameta/yotta-skills usage status
+npx -y @yottameta/yotta-skills usage enable
+
+# M1 记忆裁决只读建议；--promote 只写本地建议文件
+npx -y @yottameta/yotta-skills decide-memory --explain
+npx -y @yottameta/yotta-skills decide-memory --promote --json
+
 # 盘点本机已装技能（自包含扫描，不依赖任何元技能）
 npx -y @yottameta/yotta-skills --inventory
 
@@ -114,6 +123,10 @@ npx -y @yottameta/yotta-skills --reindex
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（install / update 完成后自动重扫，也可随时手动运行；`--rescan` 同义）；`--json` 输出 JSON |
 | `--route <需求摘要>` | 静态编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；可选本地扩展提供方在已装白名单内增补 / 重排（未配置时行为不变，协议见 `references/provider-protocol.md`）；`--json` 输出 JSON 与 `dynamic` 状态块、`--project` 附扫项目级目录 |
+| `usage status` / `usage enable` / `usage disable` | 查看 / 开启 / 关闭本地结构化使用记录；默认关闭，只记录 slug、时间、信号类型、playbook / confidence 与组合对 |
+| `usage mark --skill <slug> --signal used\|named\|accepted` | 记录一次显式使用信号；不要求先 enable |
+| `usage reset --yes` | 清空本地使用记录 |
+| `decide-memory [--dry-run\|--promote] [--explain]` | M1 记忆裁决只读建议；`--promote` 只写本地建议文件，不写元忆、不删除内容；`--json` 输出稳定 JSON |
 | `--no-reindex` | 安装 / 更新后不自动重扫注册表 |
 | `--dry-run` | 预览将执行的安装 / 更新清单；不联网、不改动 |
 | `--pin` | 锁死清单精确版本（默认） |

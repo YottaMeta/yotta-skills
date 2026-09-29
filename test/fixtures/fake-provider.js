@@ -43,6 +43,19 @@ if (mode === 'hang') {
     data = {};
   }
   send({ ok: true, capability: request && request.capability, data });
+} else if (mode === 'env') {
+  send({
+    ok: true,
+    capability: request && request.capability,
+    data: {
+      env: {
+        home: process.env.YOTTA_LICENSE_HOME || '',
+        keys: process.env.YOTTA_LICENSE_KEYS_DIR || '',
+        baseUrl: process.env.YOTTA_LICENSE_BASE_URL || '',
+        serverId: process.env.YOTTA_LICENSE_SERVER_ID || '',
+      },
+    },
+  });
 } else {
   const capability = request && request.capability;
   if (capability === 'o1.route') {

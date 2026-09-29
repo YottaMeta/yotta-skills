@@ -27,6 +27,7 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 
 - **List** - see the whole family: slug, Chinese name, package, version and a one-line description.
 - **Orchestration routing** - <code>--route</code> turns a task summary into a candidate combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install command; it only suggests installation and never installs automatically. An optional local provider may add or re-order installed skills within the allow-list (no behavior change when unconfigured; see <code>references/provider-protocol.md</code>).
+- **M1 memory adjudication** - <code>decide-memory</code> returns read-only <code>promote / hold / demote</code> suggestions, scores and signal details. Scoring is performed by a user-configured local provider (capability <code>m1.adjudicate</code>). It is read-only by default; <code>--promote</code> writes only a local recommendation file and never writes memory or deletes anything. <code>usage</code> is off by default and records only structured signals after the user enables it.
 - **Install** — install everything (or a subset) into an agent's default user-level directory or any directory.
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
 - **Update check / auto-update** — <code>update --check</code> compares installed skill versions against the npm registry and reports; <code>update --check --scheduled</code> is the weekly background entry with a local cache and jitter, so it stays offline until due; <code>update --auto</code> upgrades the installed YottaMeta family to the latest (non-family skills are never auto-updated).
@@ -34,7 +35,7 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Runtime hook adapter** — manifests declare six lifecycle requirements; <code>hook capabilities / evaluate / bind / unbind</code> probe host support, apply deterministic decisions, record evidence, and never overstate audit-only hosts as enforced.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install gate** — family installs read the package manifest, bootstrap yotta-verify (元信) when it is missing, then scan each package. <code>DO NOT INSTALL</code> blocks; caution/review continue with visible risk. Old versions are snapshotted before replacement.
-- **Inventory / re-index** - scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); set <code>YOTTA_SKILLS_REGISTRY_FILE</code> to isolate the registry per agent; self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand. An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code>; see <code>SKILL.md</code> for the config.
+- **Inventory / re-index** - scan the skill directories on this machine and keep a local registry (<code>~/.yottaskills/registry.json</code>); set <code>YOTTA_SKILLS_REGISTRY_FILE</code> to isolate the registry per agent; self-contained, no other skills required. Newly installed skills are discovered automatically: <code>install</code> / <code>update</code> re-index the registry afterwards, and <code>--reindex</code> re-scans on demand. An optional <code>yotta-skills</code> MCP (on-demand, not resident) exposes <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code> / <code>decide_memory</code>; see <code>SKILL.md</code> for the config.
 - **No silent writes** - 元阁 only suggests. Installing skills, adding a client <code>mcpServers</code> entry, and writing an agent's global memory each require explicit user confirmation beforehand; declining never blocks the plain CLI workflow.
 
 Boundaries: it only downloads, places, gates and summarizes — it does **not** develop skill content, does **not** bundle any skill body, does **not** use <code>-g</code> global installs, and does **not** silently write host configuration or agent global memory. Besides the target directory, it keeps its registry, snapshots, install evidence and update-check cache under <code>~/.yottaskills</code>.
@@ -83,6 +84,14 @@ npx -y @yottameta/yotta-skills --dry-run
 # Route a task to a combination, call order, and missing-skill install suggestion
 npx -y @yottameta/yotta-skills --route "Review this code carefully before release"
 
+# Inspect / enable local structured usage signals (off by default)
+npx -y @yottameta/yotta-skills usage status
+npx -y @yottameta/yotta-skills usage enable
+
+# Read-only M1 memory adjudication; --promote writes only a local recommendation file
+npx -y @yottameta/yotta-skills decide-memory --explain
+npx -y @yottameta/yotta-skills decide-memory --promote --json
+
 # Inventory installed skills on this machine (self-contained scan, no other skills needed)
 npx -y @yottameta/yotta-skills --inventory
 
@@ -111,6 +120,10 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
 | `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (on demand; `install` / `update` re-index automatically; `--rescan` is a synonym); `--json` for JSON |
 | `--route <task-summary>` | Static orchestration routing: return a combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install suggestion; also lists other installed (non-YottaMeta) skills as candidates matched mechanically against their frontmatter description, tagged "not scanned", read-only and never auto-invoked; an optional local provider may add or re-order installed skills within the allow-list (see <code>references/provider-protocol.md</code>); `--json` for JSON plus a `dynamic` status block, `--project` adds project-level dirs |
+| `usage status` / `usage enable` / `usage disable` | Inspect / enable / disable local structured usage signals; off by default and limited to slug, time, signal type, playbook / confidence and skill pairs |
+| `usage mark --skill <slug> --signal used\|named\|accepted` | Record one explicit usage signal; no prior enable required |
+| `usage reset --yes` | Clear the local usage record |
+| `decide-memory [--dry-run\|--promote] [--explain]` | Read-only M1 memory adjudication; `--promote` writes only a local recommendation file and never writes memory or deletes anything; `--json` for stable JSON |
 | `--no-reindex` | Do not re-index the registry automatically after `install` / `update` |
 | `--dry-run` | Preview the install / update list; no network, no changes |
 | `--pin` | Lock the exact manifest versions (default) |

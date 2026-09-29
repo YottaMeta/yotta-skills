@@ -1,3 +1,11 @@
+## v0.21.0 (2026-09-30)
+- 新增 M1 记忆裁决器开源调用口：`yotta-skills decide-memory` 与 MCP `decide_memory`，调用本地扩展提供方 `m1.adjudicate`，输出每个技能的 `promote / hold / demote` 只读建议、分数与信号明细。
+- 新增本地使用记录：`usage status|enable|disable|mark|reset`；默认关闭，`usage enable` 后 `--route` 才记录结构化 route_hits 与组合对，显式 `usage mark` 记录 used / named / accepted。记录只含 slug、时间、信号类型、playbook / confidence 与组合对，不含需求原文、记忆正文、路径或身份信息。
+- `decide-memory` 默认只读；`--dry-run` 显式只读；`--promote` 只写 `~/.yottaskills/memory-adjudication.json` 建议文件，生成私密 `PREF` 记忆候选，不自动写元忆、不删除任何内容。`--explain` 输出每个信号的得分明细。
+- provider 子进程环境透传授权库相关变量（`YOTTA_LICENSE_HOME` / `YOTTA_LICENSE_KEYS_DIR` / `YOTTA_LICENSE_BASE_URL` / `YOTTA_LICENSE_SERVER_ID`），私有 M1 provider 可用 `LicenseGate.assertCan('m1.adjudicate')` 做授权门；未授权 / 超时 / 非法输出一律 fail-open，退出码保持 0。
+- 评分算法位于本地私有目录 `license/m1/`，不进任何发布件；开源侧只做特征快照、白名单校验与展示。协议见 `references/provider-protocol.md`。
+- 元忆 0.19.0 不变；静态 playbook / 安装 / hook / scanPolicy 契约零变更。
+
 ## v0.20.2 (2026-09-29)
 - 家族安装的 npm 拉包新增镜像回退：默认源返回 404（国内镜像未同步该版本 tarball）时自动改用官方源 `https://registry.npmjs.org/` 重试一次；安装输出显示回退行，安装证据新增 `npm_registry_fallback` 字段。
 - 两次都失败时给出可直接复制的修复提示（`npm_config_registry` / `YOTTA_SKILLS_NPM_FLAGS`）；已显式指定 registry 或设置 `YOTTA_SKILLS_NO_FALLBACK=1` 时不回退。

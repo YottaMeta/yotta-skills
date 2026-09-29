@@ -44,19 +44,20 @@ test('MCP：initialize + tools/list + list_installed_skills + describe_skill + r
       JSON.stringify({ jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'describe_skill', arguments: { slug: 'fake-skill' } } }),
       JSON.stringify({ jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'reindex', arguments: {} } }),
       JSON.stringify({ jsonrpc: '2.0', id: 6, method: 'tools/call', params: { name: 'route_request', arguments: { request: '帮我润色输出，要规范可复制，别有 AI 味' } } }),
+      JSON.stringify({ jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'decide_memory', arguments: { dry_run: true } } }),
     ].join('\n') + '\n';
     const r = runMcp(req, env);
     assert.strictEqual(r.status, 0, 'exit: ' + r.status + '\n' + r.stderr);
     const lines = r.stdout.trim().split('\n').map((l) => JSON.parse(l));
-    assert.strictEqual(lines.length, 6);
+    assert.strictEqual(lines.length, 7);
     const byId = Object.fromEntries(lines.map((l) => [l.id, l]));
     // initialize
     assert.strictEqual(byId[1].result.serverInfo.name, 'yotta-skills');
     assert.strictEqual(byId[1].result.serverInfo.version, PKG.version);
     assert.strictEqual(byId[1].result.protocolVersion, '2025-11-25'); // legacy 握手
-    // tools/list：4 个工具
+    // tools/list：5 个工具
     const tools = byId[2].result.tools.map((t) => t.name);
-    assert.deepStrictEqual(tools, ['list_installed_skills', 'describe_skill', 'reindex', 'route_request']);
+    assert.deepStrictEqual(tools, ['list_installed_skills', 'describe_skill', 'reindex', 'route_request', 'decide_memory']);
     // list_installed_skills
     const list = JSON.parse(byId[3].result.content[0].text);
     assert.strictEqual(list.count, 1);
@@ -72,6 +73,10 @@ test('MCP：initialize + tools/list + list_installed_skills + describe_skill + r
     const route = JSON.parse(byId[6].result.content[0].text);
     assert.strictEqual(route.playbook.id, 'output-standard');
     assert.deepStrictEqual(route.skills.map((s) => s.slug), ['yotta-present', 'yotta-humanize']);
+    // decide_memory（无 provider 时为 not_installed，只读）
+    const decide = JSON.parse(byId[7].result.content[0].text);
+    assert.strictEqual(decide.m1.status, 'not_installed');
+    assert.deepStrictEqual(decide.m1.decisions, []);
   } finally {
     fs.rmSync(home, { recursive: true, force: true });
   }
@@ -109,7 +114,7 @@ test('MCP 2026-07-28：modern discover + tools/list + 版本不支持 -32022', (
     assert.strictEqual(byId[1].result._meta['io.modelcontextprotocol/serverInfo'].name, 'yotta-skills');
     assert.strictEqual(byId[1].result.ttlMs > 0, true);
     assert.strictEqual(byId[2].result.resultType, 'complete');
-    assert.strictEqual(byId[2].result.tools.length, 4);
+    assert.strictEqual(byId[2].result.tools.length, 5);
     assert.strictEqual(byId[3].error.code, -32022);
     assert.deepStrictEqual(byId[3].error.data.supported, ['2026-07-28']);
     assert.strictEqual(byId[3].error.data.requested, '2025-11-25');
