@@ -1,3 +1,8 @@
+## v0.22.0 (2026-09-30)
+- 关联 Agent Plugin 包新增 DeepSeek Harness（DSH）profile bundle 适配层：插件仓根 `package.json` 增加 `dsh.bundle.patch`，并由构建器生成 `cordis.patch.yml`。
+- DSH 安装后同时注册包内 `yotta-skills` 技能与 `mcp__yotta-skills__*` 工具；复用包内 stdio MCP server，不新增运行时依赖。
+- Agent Plugins 1.0 安装方式与 CLI / MCP 工具行为保持不变；本版为插件分发形态升级。
+
 ## v0.21.0 (2026-09-30)
 - 新增 M1 记忆裁决器开源调用口：`yotta-skills decide-memory` 与 MCP `decide_memory`，调用本地扩展提供方 `m1.adjudicate`，输出每个技能的 `promote / hold / demote` 只读建议、分数与信号明细。
 - 新增本地使用记录：`usage status|enable|disable|mark|reset`；默认关闭，`usage enable` 后 `--route` 才记录结构化 route_hits 与组合对，显式 `usage mark` 记录 used / named / accepted。记录只含 slug、时间、信号类型、playbook / confidence 与组合对，不含需求原文、记忆正文、路径或身份信息。
