@@ -1,3 +1,8 @@
+## v0.22.1 (2026-09-30)
+
+- 清单同步：元忆 pin 0.19.0 → 0.20.0，承接上下文分页 (`context.paging`) 与 `memory.hook` PREF 驱逐修复。
+- scanPolicy 随元忆 0.20.0 treeHash 重绑；其余安装 / 路由 / hook / DSH 适配行为不变。
+
 ## v0.22.0 (2026-09-30)
 - 关联 Agent Plugin 包新增 DeepSeek Harness（DSH）profile bundle 适配层：插件仓根 `package.json` 增加 `dsh.bundle.patch`，并由构建器生成 `cordis.patch.yml`。
 - DSH 安装后同时注册包内 `yotta-skills` 技能与 `mcp__yotta-skills__*` 工具；复用包内 stdio MCP server，不新增运行时依赖。
