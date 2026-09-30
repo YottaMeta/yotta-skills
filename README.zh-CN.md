@@ -34,7 +34,7 @@
 - **安装**——装全家（或指定技能）到智能体默认用户级目录或任意目录。
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
 - **更新检查 / 自动更新**——<code>update --check</code> 只读比对已装技能版本与 npm 注册表并报告；<code>update --check --scheduled</code> 是后台周检入口，用本地缓存和随机抖动做到未到期不联网；<code>update --auto</code> 检查后自动把已装元阁家族升到最新（非元阁家族技能绝不自动更新）。
-- **自检 / 回滚**——<code>doctor</code> 只读检查技能目录、版本、manifest、注册表和自定义 doctor；<code>rollback</code> 校验快照后恢复最近一次安装或更新，恢复失败不会覆盖当前目录。
+- **自检 / 回滚**——<code>doctor</code> 只读检查技能目录、版本、manifest、注册表和自定义 doctor，`--dir` 可直接指向单个技能包目录；<code>rollback</code> 校验快照后恢复最近一次安装或更新，恢复失败不会覆盖当前目录。
 - **运行时 hook 适配层**——技能 manifest 只声明六个生命周期要求；<code>hook capabilities / evaluate / bind / unbind</code> 负责宿主能力探测、确定性决策、结构化证据和降级标注，不把 audit 能力夸大为强制。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前门禁**——家族安装先读取包内 manifest，元信（yotta-verify）缺失时自动自举，再逐个扫描。`DO NOT INSTALL` 阻断；`CAUTION` / `REVIEW` 继续但显示风险。旧版本会先做快照再替换。
@@ -116,6 +116,8 @@ npx -y @yottameta/yotta-skills --reindex
 | `update --check` | 只读更新检查：比对已装版本与 npm 注册表并报告（退出码 0=最新 / 3=有更新 / 1=无法检查；可用 `--registry <url>` 指定镜像）；不改动 |
 | `update --check --scheduled` | 后台周检入口：未到期不联网；到期只检查一次并写本地缓存；文本失败静默，`--json` 保留诊断；始终退出 0 |
 | `update --auto` | 检查后自动更新已装元阁家族到最新（含装前门禁；非元阁家族技能绝不自动更新） |
+| `doctor [--agent <name> \| --dir <path>] [--slug <slug>]` | 只读自检：SKILL / 版本 / manifest / 注册表 / 自定义 doctor；`--dir` 可指向技能集合目录或单个技能包目录；退出码 0=通过 / 4=没有可检查对象 / 1=检查失败 / 6=manifest 身份失败 |
+| `rollback [--agent <name> \| --dir <path>] [--slug <slug>]` | 校验并恢复最近一次快照；`--list` 只列快照；`--json` 输出机器可读结果 |
 | `hook capabilities --host <name>` | 查看六个统一事件的宿主能力矩阵；未知宿主默认 `unsupported` |
 | `hook evaluate --host <name> --event <event> --manifest <file> --context <json>` | 评估 manifest hook 事件，返回 allow / block / warn / unverified，并写结构化证据 |
 | `hook bind --host <name> --manifest <file>` / `hook unbind <id>` | 幂等注册或反注册 hook 声明 |

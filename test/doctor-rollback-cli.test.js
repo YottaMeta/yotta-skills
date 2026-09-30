@@ -63,6 +63,44 @@ test('doctor --json reports a healthy installed skill', () => {
   assert.ok(!fs.existsSync(path.join(home, '.yottaskills', 'registry.json')), 'doctor 不应写注册表');
 });
 
+test('doctor auto-detects a single skill package directory', () => {
+  const { env } = isolatedHome();
+  const dest = tmpdir('ys-doctor-self-');
+  writeSkill(dest, memory.version);
+
+  const result = run(['doctor', '--dir', dest, '--json'], env);
+  assert.strictEqual(result.status, 0, result.stdout + result.stderr);
+  const data = JSON.parse(result.stdout);
+  assert.strictEqual(data.ok, true);
+  assert.strictEqual(data.checked, 1);
+  assert.strictEqual(data.results[0].slug, 'yotta-memory');
+});
+
+test('doctor auto-detects a single skill package directory with --slug', () => {
+  const { env } = isolatedHome();
+  const dest = tmpdir('ys-doctor-self-slug-');
+  writeSkill(dest, memory.version);
+
+  const result = run(['doctor', '--dir', dest, '--slug', 'yotta-memory', '--json'], env);
+  assert.strictEqual(result.status, 0, result.stdout + result.stderr);
+  const data = JSON.parse(result.stdout);
+  assert.strictEqual(data.ok, true);
+  assert.strictEqual(data.checked, 1);
+  assert.strictEqual(data.results[0].slug, 'yotta-memory');
+});
+
+test('doctor without a checkable target exits 4 instead of 1', () => {
+  const { env } = isolatedHome();
+  const dest = tmpdir('ys-doctor-empty-');
+
+  const result = run(['doctor', '--dir', dest, '--json'], env);
+  assert.strictEqual(result.status, 4, result.stdout + result.stderr);
+  const data = JSON.parse(result.stdout);
+  assert.strictEqual(data.ok, false);
+  assert.strictEqual(data.checked, 0);
+  assert.ok(data.errors.some((item) => /没有可检查/.test(item)));
+});
+
 test('doctor --json detects a version mismatch without modifying the target', () => {
   const { env } = isolatedHome();
   const dest = tmpdir('ys-doctor-dest-');

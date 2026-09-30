@@ -31,7 +31,7 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Install** — install everything (or a subset) into an agent's default user-level directory or any directory.
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
 - **Update check / auto-update** — <code>update --check</code> compares installed skill versions against the npm registry and reports; <code>update --check --scheduled</code> is the weekly background entry with a local cache and jitter, so it stays offline until due; <code>update --auto</code> upgrades the installed YottaMeta family to the latest (non-family skills are never auto-updated).
-- **Doctor / rollback** — <code>doctor</code> checks the installed skill directory, version, manifest, registry and custom doctor script without modifying it; <code>rollback</code> validates a snapshot and restores the latest install or update.
+- **Doctor / rollback** — <code>doctor</code> checks the installed skill directory, version, manifest, registry and custom doctor script without modifying it; <code>--dir</code> may point to a skills container or directly to a single skill package. <code>rollback</code> validates a snapshot and restores the latest install or update.
 - **Runtime hook adapter** — manifests declare six lifecycle requirements; <code>hook capabilities / evaluate / bind / unbind</code> probe host support, apply deterministic decisions, record evidence, and never overstate audit-only hosts as enforced.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
 - **Pre-install gate** — family installs read the package manifest, bootstrap yotta-verify (元信) when it is missing, then scan each package. <code>DO NOT INSTALL</code> blocks; caution/review continue with visible risk. Old versions are snapshotted before replacement.
@@ -113,6 +113,8 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `update --check` | Read-only update check: compare installed versions against the npm registry and report (exit 0 = up to date, 3 = updates available, 1 = could not check; run with `--registry <url>` to target a mirror); no changes |
 | `update --check --scheduled` | Weekly background entry: no network until due, then one check and a local cache write; text mode stays quiet on failure, `--json` keeps diagnostics; always exits 0 |
 | `update --auto` | Check and automatically update the installed YottaMeta family to the latest (runs the pre-install gate; never auto-updates non-family skills) |
+| `doctor [--agent <name> \| --dir <path>] [--slug <slug>]` | Read-only self-check: SKILL / version / manifest / registry / custom doctor; `--dir` may point to a skills container or a single skill package; exit 0 = pass, 4 = no checkable target, 1 = check failed, 6 = manifest identity failure |
+| `rollback [--agent <name> \| --dir <path>] [--slug <slug>]` | Validate and restore the latest snapshot; `--list` lists snapshots; `--json` returns machine-readable output |
 | `hook capabilities --host <name>` | Show the six-event host capability matrix; unknown hosts stay <code>unsupported</code> |
 | `hook evaluate --host <name> --event <event> --manifest <file> --context <json>` | Evaluate a manifest hook event, return allow / block / warn / unverified, and append structured evidence |
 | `hook bind --host <name> --manifest <file>` / `hook unbind <id>` | Idempotently register or remove hook declarations |
