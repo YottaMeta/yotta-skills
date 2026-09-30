@@ -142,3 +142,90 @@ test('provider 只返回白名单外 slug：全部丢弃、不应用', () => {
     fs.rmSync(ctx.home, { recursive: true, force: true });
   }
 });
+
+test('provider active：rich 响应应用 confidence / reasons / summary / alternatives', () => {
+  const ctx = setup();
+  try {
+    const data = {
+      confidence: 'high',
+      summary: '建议先改写，再呈现。',
+      reasons: ['意图匹配：输出 / 润色', '历史使用：yotta-humanize used x2'],
+      skills: [
+        { slug: 'yotta-humanize', role: '先做改写', score: 88, reason: '意图匹配' },
+        { slug: 'yotta-present', role: '再做呈现', score: 82, reason: '静态场景' },
+        { slug: 'ghost-skill', score: 99 },
+      ],
+      alternatives: [
+        { slug: 'yotta-memory', score: 55, reason: '可作为长期记忆补充' },
+        { slug: 'ghost-skill', score: 99 },
+      ],
+    };
+    writeProvider(ctx.providerHome, [
+      process.execPath, FIXTURE, 'custom', JSON.stringify(data),
+    ]);
+    const r = run(ctx.env, ctx.skills, ['--json']);
+    assert.strictEqual(r.status, 0, r.stderr);
+    const out = JSON.parse(r.stdout);
+    assert.strictEqual(out.dynamic.status, 'active');
+    assert.strictEqual(out.dynamic.applied, true);
+    assert.strictEqual(out.dynamic.confidence, 'high');
+    assert.deepStrictEqual(out.dynamic.reasons, ['意图匹配：输出 / 润色', '历史使用：yotta-humanize used x2']);
+    assert.strictEqual(out.dynamic.summary, '建议先改写，再呈现。');
+    assert.deepStrictEqual(out.dynamic.alternatives.map((item) => item.slug), ['yotta-memory']);
+    assert.deepStrictEqual(out.skills.map((skill) => skill.slug), ['yotta-humanize', 'yotta-present']);
+    assert.strictEqual(out.skills[0].dynamic_reason, '意图匹配');
+    assert.strictEqual(out.skills[0].dynamic_score, 88);
+  } finally {
+    fs.rmSync(ctx.home, { recursive: true, force: true });
+  }
+});
+
+test('provider active：非法 confidence 回落静态置信度，展示文本去控制字符并限长', () => {
+  const ctx = setup();
+  try {
+    const data = {
+      confidence: 'super',
+      summary: 'line1\nline2',
+      reasons: ['a\nb', 'x'.repeat(500)],
+      skills: [{ slug: 'yotta-present' }],
+    };
+    writeProvider(ctx.providerHome, [
+      process.execPath, FIXTURE, 'custom', JSON.stringify(data),
+    ]);
+    const r = run(ctx.env, ctx.skills, ['--json']);
+    assert.strictEqual(r.status, 0, r.stderr);
+    const out = JSON.parse(r.stdout);
+    assert.strictEqual(out.dynamic.confidence, out.confidence);
+    assert.strictEqual(out.dynamic.summary, 'line1 line2');
+    assert.strictEqual(out.dynamic.reasons[0], 'a b');
+    assert.ok(out.dynamic.reasons[1].length <= 240);
+  } finally {
+    fs.rmSync(ctx.home, { recursive: true, force: true });
+  }
+});
+
+test('provider payload：包含 request_features / usage / playbooks，且不含 source_dirs', () => {
+  const ctx = setup();
+  const payloadFile = path.join(ctx.home, 'payload.json');
+  try {
+    writeProvider(ctx.providerHome, [
+      process.execPath, FIXTURE, 'record-payload', payloadFile,
+    ]);
+    const r = run(ctx.env, ctx.skills, ['--json']);
+    assert.strictEqual(r.status, 0, r.stderr);
+    const payload = JSON.parse(fs.readFileSync(payloadFile, 'utf8'));
+    assert.strictEqual(payload.schema, 2);
+    assert.strictEqual(payload.request, REQUEST);
+    assert.ok(payload.request_features.request_hash);
+    assert.ok(Array.isArray(payload.request_features.english_tokens));
+    assert.ok(Array.isArray(payload.request_features.cjk_bigrams));
+    assert.strictEqual(payload.usage.enabled, false);
+    assert.deepStrictEqual(payload.usage.skills, {});
+    assert.ok(Array.isArray(payload.playbooks));
+    assert.ok(payload.playbooks.length > 0);
+    assert.ok(!JSON.stringify(payload).includes('source_dirs'));
+    assert.ok(!JSON.stringify(payload).includes(ctx.skills));
+  } finally {
+    fs.rmSync(ctx.home, { recursive: true, force: true });
+  }
+});

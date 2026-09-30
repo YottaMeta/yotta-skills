@@ -1,3 +1,12 @@
+## v0.23.0 (2026-10-01)
+
+- O1 动态路由 MVP：`--route` / MCP `route_request` 在静态 playbook 之上，可选调用本地 provider（capability `o1.route`）做确定性组合排序；新增 `confidence` / `reasons` / `summary` / `alternatives` 输出。
+- 开源侧新增 `lib/route-features.js`（请求特征 + 已装技能元数据 + 聚合使用信号 + 公开 playbook 元数据）与 `lib/route-dynamic.js`（白名单 / 枚举 / 限长校验）；静态技能始终保留，provider 不能删除静态技能或改变 `missing_skills` 语义。
+- `usage` 默认关闭；仅显式启用后向本地 provider 发送聚合计数（used / named / accepted / route_hits / distinct_pairs / last_signal_at），不发送需求原文、记忆正文、路径或身份信息；provider 审计仍只记元数据。
+- 非元阁家族技能仍只作候选并标注 `scan_required`；不自动安装、不自动调用。
+- 评分算法位于本地私有目录 `license/o1/`，不进任何发布件；未配置 / 未授权 / 超时 / 非法输出时回落静态路由，退出码保持 0。
+- 元忆 0.20.0 不变；安装 / 更新 / hook / scanPolicy 契约零变更。
+
 ## v0.22.2 (2026-09-30)
 
 - 修复 `doctor --dir` 指向单个技能包目录时的 UX：现在会按 `SKILL.md` / `skill-manifest.json` / 目录名自动识别技能身份，不再误报「目标目录下没有可检查的元阁家族技能」。

@@ -73,6 +73,8 @@ test('MCP：initialize + tools/list + list_installed_skills + describe_skill + r
     const route = JSON.parse(byId[6].result.content[0].text);
     assert.strictEqual(route.playbook.id, 'output-standard');
     assert.deepStrictEqual(route.skills.map((s) => s.slug), ['yotta-present', 'yotta-humanize']);
+    assert.strictEqual(route.dynamic.status, 'not_installed');
+    assert.strictEqual(route.dynamic.applied, false);
     // decide_memory（无 provider 时为 not_installed，只读）
     const decide = JSON.parse(byId[7].result.content[0].text);
     assert.strictEqual(decide.m1.status, 'not_installed');

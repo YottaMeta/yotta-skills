@@ -43,6 +43,17 @@ if (mode === 'hang') {
     data = {};
   }
   send({ ok: true, capability: request && request.capability, data });
+} else if (mode === 'record-payload') {
+  try {
+    fs.writeFileSync(argData, JSON.stringify(request && request.payload, null, 2), 'utf8');
+  } catch (e) {
+    // 测试夹具写失败不阻断响应
+  }
+  send({
+    ok: true,
+    capability: request && request.capability,
+    data: { skills: [{ slug: 'yotta-present' }] },
+  });
 } else if (mode === 'env') {
   send({
     ok: true,

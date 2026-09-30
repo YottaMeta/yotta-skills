@@ -29,7 +29,7 @@
 元阁也是全家的**编排策划层**：接到需求先查「编排策划」组合表——该组合哪几个技能、按什么顺序、各自强在哪——然后给出安装与调用**建议**，由用户确认后执行。决策表随包提供（<code>references/orchestration.md</code>），<code>SKILL.md</code> 中有摘要。
 
 - **看清单**--全家技能一览：slug / 中文名 / 包名 / 版本 / 一句话说明。
-- **编排路由**--`--route` 按需求摘要输出候选组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装命令；非元阁家族已装技能按 frontmatter description 机械匹配作并列候选（标注来源与未扫描状态，只读不自动调用）；只建议安装，不自动安装。可选本地扩展提供方可在已装白名单内增补 / 重排（未配置时行为不变），协议见 `references/provider-protocol.md`。
+- **编排路由**--`--route` 按需求摘要输出候选组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装命令；非元阁家族已装技能按 frontmatter description 机械匹配作并列候选（标注来源与未扫描状态，只读不自动调用）；只建议安装，不自动安装。可选本地扩展提供方可在已装白名单内增补 / 重排，并返回 `confidence` / `reasons` / `summary` / `alternatives`（未配置时行为不变），协议见 `references/provider-protocol.md`。
 - **M1 记忆裁决**--`decide-memory` 输出技能 `promote / hold / demote` 只读建议、分数与信号明细；评分由用户显式配置的本地 provider（capability `m1.adjudicate`）完成。默认只读，`--promote` 只写本地建议文件，不写元忆、不删除内容。`usage` 默认关闭，显式开启后才记录结构化使用信号（不含需求原文）。
 - **安装**——装全家（或指定技能）到智能体默认用户级目录或任意目录。
 - **更新**——增量更新：补齐缺失技能、升级版本不一致的技能。
@@ -124,7 +124,7 @@ npx -y @yottameta/yotta-skills --reindex
 | `--registry <url>` | 检查的 npm registry 地址（默认 https://registry.npmjs.org/；`YOTTA_SKILLS_REGISTRY` 覆盖） |
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（install / update 完成后自动重扫，也可随时手动运行；`--rescan` 同义）；`--json` 输出 JSON |
-| `--route <需求摘要>` | 静态编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；可选本地扩展提供方在已装白名单内增补 / 重排（未配置时行为不变，协议见 `references/provider-protocol.md`）；`--json` 输出 JSON 与 `dynamic` 状态块、`--project` 附扫项目级目录 |
+| `--route <需求摘要>` | 编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；可选本地扩展提供方在已装白名单内增补 / 重排并返回 `confidence` / `reasons` / `summary` / `alternatives`（未配置时行为不变，协议见 `references/provider-protocol.md`）；`--json` 输出 JSON 与 `dynamic` 状态块、`--project` 附扫项目级目录 |
 | `usage status` / `usage enable` / `usage disable` | 查看 / 开启 / 关闭本地结构化使用记录；默认关闭，只记录 slug、时间、信号类型、playbook / confidence 与组合对 |
 | `usage mark --skill <slug> --signal used\|named\|accepted` | 记录一次显式使用信号；不要求先 enable |
 | `usage reset --yes` | 清空本地使用记录 |
