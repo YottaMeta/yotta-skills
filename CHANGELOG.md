@@ -1,3 +1,9 @@
+## v0.23.2 (2026-10-01)
+
+- 修复家族安装管线嵌套载荷丢失：复制原语的顶层跳过名单（`package.json` / `bin` / `node_modules` / `.git`）此前按条目名逐层生效，会把技能包内嵌套的同名载荷（如元造 `template/package.json`、`template/bin/install.js`）一并跳过——家族安装 / 更新元造后，其脚手架自检会失败（缺必需文件）。现改为仅顶层生效，与元造 0.1.3 的安装器修复对齐。
+- 新增 `lib/copy-tree.js`（单一复制原语）与回归测试：顶层同名跳过、嵌套同名保留、缓存类（`__pycache__` / `.pytest_cache` / `.mypy_cache` / `*.pyc` / `*.pyo`）任意层级清理；家族管线集成回归同步补齐。
+- 清单同步：`skills.json` / `references/skill-list.md` 更新元造 0.1.4、元案 0.1.1。
+
 ## v0.23.1 (2026-10-01)
 
 - 文档：环境变量表补齐 `YOTTA_SKILLS_REGISTRY_FILE` / `YOTTA_SKILLS_USAGE_FILE` / `YOTTA_PROVIDER_HOME` 三项，并新增「隔离环境：三个状态文件成组导出」小节（bash / PowerShell 示例）——测试、CI 与多 agent 场景需三件成组导出，避免读写宿主真实状态。

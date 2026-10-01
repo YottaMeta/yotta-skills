@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { createInstaller, renameWithRetry, isSafeTarEntry } = require('../lib/install-pipeline');
+const { COPY_SKIP, copyDir: copyTree } = require('../lib/copy-tree');
 
 const skill = { slug: 'yotta-demo', name: '元示例', pkg: '@yottameta/yotta-demo', version: '1.0.0' };
 
@@ -37,7 +38,7 @@ function fixture(deps) {
     homeDir: home,
     ...deps,
   });
-  return { installer, dest, home };
+  return { installer, dest, home, pkgDir };
 }
 
 test('safe pipeline installs a new package', () => {
@@ -45,6 +46,25 @@ test('safe pipeline installs a new package', () => {
   const result = installer(skill, dest, {});
   assert.strictEqual(result.status, 'ok');
   assert.ok(fs.existsSync(path.join(dest, skill.slug, 'SKILL.md')));
+});
+
+test('staged swap keeps nested package.json / bin payload (copy-tree top-level skip)', () => {
+  const { installer, dest, pkgDir } = fixture({
+    copyDir: (src, dst) => copyTree(src, dst, COPY_SKIP, true),
+  });
+  fs.mkdirSync(path.join(pkgDir, 'template', 'bin'), { recursive: true });
+  fs.writeFileSync(path.join(pkgDir, 'template', 'package.json'), '{"name":"{{skill_name}}"}', 'utf8');
+  fs.writeFileSync(path.join(pkgDir, 'template', 'bin', 'install.js'), '// nested installer', 'utf8');
+
+  const result = installer(skill, dest, {});
+  assert.strictEqual(result.status, 'ok');
+  const target = path.join(dest, skill.slug);
+  // 顶层开发件跳过
+  assert.equal(fs.existsSync(path.join(target, 'package.json')), false);
+  // 嵌套同名载荷保留（本批修复回归点）
+  assert.equal(fs.readFileSync(path.join(target, 'template', 'package.json'), 'utf8'), '{"name":"{{skill_name}}"}');
+  assert.equal(fs.readFileSync(path.join(target, 'template', 'bin', 'install.js'), 'utf8'), '// nested installer');
+  assert.ok(fs.existsSync(path.join(target, 'SKILL.md')));
 });
 
 test('install evidence carries scan policy review details and context', () => {
