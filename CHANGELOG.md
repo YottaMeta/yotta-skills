@@ -1,3 +1,8 @@
+## v0.23.1 (2026-10-01)
+
+- 文档：环境变量表补齐 `YOTTA_SKILLS_REGISTRY_FILE` / `YOTTA_SKILLS_USAGE_FILE` / `YOTTA_PROVIDER_HOME` 三项，并新增「隔离环境：三个状态文件成组导出」小节（bash / PowerShell 示例）——测试、CI 与多 agent 场景需三件成组导出，避免读写宿主真实状态。
+- 行为零变更：安装 / 更新 / 路由 / hook / MCP 契约不变。
+
 ## v0.23.0 (2026-10-01)
 
 - O1 动态路由 MVP：`--route` / MCP `route_request` 在静态 playbook 之上，可选调用本地 provider（capability `o1.route`）做确定性组合排序；新增 `confidence` / `reasons` / `summary` / `alternatives` 输出。
