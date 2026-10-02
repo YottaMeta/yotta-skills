@@ -175,6 +175,7 @@ npx -y @yottameta/yotta-skills hub link --all
 
 # 5) 查看来源、版本、链接宿主与异常
 npx -y @yottameta/yotta-skills hub status
+npx -y @yottameta/yotta-skills hub doctor
 
 # 只删链接，不动 Hub 真源（真目录 / 外部链接一律拒绝）
 npx -y @yottameta/yotta-skills hub unlink --all
@@ -213,6 +214,7 @@ npx -y @yottameta/yotta-skills hub unlink --all
 | `hub link --agent <id> \| --dir <dir> \| --all` | 把 Hub 技能链接到指定宿主 / 目录 / 全部已发现宿主；`--dry-run` 只预览 |
 | `hub unlink --agent <id> \| --dir <dir> \| --all` | 只删除链接；lstat + readlink 校验目标在 Hub 内，fail-closed |
 | `hub status [--json]` | 查看 Hub 技能来源、版本、链接宿主、异常链接与宿主发现摘要 |
+| `hub doctor [--json]` | 检查断链 / Hub 目标缺失 / slug 不一致 / 目录权限；异常时退出码 1 |
 | `--route <需求摘要>` | 编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；可选本地 provider 增补 / 重排并返回 `confidence` / `reasons` / `summary` / `alternatives`；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `usage status` | 查看本地使用记录开关与计数；默认关闭，不创建文件 |
 | `usage enable` / `usage disable` | 开启 / 关闭 `--route` 的结构化使用记录；不记录需求原文 |

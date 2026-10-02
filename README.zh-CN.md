@@ -114,6 +114,7 @@ npx -y @yottameta/yotta-skills hub adopt --scan
 npx -y @yottameta/yotta-skills hub adopt --apply
 npx -y @yottameta/yotta-skills hub link --all
 npx -y @yottameta/yotta-skills hub status
+npx -y @yottameta/yotta-skills hub doctor
 ```
 
 前置：Node.js 18+、npm、系统 tar（Windows 10+ / macOS / 多数 Linux 自带）。
@@ -146,6 +147,7 @@ npx -y @yottameta/yotta-skills hub status
 | `hub link --all` | 把 Hub 技能链接到全部已发现宿主（Windows junction / POSIX symlink） |
 | `hub unlink --all` | 只删除链接，不动 Hub 真源（fail-closed；真目录 / 非 Hub 链接一律拒绝） |
 | `hub status` | 查看 Hub 技能来源、版本、链接宿主与异常；`--json` 输出 JSON |
+| `hub doctor` | 检查断链 / Hub 目标缺失 / slug 不一致 / 目录权限；异常时退出码 1；`--json` 输出 JSON |
 | `--route <需求摘要>` | 编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；可选本地扩展提供方在已装白名单内增补 / 重排并返回 `confidence` / `reasons` / `summary` / `alternatives`（未配置时行为不变，协议见 `references/provider-protocol.md`）；`--json` 输出 JSON 与 `dynamic` 状态块、`--project` 附扫项目级目录 |
 | `usage status` / `usage enable` / `usage disable` | 查看 / 开启 / 关闭本地结构化使用记录；默认关闭，只记录 slug、时间、信号类型、playbook / confidence 与组合对 |
 | `usage mark --skill <slug> --signal used\|named\|accepted` | 记录一次显式使用信号；不要求先 enable |

@@ -38,6 +38,7 @@ npx -y @yottameta/yotta-skills hub unlink --all
 
 # 查看来源、版本、链接宿主与异常
 npx -y @yottameta/yotta-skills hub status
+npx -y @yottameta/yotta-skills hub doctor
 ```
 
 ## 宿主发现口径

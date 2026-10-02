@@ -253,3 +253,33 @@ test('CLI hub refresh updates an adopted skill from an explicit path', () => {
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+test('CLI hub doctor reports a broken link and missing hub target', () => {
+  const root = tmp('ys-hub-doctor-');
+  const hubDir = path.join(root, 'hub');
+  const targetDir = path.join(root, 'host', 'skills');
+  const source = path.join(hubDir, 'yotta-test');
+  try {
+    writeSkill(source, 'yotta-test', '0.1.0');
+    const linked = hub.linkSkills({ hubDir, targetDir, slugs: ['yotta-test'] });
+    assert.strictEqual(linked.results[0].status, 'linked');
+    fs.rmSync(source, { recursive: true, force: true });
+    const r = run(['hub', 'doctor', '--hub', hubDir, '--json'], {
+      USERPROFILE: root,
+      HOME: root,
+      CODEX_HOME: path.join(root, '.codex'),
+      XDG_CONFIG_HOME: path.join(root, '.config'),
+      XDG_STATE_HOME: path.join(root, '.state'),
+      APPDATA: path.join(root, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(root, 'AppData', 'Local'),
+      YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+    }, root);
+    assert.strictEqual(r.status, 1, r.stdout + r.stderr);
+    const data = JSON.parse(r.stdout);
+    assert.strictEqual(data.ok, false);
+    assert.ok(data.checks.some((check) => check.id.startsWith('skill_present:') && !check.ok));
+    assert.ok(data.checks.some((check) => check.id.startsWith('link:') && !check.ok));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

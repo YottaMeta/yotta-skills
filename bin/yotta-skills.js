@@ -235,6 +235,10 @@ function parseArgs(argv) {
   }
   // 命令解析：install / update / doctor / rollback，其余位置参数 = 技能 slug（可多个）
   for (const p of positionals) {
+    if (opts.command === 'hub') {
+      opts.rest.push(p);
+      continue;
+    }
     if (p === 'install' || p === 'update' || p === 'doctor' || p === 'rollback' || p === 'hook'
       || p === 'hub'
       || p === 'usage' || p === 'decide-memory') {
@@ -1327,6 +1331,7 @@ function printHelp() {
   out('  yotta-skills hub link --agent <id>   只链接到一个宿主（未知宿主用 --dir）');
   out('  yotta-skills hub unlink --all        只删除链接，不动 Hub 真源（fail-closed）');
   out('  yotta-skills hub status              查看 Hub 技能 / 来源 / 链接 / 宿主');
+  out('  yotta-skills hub doctor              检查断链 / 目标缺失 / slug 不一致 / 目录权限');
   out('');
   out('选项:');
   out('  --agent <name>   智能体键名（--list 可查看；未知智能体请用 --dir）');
@@ -2004,6 +2009,22 @@ function printAdoptApply(payload, json) {
     ' / 失败 ' + payload.results.filter((item) => !['imported', 'skip', 'conflict'].includes(item.status)).length);
 }
 
+function printHubDoctor(payload, json) {
+  if (json) {
+    out(JSON.stringify(payload, null, 2));
+    return;
+  }
+  out('yotta-skills（元阁）v' + VERSION + ' —— Hub doctor');
+  out('Hub: ' + payload.hubDir);
+  for (const check of payload.checks) {
+    if (check.ok && check.severity !== 'info') continue;
+    const mark = check.ok ? '✔' : check.severity === 'warning' ? '△' : '✘';
+    out('  ' + mark + ' ' + check.message + (check.hint ? '（修复: ' + check.hint + '）' : ''));
+  }
+  out('汇总: 错误 ' + payload.summary.errors + ' / 警告 ' + payload.summary.warnings);
+  if (!payload.ok) out('Hub doctor 未通过：请按上面的修复建议处理后重试。');
+}
+
 function runHub(opts) {
   const hubDir = hubLib.resolveHubDir(opts);
   const action = opts.hubAction || 'status';
@@ -2130,8 +2151,20 @@ function runHub(opts) {
     return;
   }
 
+  if (action === 'doctor') {
+    const payload = hubLib.doctor({
+      hubDir,
+      manifest: MANIFEST,
+      homeDir: os.homedir(),
+      env: process.env,
+    });
+    printHubDoctor(payload, opts.json);
+    if (!payload.ok) process.exitCode = 1;
+    return;
+  }
+
   die('未知 hub 子命令: ' + action, 2,
-    '支持 install / update / link / unlink / status / hosts；adopt / refresh / doctor 在后续里程碑接入。');
+    '支持 install / update / adopt / refresh / link / unlink / status / hosts / doctor。');
 }
 
 // ── main ───────────────────────────────────────────────────────────────────

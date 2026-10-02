@@ -111,6 +111,7 @@ npx -y @yottameta/yotta-skills hub adopt --scan
 npx -y @yottameta/yotta-skills hub adopt --apply
 npx -y @yottameta/yotta-skills hub link --all
 npx -y @yottameta/yotta-skills hub status
+npx -y @yottameta/yotta-skills hub doctor
 ```
 
 Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 10+ / macOS / most Linux distributions).
@@ -143,6 +144,7 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `hub link --all` | Link Hub skills into every discovered host (Windows junction / POSIX symlink) |
 | `hub unlink --all` | Remove links only; never touches Hub sources (fail-closed for real directories or foreign links) |
 | `hub status` | Show Hub sources, versions, link hosts and drift; `--json` for JSON |
+| `hub doctor` | Check broken links, missing Hub targets, slug mismatches and directory permissions; exit 1 on errors; `--json` for JSON |
 | `--route <task-summary>` | Orchestration routing: return a combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install suggestion; also lists other installed (non-YottaMeta) skills as candidates matched mechanically against their frontmatter description, tagged "not scanned", read-only and never auto-invoked; an optional local provider may add or re-order installed skills within the allow-list and return <code>confidence</code> / <code>reasons</code> / <code>summary</code> / <code>alternatives</code> (see <code>references/provider-protocol.md</code>); `--json` for JSON plus a `dynamic` status block, `--project` adds project-level dirs |
 | `usage status` / `usage enable` / `usage disable` | Inspect / enable / disable local structured usage signals; off by default and limited to slug, time, signal type, playbook / confidence and skill pairs |
 | `usage mark --skill <slug> --signal used\|named\|accepted` | Record one explicit usage signal; no prior enable required |
