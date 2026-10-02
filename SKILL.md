@@ -146,12 +146,12 @@ npx -y @yottameta/yotta-skills --inventory
 # 重扫注册表（会话开工 / 新装技能后，增量合并变化）
 npx -y @yottameta/yotta-skills --reindex
 
-# OpenClaw / QClaw（QClaw 基于 OpenClaw）：走宿主官方技能命令，保留安全审计与更新追踪
+# OpenClaw：走宿主官方技能命令，保留安全审计与更新追踪
 openclaw skills install @yottameta/yotta-skills
 openclaw skills update @yottameta/yotta-skills
 ```
 
-> **OpenClaw / QClaw 用户**：技能安装与更新走宿主官方命令 `openclaw skills install|update @yottameta/<slug>`，
+> **OpenClaw 用户**：技能安装与更新走宿主官方命令 `openclaw skills install|update @yottameta/<slug>`，
 > 以保留宿主的 ClawHub 安全审计卡与更新追踪；元阁的 `--inventory` / `--reindex` 已能识别 `~/.openclaw/skills`（含 `OPENCLAW_STATE_DIR` 覆盖）。
 
 ## 技能 Hub（单点安装 + 链接分发）
