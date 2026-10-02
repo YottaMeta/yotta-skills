@@ -4,7 +4,8 @@
 - 宿主发现复用公开宿主表（兼容 Vercel Labs `skills` CLI / SkillCat 的目录映射，当前 79 条），支持 `CODEX_HOME` / `XDG_CONFIG_HOME` / `DSH_HOME` / `OPENCLAW_STATE_DIR` / `CLAUDE_CONFIG_DIR` 等环境变量覆盖，并过滤临时目录、`.bak`、candidate / staging、插件构建目录等噪声。
 - 只读桥接 Vercel Labs `skills` CLI 的 `.skill-lock.json` v3（`$XDG_STATE_HOME/skills/` 或 `~/.agents/`）；元阁不重写官方锁文件，只在 Hub 台账中合并来源信息。
 - 兼容矩阵实测：官方 `skills@1.7.0` 在临时假 home 中 8/8 宿主透过 Windows junction 读取同一技能；元阁 `hub hosts` 本机识别 31 个技能目录 / 44 个已装应用标记。证据：`docs\元阁-Hub-宿主兼容矩阵-2026-10-02.md`。
-- 新增 `lib/agent-dirs.js` / `lib/agent-discovery.js` / `lib/hub.js` / `lib/hub-adopt.js` / `lib/skills-cli-lock.js` 与 `test/hub.test.js`；全量测试 287/287。
+- WorkBuddy 复验修复：`hub doctor` 对「Hub 目录存在但零技能」判为 error 并提示先 `hub install` / `hub adopt --apply`；`hub link` / `hub unlink` 补齐 `--json` 结构化输出，不再静默退化为文本。
+- 新增 `lib/agent-dirs.js` / `lib/agent-discovery.js` / `lib/hub.js` / `lib/hub-adopt.js` / `lib/skills-cli-lock.js` 与 `test/hub.test.js`；全量测试 289/289。
 
 ## v0.24.2 (2026-10-02)
 

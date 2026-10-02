@@ -2097,9 +2097,11 @@ function runHub(opts) {
   if (action === 'link') {
     const targets = hubTargetDirs(opts, discovery);
     let failed = 0;
+    const targetPayloads = [];
     for (const target of targets) {
       if (path.resolve(target.dir) === path.resolve(hubDir)) {
-        out('跳过 Hub 自身: ' + target.dir);
+        targetPayloads.push({ dir: target.dir, label: target.label, skipped: true, results: [] });
+        if (!opts.json) out('跳过 Hub 自身: ' + target.dir);
         continue;
       }
       const result = hubLib.linkSkills({
@@ -2111,14 +2113,20 @@ function runHub(opts) {
         force: opts.force,
         dryRun: opts.dryRun,
       });
-      out('');
-      out('目标: ' + target.dir + '（' + target.label + '）');
-      for (const item of result.results) {
-        const mark = item.status === 'linked' ? '✔' : item.status === 'conflict' ? '△' : item.status === 'error' ? '✘' : '·';
-        out('  ' + mark + ' ' + item.slug.padEnd(26) + item.note);
-        if (item.status === 'error') failed++;
+      targetPayloads.push({ dir: target.dir, label: target.label, results: result.results });
+      if (!opts.json) {
+        out('');
+        out('目标: ' + target.dir + '（' + target.label + '）');
+        for (const item of result.results) {
+          const mark = item.status === 'linked' ? '✔' : item.status === 'conflict' ? '△' : item.status === 'error' ? '✘' : '·';
+          out('  ' + mark + ' ' + item.slug.padEnd(26) + item.note);
+          if (item.status === 'error') failed++;
+        }
+      } else {
+        failed += result.results.filter((item) => item.status === 'error').length;
       }
     }
+    if (opts.json) out(JSON.stringify({ hubDir, targets: targetPayloads, failed }, null, 2));
     if (failed > 0) process.exitCode = 1;
     return;
   }
@@ -2126,6 +2134,7 @@ function runHub(opts) {
   if (action === 'unlink') {
     const targets = hubTargetDirs(opts, discovery);
     let failed = 0;
+    const targetPayloads = [];
     for (const target of targets) {
       const result = hubLib.unlinkSkills({
         hubDir,
@@ -2133,14 +2142,20 @@ function runHub(opts) {
         slugs: opts.skills,
         dryRun: opts.dryRun,
       });
-      out('');
-      out('目标: ' + target.dir + '（' + target.label + '）');
-      for (const item of result.results) {
-        const mark = item.status === 'unlinked' ? '✔' : item.status === 'refused' ? '△' : item.status === 'error' ? '✘' : '·';
-        out('  ' + mark + ' ' + item.slug.padEnd(26) + item.note);
-        if (item.status === 'error') failed++;
+      targetPayloads.push({ dir: target.dir, label: target.label, results: result.results });
+      if (!opts.json) {
+        out('');
+        out('目标: ' + target.dir + '（' + target.label + '）');
+        for (const item of result.results) {
+          const mark = item.status === 'unlinked' ? '✔' : item.status === 'refused' ? '△' : item.status === 'error' ? '✘' : '·';
+          out('  ' + mark + ' ' + item.slug.padEnd(26) + item.note);
+          if (item.status === 'error') failed++;
+        }
+      } else {
+        failed += result.results.filter((item) => item.status === 'error').length;
       }
     }
+    if (opts.json) out(JSON.stringify({ hubDir, targets: targetPayloads, failed }, null, 2));
     if (failed > 0) process.exitCode = 1;
     return;
   }

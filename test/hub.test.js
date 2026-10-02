@@ -283,3 +283,71 @@ test('CLI hub doctor reports a broken link and missing hub target', () => {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('CLI hub doctor rejects an existing but empty hub', () => {
+  const home = tmp('ys-hub-empty-doctor-');
+  const hubDir = path.join(home, 'empty-hub');
+  try {
+    fs.mkdirSync(hubDir, { recursive: true });
+    const r = run(['hub', 'doctor', '--hub', hubDir, '--json'], {
+      USERPROFILE: home,
+      HOME: home,
+      CODEX_HOME: path.join(home, '.codex'),
+      XDG_CONFIG_HOME: path.join(home, '.config'),
+      XDG_STATE_HOME: path.join(home, '.state'),
+      APPDATA: path.join(home, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
+      YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+    }, home);
+    assert.strictEqual(r.status, 1, r.stdout + r.stderr);
+    const data = JSON.parse(r.stdout);
+    assert.strictEqual(data.ok, false);
+    const check = data.checks.find((item) => item.id === 'hub_nonempty');
+    assert.ok(check, 'empty hub check should exist');
+    assert.strictEqual(check.ok, false);
+    assert.match(check.hint, /hub install|hub adopt --apply/);
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI hub link and unlink honor --json', () => {
+  const root = tmp('ys-hub-json-link-');
+  const hubDir = path.join(root, 'hub');
+  const targetDir = path.join(root, 'host', 'skills');
+  const source = path.join(hubDir, 'yotta-test');
+  try {
+    writeSkill(source, 'yotta-test', '0.1.0');
+    const linkRun = run(['hub', 'link', '--dir', targetDir, '--hub', hubDir, '--json'], {
+      USERPROFILE: root,
+      HOME: root,
+      CODEX_HOME: path.join(root, '.codex'),
+      XDG_CONFIG_HOME: path.join(root, '.config'),
+      XDG_STATE_HOME: path.join(root, '.state'),
+      APPDATA: path.join(root, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(root, 'AppData', 'Local'),
+      YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+    }, root);
+    assert.strictEqual(linkRun.status, 0, linkRun.stdout + linkRun.stderr);
+    const linked = JSON.parse(linkRun.stdout);
+    assert.ok(Array.isArray(linked.targets));
+    assert.strictEqual(linked.targets[0].results[0].status, 'linked');
+
+    const unlinkRun = run(['hub', 'unlink', '--dir', targetDir, 'yotta-test', '--hub', hubDir, '--json'], {
+      USERPROFILE: root,
+      HOME: root,
+      CODEX_HOME: path.join(root, '.codex'),
+      XDG_CONFIG_HOME: path.join(root, '.config'),
+      XDG_STATE_HOME: path.join(root, '.state'),
+      APPDATA: path.join(root, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(root, 'AppData', 'Local'),
+      YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+    }, root);
+    assert.strictEqual(unlinkRun.status, 0, unlinkRun.stdout + unlinkRun.stderr);
+    const unlinked = JSON.parse(unlinkRun.stdout);
+    assert.ok(Array.isArray(unlinked.targets));
+    assert.strictEqual(unlinked.targets[0].results[0].status, 'unlinked');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
