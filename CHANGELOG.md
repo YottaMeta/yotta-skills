@@ -1,3 +1,7 @@
+## v0.25.1 (2026-10-02)
+
+- 家族清单同步：元质 `yotta-code-quality` 0.4.3（分发副本 frontmatter `description` 单引号标量修复，严格 YAML 解析器不再跳过）。
+
 ## v0.25.0 (2026-10-02)
 
 - 新增本机技能 Hub（标准 `yotta-skills-hub/v1`）：`hub hosts` 只读发现本机宿主与技能目录（文件系统优先，不读元忆 / 注册表）；`hub install` / `hub update` 把技能装到 `~/.yottaskills/hub` 单点真源；`hub adopt --scan|--apply` 收编各宿主现有技能（默认复制保真 + 原目录保留）；`hub refresh <slug> --from <path>` 手动同步非元阁来源技能；`hub link --all` 用 Windows junction / POSIX symlink 分发到全部已发现宿主；`hub unlink` fail-closed 只删链接；`hub status` 显示来源、版本、链接与异常；`hub doctor` 检查断链 / 目标缺失 / slug 不一致 / 目录权限。
