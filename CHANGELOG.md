@@ -1,3 +1,13 @@
+## v0.26.0 (2026-10-02)
+
+- 新增本机技能枢纽面板 `yotta-skills view`（默认 `127.0.0.1:8789`，`--port` 可改，仅本机监听）：六视图（概览 / 宿主矩阵 / 收编向导 / 链接与体检 / 记录与回滚 / 路由与编排）+ 高级 CLI 页；全部包装既有 Hub / 快照 / 证据 / 路由 lib，不建平行状态。
+- 面板动作边界：收编 / 链接 / 解除 / 回滚可执行（预览 → 确认 → 执行 → 证据）；install / update / refresh 只给复制命令；收编逐项运行元信扫描，high / critical 阻断，面板不提供跳过 / 降级（`--skip-scan` / `--allow-unverified` 仍只在 CLI 显式使用）。
+- 安全壳：Host / Origin / Sec-Fetch-Site 校验、严格 CSP / no-store / noindex、写操作会话令牌、256KB 请求体上限、写操作串行、破坏性确认串；零远程资源、零遥测，不读元忆、不改宿主配置。
+- 新增 `lib/hub-view-server.js`（HTTP 服务与 API）与 `lib/hub-scan.js`（CLI / 面板共用元信扫描发现；CLI 同名逻辑改为委托，行为不变）；`assets/view.html` 为前端单一真源，`tools/sync_hub_view_html.py` 嵌入 CLI 并提供 `--check` 漂移门禁（已接入 `preflight-publish.py`）；`tools/check_hub_view.js` 做 1440 / 390 浏览器验收。
+- 快照回读增强（additive）：`validateSnapshot` / `listSnapshots` 输出 `source` / `createdAt`，供面板回滚定位来源目录；CLI 原字段不变。
+- 断链修复：Hub 真源删除后遗留的 junction / symlink 现在会被识别为 `broken`（读取链接值判定是否指向 Hub），`hub unlink` 可 fail-closed 清理；此前面向断链的 `unlink` 会因目标不可解析被误拒。
+- 测试：`test/hub-view-server.test.js` 17/17、`test/hub-view-cli.test.js` 2/2、`test/hub-view-embedding.test.js` 3/3；全量 312/312。
+
 ## v0.25.1 (2026-10-02)
 
 - 家族清单同步：元质 `yotta-code-quality` 0.4.3（分发副本 frontmatter `description` 单引号标量修复，严格 YAML 解析器不再跳过）。

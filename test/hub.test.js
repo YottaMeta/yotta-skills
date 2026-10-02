@@ -107,6 +107,31 @@ test('hub unlink is fail-closed for a real directory', () => {
   }
 });
 
+test('hub unlink cleans a broken junction after the hub entry disappears', () => {
+  const root = tmp('ys-hub-broken-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const targetDir = path.join(root, 'host', 'skills');
+    const source = path.join(hubDir, 'yotta-test');
+    writeSkill(source, 'yotta-test', '0.1.0');
+    hub.linkSkills({ hubDir, targetDir, slugs: ['yotta-test'] });
+    fs.rmSync(source, { recursive: true, force: true });
+
+    const linkStatus = hub.linkStatus(hubDir);
+    assert.strictEqual(linkStatus[0].status, 'broken');
+    assert.strictEqual(linkStatus[0].actual.inHub, true);
+    assert.strictEqual(linkStatus[0].actual.targetExists, false);
+
+    const result = hub.unlinkSkills({ hubDir, targetDir, slugs: ['yotta-test'] });
+    assert.strictEqual(result.results[0].status, 'unlinked', result.results[0].note);
+    let remains = true;
+    try { fs.lstatSync(path.join(targetDir, 'yotta-test')); } catch (_) { remains = false; }
+    assert.strictEqual(remains, false, 'broken junction must be removed');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('CLI hub hosts --json reads filesystem discovery, not the memory registry', () => {
   const home = tmp('ys-hub-cli-home-');
   try {
