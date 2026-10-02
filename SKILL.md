@@ -166,10 +166,14 @@ npx -y @yottameta/yotta-skills hub hosts
 # 2) 把元技能装进 Hub 真源（复用安装管线 + 元信装前扫描）
 npx -y @yottameta/yotta-skills hub install
 
-# 3) 链接分发到全部已发现宿主（Windows junction / macOS·Linux symlink）
+# 3) 接管各宿主现有技能：先只读预演，再复制收编（原目录保留）
+npx -y @yottameta/yotta-skills hub adopt --scan
+npx -y @yottameta/yotta-skills hub adopt --apply
+
+# 4) 链接分发到全部已发现宿主（Windows junction / macOS·Linux symlink）
 npx -y @yottameta/yotta-skills hub link --all
 
-# 4) 查看来源、版本、链接宿主与异常
+# 5) 查看来源、版本、链接宿主与异常
 npx -y @yottameta/yotta-skills hub status
 
 # 只删链接，不动 Hub 真源（真目录 / 外部链接一律拒绝）
@@ -203,6 +207,9 @@ npx -y @yottameta/yotta-skills hub unlink --all
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（install / update 完成后 CLI 自动重扫；也可在会话开工等时机手动运行）；`--json` 输出 JSON、`--project` 附扫项目级目录；`--rescan` 同义 |
 | `hub hosts` | 发现本机已装智能体与技能目录（文件系统 + 环境变量；不读元忆 / 注册表）；`--json` 输出 JSON |
 | `hub install [skill...]` | 把元技能安装到 Hub 真源（默认 `~/.yottaskills/hub`；`--hub` / `YOTTA_SKILLS_HUB` 覆盖） |
+| `hub adopt --scan` | 只读预演：扫描各宿主现有技能，输出收编候选、多副本冲突、已在 Hub 状态 |
+| `hub adopt --apply [--include <a,b>] [--force] [--in-place]` | 把选中技能收编进 Hub；默认复制保真 + 原目录保留；非元阁来源标注「无更新源」 |
+| `hub refresh <slug> --from <path>` | 手动同步非元阁技能（重新收编 + 更新哈希 + 台账） |
 | `hub link --agent <id> \| --dir <dir> \| --all` | 把 Hub 技能链接到指定宿主 / 目录 / 全部已发现宿主；`--dry-run` 只预览 |
 | `hub unlink --agent <id> \| --dir <dir> \| --all` | 只删除链接；lstat + readlink 校验目标在 Hub 内，fail-closed |
 | `hub status [--json]` | 查看 Hub 技能来源、版本、链接宿主、异常链接与宿主发现摘要 |

@@ -23,6 +23,13 @@ npx -y @yottameta/yotta-skills hub hosts
 npx -y @yottameta/yotta-skills hub install
 npx -y @yottameta/yotta-skills hub update
 
+# 接管各宿主现有技能：先只读预演，再复制收编（原目录保留）
+npx -y @yottameta/yotta-skills hub adopt --scan
+npx -y @yottameta/yotta-skills hub adopt --apply
+
+# 非元阁来源技能没有统一更新源：手动从指定目录刷新
+npx -y @yottameta/yotta-skills hub refresh my-skill --from <技能目录>
+
 # 分发到全部已发现宿主（默认不覆盖真目录；--force 才备份并替换）
 npx -y @yottameta/yotta-skills hub link --all
 

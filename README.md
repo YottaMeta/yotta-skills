@@ -107,6 +107,8 @@ npx -y @yottameta/yotta-skills hub hosts
 
 # Install once into the local Hub, then link to every discovered host
 npx -y @yottameta/yotta-skills hub install
+npx -y @yottameta/yotta-skills hub adopt --scan
+npx -y @yottameta/yotta-skills hub adopt --apply
 npx -y @yottameta/yotta-skills hub link --all
 npx -y @yottameta/yotta-skills hub status
 ```
@@ -135,6 +137,9 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (on demand; `install` / `update` re-index automatically; `--rescan` is a synonym); `--json` for JSON |
 | `hub hosts` | Discover installed agents and their skill directories (filesystem + environment; never reads the memory registry); `--json` for JSON |
 | `hub install [skill...]` | Install family skills into the local Hub (`~/.yottaskills/hub` by default; override with `--hub` / `YOTTA_SKILLS_HUB`) |
+| `hub adopt --scan` | Read-only preview: scan existing host skills and report adoption candidates, duplicate conflicts and Hub state |
+| `hub adopt --apply [--include <a,b>] [--force] [--in-place]` | Adopt selected skills into the Hub; copy-preserving by default and keep the original directory; non-YottaMeta sources are marked "no update source" |
+| `hub refresh <slug> --from <path>` | Manually re-sync a non-YottaMeta skill (re-adopt, refresh hash and ledger) |
 | `hub link --all` | Link Hub skills into every discovered host (Windows junction / POSIX symlink) |
 | `hub unlink --all` | Remove links only; never touches Hub sources (fail-closed for real directories or foreign links) |
 | `hub status` | Show Hub sources, versions, link hosts and drift; `--json` for JSON |

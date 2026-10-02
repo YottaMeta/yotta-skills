@@ -156,3 +156,100 @@ test('CLI hub status reports hub standard and empty hub state', () => {
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+test('CLI hub adopt --scan lists a filesystem candidate without writing', () => {
+  const home = tmp('ys-hub-adopt-scan-');
+  const hubDir = path.join(home, 'hub');
+  try {
+    writeSkill(path.join(home, '.newagent', 'skills', 'custom-skill'), 'custom-skill', '2.0.0');
+    const r = run(['hub', 'adopt', '--scan', '--hub', hubDir, '--json'], {
+      USERPROFILE: home,
+      HOME: home,
+      CODEX_HOME: path.join(home, '.codex'),
+      XDG_CONFIG_HOME: path.join(home, '.config'),
+      XDG_STATE_HOME: path.join(home, '.state'),
+      APPDATA: path.join(home, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
+      YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+    }, home);
+    assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+    const data = JSON.parse(r.stdout);
+    const candidate = data.candidates.find((item) => item.slug === 'custom-skill');
+    assert.ok(candidate, 'candidate should be listed');
+    assert.strictEqual(candidate.version, '2.0.0');
+    assert.strictEqual(candidate.inHub, false);
+    assert.ok(!fs.existsSync(path.join(hubDir, 'custom-skill')), 'scan must not write');
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI hub adopt --apply copies into hub and keeps the original directory', () => {
+  const home = tmp('ys-hub-adopt-apply-');
+  const hubDir = path.join(home, 'hub');
+  const source = path.join(home, '.newagent', 'skills', 'custom-skill');
+  try {
+    writeSkill(source, 'custom-skill', '2.0.0');
+    const r = run(['hub', 'adopt', '--apply', '--skip-scan', '--hub', hubDir, '--json'], {
+      USERPROFILE: home,
+      HOME: home,
+      CODEX_HOME: path.join(home, '.codex'),
+      XDG_CONFIG_HOME: path.join(home, '.config'),
+      XDG_STATE_HOME: path.join(home, '.state'),
+      APPDATA: path.join(home, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
+      YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+    }, home);
+    assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+    const data = JSON.parse(r.stdout);
+    const result = data.results.find((item) => item.slug === 'custom-skill');
+    assert.strictEqual(result.status, 'imported');
+    assert.ok(fs.existsSync(path.join(hubDir, 'custom-skill', 'SKILL.md')), 'hub copy should exist');
+    assert.ok(fs.existsSync(path.join(source, 'SKILL.md')), 'original should remain');
+    const state = JSON.parse(fs.readFileSync(path.join(hubDir, '.yotta-hub.json'), 'utf8'));
+    assert.strictEqual(state.skills['custom-skill'].origin, 'external');
+    assert.strictEqual(state.skills['custom-skill'].scanVerdict, 'explicit-unverified');
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI hub refresh updates an adopted skill from an explicit path', () => {
+  const home = tmp('ys-hub-refresh-');
+  const hubDir = path.join(home, 'hub');
+  const source = path.join(home, '.newagent', 'skills', 'custom-skill');
+  const next = path.join(home, 'next-custom-skill');
+  try {
+    writeSkill(source, 'custom-skill', '2.0.0');
+    run(['hub', 'adopt', '--apply', '--skip-scan', '--hub', hubDir], {
+      USERPROFILE: home,
+      HOME: home,
+      CODEX_HOME: path.join(home, '.codex'),
+      XDG_CONFIG_HOME: path.join(home, '.config'),
+      XDG_STATE_HOME: path.join(home, '.state'),
+      APPDATA: path.join(home, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
+      YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+    }, home);
+    writeSkill(next, 'custom-skill', '2.1.0');
+    const r = run(['hub', 'refresh', 'custom-skill', '--from', next, '--skip-scan', '--hub', hubDir, '--json'], {
+      USERPROFILE: home,
+      HOME: home,
+      CODEX_HOME: path.join(home, '.codex'),
+      XDG_CONFIG_HOME: path.join(home, '.config'),
+      XDG_STATE_HOME: path.join(home, '.state'),
+      APPDATA: path.join(home, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
+      YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+    }, home);
+    assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+    const data = JSON.parse(r.stdout);
+    assert.strictEqual(data.ok, true);
+    const text = fs.readFileSync(path.join(hubDir, 'custom-skill', 'SKILL.md'), 'utf8');
+    assert.ok(text.includes('2.1.0'));
+    const state = JSON.parse(fs.readFileSync(path.join(hubDir, '.yotta-hub.json'), 'utf8'));
+    assert.strictEqual(state.skills['custom-skill'].version, '2.1.0');
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});

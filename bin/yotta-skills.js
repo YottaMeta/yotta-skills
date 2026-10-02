@@ -48,6 +48,7 @@ const registryFetchLib = require('../lib/registry-fetch');
 const agentDirsLib = require('../lib/agent-dirs');
 const agentDiscoveryLib = require('../lib/agent-discovery');
 const hubLib = require('../lib/hub');
+const hubAdoptLib = require('../lib/hub-adopt');
 const { createInstaller, isSafeTarEntry } = require('../lib/install-pipeline');
 const { COPY_SKIP, copyDir } = require('../lib/copy-tree');
 
@@ -154,6 +155,7 @@ function parseArgs(argv) {
     only: [], domain: null, installedOnly: false,
     hub: null, all: false, inPlace: false, allowUnverified: false,
     from: null, include: [], as: null, skillsCli: null,
+    scan: false, apply: false,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -206,6 +208,8 @@ function parseArgs(argv) {
     else if (a === '--hub') opts.hub = take('--hub');
     else if (a === '--all') opts.all = true;
     else if (a === '--in-place') opts.inPlace = true;
+    else if (a === '--scan') opts.scan = true;
+    else if (a === '--apply') opts.apply = true;
     else if (a === '--allow-unverified') opts.allowUnverified = true;
     else if (a === '--from') opts.from = take('--from');
     else if (a === '--include') {
@@ -253,9 +257,9 @@ function parseArgs(argv) {
   if (opts.installedOnly && opts.command !== 'update') {
     die('--installed-only 只能与 update 一起使用', 2, '标准配方：yotta-skills update --installed-only --dir <技能目录>。');
   }
-  if ((opts.all || opts.inPlace || opts.allowUnverified || opts.from || opts.include.length || opts.as)
+  if ((opts.all || opts.inPlace || opts.allowUnverified || opts.from || opts.include.length || opts.as || opts.scan || opts.apply)
     && opts.command !== 'hub') {
-    die('--all / --in-place / --allow-unverified / --from / --include / --as 只能与 hub 命令一起使用', 2,
+    die('--all / --in-place / --allow-unverified / --from / --include / --as / --scan / --apply 只能与 hub 命令一起使用', 2,
       'Hub 用法：yotta-skills hub link --all 或 yotta-skills hub adopt --scan。');
   }
   if (opts.domain && !domainValues().includes(opts.domain)) {
@@ -1316,6 +1320,9 @@ function printHelp() {
   out('  yotta-skills hook unbind <binding-id>  反注册 hook 声明');
   out('  yotta-skills hub hosts              发现本机已装智能体与技能目录（不读元忆）');
   out('  yotta-skills hub install [skill...]  把元技能装进本机 Hub（单点真源）');
+  out('  yotta-skills hub adopt --scan        只读预演：扫描各宿主现有技能，输出收编候选与冲突');
+  out('  yotta-skills hub adopt --apply       把选中技能复制进 Hub（默认保留原目录；--in-place 原地登记）');
+  out('  yotta-skills hub refresh <slug> --from <path>  手动同步非元阁技能（无统一更新源）');
   out('  yotta-skills hub link --all          把 Hub 技能链接到全部已发现宿主（junction / symlink）');
   out('  yotta-skills hub link --agent <id>   只链接到一个宿主（未知宿主用 --dir）');
   out('  yotta-skills hub unlink --all        只删除链接，不动 Hub 真源（fail-closed）');
@@ -1352,8 +1359,10 @@ function printHelp() {
   out('  --promote         decide-memory 只写本地建议文件（不写元忆）');
   out('  --hub <path>      Hub 目录（默认 ~/.yottaskills/hub；YOTTA_SKILLS_HUB 覆盖）');
   out('  --all             hub link / unlink 时作用于全部已发现宿主');
-  out('  --in-place        hub adopt 后续里程碑：原地登记，不复制（当前保留）');
-  out('  --allow-unverified hub adopt 后续里程碑：显式允许未扫描导入');
+  out('  --scan            hub adopt 只读预演（默认行为）');
+  out('  --apply           hub adopt 执行收编');
+  out('  --in-place        hub adopt 原地登记，不复制（原目录删除即断链）');
+  out('  --allow-unverified 显式允许未扫描导入（默认 high / critical 阻断）');
   out('  --project         inventory / reindex 时附加扫描当前项目 .agents/skills / .codex/skills');
   out('  --no-reindex      安装 / 更新后不自动重扫注册表');
   out('  -h, --help       帮助');
@@ -1928,6 +1937,73 @@ function printHubStatus(payload, discovery, json) {
   printHubHosts(discovery, false);
 }
 
+function hubScanEngine(hubDir, discovery, opts) {
+  const direct = findVerifyEngine(hubDir, opts);
+  if (direct) return direct;
+  for (const host of discovery.hosts) {
+    if (!host.exists) continue;
+    const engine = findVerifyEngine(host.dir, opts);
+    if (engine) return engine;
+  }
+  return null;
+}
+
+function hubScanSkill(hubDir, discovery, opts, skillDir) {
+  if (opts.skipScan) {
+    return { ok: true, verdict: 'explicit-unverified', counts: null, block: false };
+  }
+  const engine = hubScanEngine(hubDir, discovery, opts);
+  if (!engine) {
+    return {
+      ok: false,
+      error: '未找到元信扫描引擎（可先安装 yotta-verify，或用 --allow-unverified 显式降级）',
+    };
+  }
+  const scan = runScan(engine, skillDir, opts);
+  if (!scan.ok) return scan;
+  const verdict = gateLib.evaluateVerdict(scan.verdict);
+  return { ok: true, verdict: scan.verdict, counts: scan.counts, block: verdict.block };
+}
+
+function printAdoptScan(payload, json) {
+  if (json) {
+    out(JSON.stringify(payload, null, 2));
+    return;
+  }
+  out('yotta-skills（元阁）v' + VERSION + ' —— Hub 收编预演（只读）');
+  out('Hub: ' + payload.hubDir);
+  out('候选 ' + payload.summary.candidates + ' / 冲突 ' + payload.summary.conflicts +
+    ' / 已在 Hub ' + payload.summary.alreadyInHub);
+  out('');
+  for (const item of payload.candidates) {
+    const mark = item.conflict ? '△' : item.inHub ? '·' : '✔';
+    out('  ' + mark + ' ' + item.slug.padEnd(26) + 'v' + String(item.version || '-').padEnd(10) +
+      (item.sourceHost || '-') + '  ' + (item.source || ''));
+    if (item.conflict) {
+      out('      冲突副本: ' + item.variants.map((variant) =>
+        (variant.host || '?') + ' v' + (variant.version || '?')).join(', '));
+    }
+  }
+  if (payload.candidates.length === 0) out('  （没有发现可收编技能）');
+}
+
+function printAdoptApply(payload, json) {
+  if (json) {
+    out(JSON.stringify(payload, null, 2));
+    return;
+  }
+  out('yotta-skills（元阁）v' + VERSION + ' —— Hub 收编');
+  out('Hub: ' + payload.hubDir);
+  for (const item of payload.results) {
+    const mark = item.status === 'imported' ? '✔' : item.status === 'skip' ? '·' : item.status === 'conflict' ? '△' : '✘';
+    out('  ' + mark + ' ' + item.slug.padEnd(26) + item.note);
+  }
+  out('汇总: 收编 ' + payload.results.filter((item) => item.status === 'imported').length +
+    ' / 跳过 ' + payload.results.filter((item) => item.status === 'skip').length +
+    ' / 冲突 ' + payload.results.filter((item) => item.status === 'conflict').length +
+    ' / 失败 ' + payload.results.filter((item) => !['imported', 'skip', 'conflict'].includes(item.status)).length);
+}
+
 function runHub(opts) {
   const hubDir = hubLib.resolveHubDir(opts);
   const action = opts.hubAction || 'status';
@@ -1946,6 +2022,54 @@ function runHub(opts) {
     out('');
     out('Hub 台账已更新: ' + count + ' 个技能；标准 ' + hubLib.STANDARD_ID);
     if (result.failed > 0) process.exitCode = result.exitCode || 1;
+    return;
+  }
+
+  if (action === 'adopt') {
+    if (opts.as) {
+      die('hub adopt --as 暂未启用', 2, '先收编原 slug；改名 / 冲突改写放到后续里程碑，避免静默改技能身份。');
+    }
+    const scan = hubAdoptLib.scanCandidates({ hubDir, discovery });
+    if (!opts.apply) {
+      printAdoptScan(scan, opts.json);
+      return;
+    }
+    const payload = hubAdoptLib.applyCandidates({
+      hubDir,
+      candidates: scan.candidates,
+      include: opts.include,
+      force: opts.force,
+      inPlace: opts.inPlace,
+      skipScan: opts.skipScan,
+      allowUnverified: opts.allowUnverified,
+      manifest: MANIFEST,
+      homeDir: os.homedir(),
+      env: process.env,
+      scan: (skillDir) => hubScanSkill(hubDir, discovery, opts, skillDir),
+    });
+    printAdoptApply(payload, opts.json);
+    if (payload.results.some((item) => !['imported', 'skip', 'conflict'].includes(item.status))) process.exitCode = 1;
+    return;
+  }
+
+  if (action === 'refresh') {
+    if (!opts.from) die('hub refresh 缺少 --from <path>', 2, '示例：yotta-skills hub refresh my-skill --from <技能目录>。');
+    if (opts.skills.length !== 1) die('hub refresh 需要一个且仅一个技能 slug', 2, '示例：yotta-skills hub refresh my-skill --from <技能目录>。');
+    const result = hubAdoptLib.refreshFrom({
+      hubDir,
+      slug: opts.skills[0],
+      from: opts.from,
+      skipScan: opts.skipScan,
+      allowUnverified: opts.allowUnverified,
+      manifest: MANIFEST,
+      homeDir: os.homedir(),
+      env: process.env,
+      scan: (skillDir) => hubScanSkill(hubDir, discovery, opts, skillDir),
+    });
+    if (opts.json) out(JSON.stringify(result, null, 2));
+    else if (result.ok) out('已刷新: ' + result.slug + '（来源 ' + result.source + '）');
+    else out('刷新失败: ' + result.error);
+    if (!result.ok) process.exitCode = 1;
     return;
   }
 
