@@ -101,6 +101,14 @@ npx -y @yottameta/yotta-skills --inventory
 
 # Re-index the registry (on demand; install / update re-index automatically)
 npx -y @yottameta/yotta-skills --reindex
+
+# Discover installed agents and their skill directories (filesystem-first; no memory registry)
+npx -y @yottameta/yotta-skills hub hosts
+
+# Install once into the local Hub, then link to every discovered host
+npx -y @yottameta/yotta-skills hub install
+npx -y @yottameta/yotta-skills hub link --all
+npx -y @yottameta/yotta-skills hub status
 ```
 
 Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 10+ / macOS / most Linux distributions).
@@ -125,6 +133,11 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `--registry <url>` | npm registry to check against (default https://registry.npmjs.org/; `YOTTA_SKILLS_REGISTRY` overrides) |
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
 | `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (on demand; `install` / `update` re-index automatically; `--rescan` is a synonym); `--json` for JSON |
+| `hub hosts` | Discover installed agents and their skill directories (filesystem + environment; never reads the memory registry); `--json` for JSON |
+| `hub install [skill...]` | Install family skills into the local Hub (`~/.yottaskills/hub` by default; override with `--hub` / `YOTTA_SKILLS_HUB`) |
+| `hub link --all` | Link Hub skills into every discovered host (Windows junction / POSIX symlink) |
+| `hub unlink --all` | Remove links only; never touches Hub sources (fail-closed for real directories or foreign links) |
+| `hub status` | Show Hub sources, versions, link hosts and drift; `--json` for JSON |
 | `--route <task-summary>` | Orchestration routing: return a combination, call order, per-skill roles, confidence, evidence, installed/missing status, and an install suggestion; also lists other installed (non-YottaMeta) skills as candidates matched mechanically against their frontmatter description, tagged "not scanned", read-only and never auto-invoked; an optional local provider may add or re-order installed skills within the allow-list and return <code>confidence</code> / <code>reasons</code> / <code>summary</code> / <code>alternatives</code> (see <code>references/provider-protocol.md</code>); `--json` for JSON plus a `dynamic` status block, `--project` adds project-level dirs |
 | `usage status` / `usage enable` / `usage disable` | Inspect / enable / disable local structured usage signals; off by default and limited to slug, time, signal type, playbook / confidence and skill pairs |
 | `usage mark --skill <slug> --signal used\|named\|accepted` | Record one explicit usage signal; no prior enable required |

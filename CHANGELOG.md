@@ -1,3 +1,11 @@
+## v0.25.0 (2026-10-02)
+
+- 新增本机技能 Hub（标准 `yotta-skills-hub/v1`）：`hub hosts` 只读发现本机宿主与技能目录（文件系统优先，不读元忆 / 注册表）；`hub install` / `hub update` 把技能装到 `~/.yottaskills/hub` 单点真源；`hub link --all` 用 Windows junction / POSIX symlink 分发到全部已发现宿主；`hub unlink` fail-closed 只删链接；`hub status` 显示来源、版本、链接与异常。
+- 宿主发现复用公开宿主表（兼容 Vercel Labs `skills` CLI / SkillCat 的目录映射，当前 79 条），支持 `CODEX_HOME` / `XDG_CONFIG_HOME` / `DSH_HOME` / `OPENCLAW_STATE_DIR` / `CLAUDE_CONFIG_DIR` 等环境变量覆盖，并过滤临时目录、`.bak`、candidate / staging、插件构建目录等噪声。
+- 只读桥接 Vercel Labs `skills` CLI 的 `.skill-lock.json` v3（`$XDG_STATE_HOME/skills/` 或 `~/.agents/`）；元阁不重写官方锁文件，只在 Hub 台账中合并来源信息。
+- 兼容矩阵实测：官方 `skills@1.7.0` 在临时假 home 中 8/8 宿主透过 Windows junction 读取同一技能；元阁 `hub hosts` 本机识别 31 个技能目录 / 44 个已装应用标记。证据：`docs\元阁-Hub-宿主兼容矩阵-2026-10-02.md`。
+- 新增 `lib/agent-dirs.js` / `lib/agent-discovery.js` / `lib/hub.js` / `lib/skills-cli-lock.js` 与 `test/hub.test.js`；全量测试 283/283。
+
 ## v0.24.2 (2026-10-02)
 
 - 家族清单同步：元忆 `0.21.1`（管理台归属 AI 平铺选择 + 记忆详情抽屉遮罩层级修复）。

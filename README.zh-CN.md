@@ -104,6 +104,14 @@ npx -y @yottameta/yotta-skills --inventory
 
 # 重扫注册表（随时手动运行；install / update 完成后已自动重扫）
 npx -y @yottameta/yotta-skills --reindex
+
+# 发现本机已装智能体与技能目录（文件系统优先，不读元忆 / 注册表）
+npx -y @yottameta/yotta-skills hub hosts
+
+# 单点装到本机 Hub，再链接分发到全部已发现宿主
+npx -y @yottameta/yotta-skills hub install
+npx -y @yottameta/yotta-skills hub link --all
+npx -y @yottameta/yotta-skills hub status
 ```
 
 前置：Node.js 18+、npm、系统 tar（Windows 10+ / macOS / 多数 Linux 自带）。
@@ -128,6 +136,11 @@ npx -y @yottameta/yotta-skills --reindex
 | `--registry <url>` | 检查的 npm registry 地址（默认 https://registry.npmjs.org/；`YOTTA_SKILLS_REGISTRY` 覆盖） |
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（install / update 完成后自动重扫，也可随时手动运行；`--rescan` 同义）；`--json` 输出 JSON |
+| `hub hosts` | 发现本机已装智能体与技能目录（文件系统 + 环境变量；不读元忆 / 注册表）；`--json` 输出 JSON |
+| `hub install [skill...]` | 把元技能安装到本机 Hub 真源（默认 `~/.yottaskills/hub`；`--hub` / `YOTTA_SKILLS_HUB` 覆盖） |
+| `hub link --all` | 把 Hub 技能链接到全部已发现宿主（Windows junction / POSIX symlink） |
+| `hub unlink --all` | 只删除链接，不动 Hub 真源（fail-closed；真目录 / 非 Hub 链接一律拒绝） |
+| `hub status` | 查看 Hub 技能来源、版本、链接宿主与异常；`--json` 输出 JSON |
 | `--route <需求摘要>` | 编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；可选本地扩展提供方在已装白名单内增补 / 重排并返回 `confidence` / `reasons` / `summary` / `alternatives`（未配置时行为不变，协议见 `references/provider-protocol.md`）；`--json` 输出 JSON 与 `dynamic` 状态块、`--project` 附扫项目级目录 |
 | `usage status` / `usage enable` / `usage disable` | 查看 / 开启 / 关闭本地结构化使用记录；默认关闭，只记录 slug、时间、信号类型、playbook / confidence 与组合对 |
 | `usage mark --skill <slug> --signal used\|named\|accepted` | 记录一次显式使用信号；不要求先 enable |
