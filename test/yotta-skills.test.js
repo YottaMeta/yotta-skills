@@ -27,6 +27,7 @@ function fakeEnv(extra) {
   const home = tmpdir('ys-home-');
   return {
     YOTTA_SKILLS_NPM: FAKE_NPM,
+    YOTTA_SKILLS_FETCH: 'npm',
     USERPROFILE: home,
     HOME: home,
     ...(extra || {}),
@@ -253,6 +254,7 @@ test('install yotta-verify records before_install hook evidence', () => {
     ['install', 'yotta-verify', '--dir', dest, '--pin', '--no-reindex'],
     {
       YOTTA_SKILLS_NPM: FAKE_NPM,
+      YOTTA_SKILLS_FETCH: 'npm',
       YOTTA_SKILLS_FAKE_VERDICT: 'SAFE TO INSTALL',
       YOTTA_SKILLS_FAKE_MANIFEST_FILE: path.join(ROOT, '..', 'yotta-verify', 'skill-manifest.json'),
       USERPROFILE: home,

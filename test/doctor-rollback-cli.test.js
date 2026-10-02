@@ -259,6 +259,7 @@ test('install executes package-local setup and doctor before committing', () => 
     {
       ...env,
       YOTTA_SKILLS_NPM: FAKE_NPM,
+      YOTTA_SKILLS_FETCH: 'npm',
       YOTTA_SKILLS_FAKE_MANIFEST_FILE: manifestFile,
       YOTTA_SKILLS_FAKE_LIFECYCLE_DIR: lifecycleDir,
     },

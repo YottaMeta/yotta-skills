@@ -94,7 +94,7 @@ test('install evidence carries scan policy review details and context', () => {
   });
   const result = installer(skill, dest, {});
   assert.strictEqual(result.status, 'ok');
-  assert.deepStrictEqual(seenContext, { slug: skill.slug, version: '1.0.0' });
+  assert.deepStrictEqual(seenContext, { slug: skill.slug, version: '1.0.0', opts: {} });
   const before = evidence.find((entry) => entry.event === 'before_install' && entry.skill === skill.slug);
   assert.ok(before, '缺少 before_install 证据');
   assert.strictEqual(before.scan_policy.applied, true);

@@ -1,3 +1,11 @@
+## v0.24.0 (2026-10-02)
+
+- 接管能力补缺口（A 无 npm 拉包 / B 依赖人话提示 / C 范围控制 / D 行为回归）：
+- A 内置拉包 / 解包：新增 `lib/registry-fetch.js`（Node 内置 https 直连 registry：abbreviated packument + 版本解析 + tarball 下载 + `integrity`(sha512) / `shasum`(sha1) fail-closed 校验 + `HTTPS_PROXY` / `HTTP_PROXY` CONNECT 隧道）与 `lib/untar.js`（zlib + ustar / pax / GNU 长名解析；路径越界与链接条目 fail-closed）；默认内置为主，npm 与系统 tar 仅作回退通道，`YOTTA_SKILLS_FETCH` / `YOTTA_SKILLS_EXTRACT` 可强制单通道；安装证据新增 `fetch_channel` / `extract_channel`。
+- B 依赖统一提示：新增 `lib/deps.js` 人话模板（需要什么 / 为什么 / 一条修复命令 / 不影响使用），接入拉包失败、缺 Python、双通道解包失败与 Node 版本检查；`doctor` 新增 `dependencies` 自检块（text + `--json`，只告警不失败）；顺手修 `--python` 旗标在扫描路径被忽略。
+- C 范围控制：`skills.json` 每条技能新增 `domain`（对齐家族索引 9 类），`references/skill-list.md` 同步补列；新增 `--only` / `--domain` 与 `update --installed-only`。接管语义：只维护目标目录已安装的家族技能，`skills.json` 只作身份 / 版本参照；未装不动作、不新增、不报错；已管理且已最新跳过（退出码 0）；无旗标时 install / update 语义不变。
+- D 回归与文档：新增 `test/update-scope.test.js` / `domain-filter.test.js` / `fetch-builtin.test.js` / `deps-message.test.js` / `python-flag.test.js`（含 PATH 隔离的 Node-only 端到端）；`references/install-flow.md` 补双通道流程、依赖矩阵与范围语义矩阵；`SKILL.md` / README 中英同步。
+
 ## v0.23.3 (2026-10-01)
 
 - 安装器卫生批次：`install.sh` 统一（未知参数报错 exit 2、`--help` / `--version`、残留清理白名单）；`skills.json` 清单 pin 同步 27 项。

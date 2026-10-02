@@ -38,6 +38,7 @@
 - **运行时 hook 适配层**——技能 manifest 只声明六个生命周期要求；<code>hook capabilities / evaluate / bind / unbind</code> 负责宿主能力探测、确定性决策、结构化证据和降级标注，不把 audit 能力夸大为强制。
 - **幂等**——已在清单版本的技能跳过；重复运行安全。
 - **装前门禁**——家族安装先读取包内 manifest，元信（yotta-verify）缺失时自动自举，再逐个扫描。`DO NOT INSTALL` 阻断；`CAUTION` / `REVIEW` 继续但显示风险。旧版本会先做快照再替换。
+- **无 npm 也能接管**——拉包与解包默认走 Node 内置通道（npm / 系统 tar 仅作回退）；`update --installed-only` 只接管机器内已安装的元技能，不补装、不新增、不报错。
 - **盘点 / re-index**--扫描本机各智能体技能目录，维护本地注册表（<code>~/.yottaskills/registry.json</code>）；可用 <code>YOTTA_SKILLS_REGISTRY_FILE</code> 为不同 agent 指定独立注册表；自包含，不需要任何其他技能。新装技能自动被发现：<code>install</code> / <code>update</code> 完成后自动重扫注册表，<code>--reindex</code> 可随时手动重扫（如会话开工）。可选 <code>yotta-skills</code> MCP（按需加载、不常驻）提供 <code>list_installed_skills</code> / <code>describe_skill</code> / <code>reindex</code> / <code>route_request</code> / <code>decide_memory</code> 五工具，配置见 <code>SKILL.md</code>。
 
 边界：只做「下载 + 落位 + 门禁 + 汇总」——**不**开发技能内容、**不**内置任何技能本体、**不**用 <code>-g</code>
@@ -69,6 +70,9 @@ npx -y @yottameta/yotta-skills update --check --scheduled
 
 # 检查后自动更新已装元阁家族（含装前门禁；非元阁家族技能不自动更新）
 npx -y @yottameta/yotta-skills update --auto
+
+# 只接管机器内已装的元技能（不补装缺失；清单只作身份 / 版本参照）
+npx -y @yottameta/yotta-skills update --installed-only --dir ~/my-skills
 
 # 只读检查已装技能（可加 --slug / --json）
 npx -y @yottameta/yotta-skills doctor --dir ~/my-skills --slug yotta-memory

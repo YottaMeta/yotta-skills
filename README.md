@@ -31,6 +31,7 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 - **Install** — install everything (or a subset) into an agent's default user-level directory or any directory.
 - **Update** — incremental update: add missing skills, upgrade version-skewed ones.
 - **Update check / auto-update** — <code>update --check</code> compares installed skill versions against the npm registry and reports; <code>update --check --scheduled</code> is the weekly background entry with a local cache and jitter, so it stays offline until due; <code>update --auto</code> upgrades the installed YottaMeta family to the latest (non-family skills are never auto-updated).
+- **Works without npm** — fetching and extraction default to built-in Node channels (npm / system tar are fallbacks only); <code>update --installed-only</code> adopts only skills already installed on the machine and never backfills or errors on missing ones.
 - **Doctor / rollback** — <code>doctor</code> checks the installed skill directory, version, manifest, registry and custom doctor script without modifying it; <code>--dir</code> may point to a skills container or directly to a single skill package. <code>rollback</code> validates a snapshot and restores the latest install or update.
 - **Runtime hook adapter** — manifests declare six lifecycle requirements; <code>hook capabilities / evaluate / bind / unbind</code> probe host support, apply deterministic decisions, record evidence, and never overstate audit-only hosts as enforced.
 - **Idempotent** — a skill already at the manifest version is skipped; re-running is safe.
@@ -66,6 +67,9 @@ npx -y @yottameta/yotta-skills update --check --scheduled
 
 # Check and auto-update the installed YottaMeta family (pre-install gate applies; non-family skills untouched)
 npx -y @yottameta/yotta-skills update --auto
+
+# Adopt only the family skills already installed on this machine (no backfill)
+npx -y @yottameta/yotta-skills update --installed-only --dir ~/my-skills
 
 # Read-only health check (optionally with --slug / --json)
 npx -y @yottameta/yotta-skills doctor --dir ~/my-skills --slug yotta-memory
