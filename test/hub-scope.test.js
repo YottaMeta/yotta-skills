@@ -98,6 +98,33 @@ test('explicit --dir on a bridge dir is refused (fail-closed)', () => {
   }
 });
 
+test('explicit --dir unlink on a bridge dir is allowed (cleanup path)', () => {
+  const home = tmp('ys-scope-bridge-unlink-');
+  try {
+    const hubDir = path.join(home, 'hub');
+    writeSkill(path.join(hubDir, 'demo-skill'), 'demo-skill');
+    const state = path.join(home, '.state', 'skills');
+    fs.mkdirSync(state, { recursive: true });
+    const linkPath = path.join(state, 'demo-skill');
+    fs.symlinkSync(path.join(hubDir, 'demo-skill'), linkPath, process.platform === 'win32' ? 'junction' : 'dir');
+    fs.writeFileSync(path.join(hubDir, '.yotta-links.json'), JSON.stringify({
+      standard: 'yotta-skills-hub/v1',
+      version: 1,
+      updatedAt: null,
+      links: [{ slug: 'demo-skill', dir: state, target: linkPath, hubDir: path.join(hubDir, 'demo-skill') }],
+    }, null, 2), 'utf8');
+    const env = fakeHomeEnv(home);
+    const result = run(['hub', 'unlink', '--dir', state, '--json', '--hub', hubDir], env);
+    assert.strictEqual(result.status, 0, result.stderr);
+    const payload = JSON.parse(result.stdout);
+    const results = (payload.targets || []).flatMap((target) => target.results || []);
+    assert.strictEqual(results.filter((item) => item.status === 'unlinked').length, 1, JSON.stringify(results));
+    assert.ok(!fs.existsSync(linkPath), 'bridge link must be removed by explicit cleanup');
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
 test('hub hosts labels verified / discovered / bridge dirs', () => {
   const home = tmp('ys-scope-hosts-');
   try {

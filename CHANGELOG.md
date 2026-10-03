@@ -1,3 +1,8 @@
+## v0.28.1 (2026-10-03)
+
+- **修复：桥接目录的 `unlink` 清理被误拦**。0.28.0 的 `--dir` 桥接守卫同时拦住了 `hub unlink --dir`，导致历史误链（如 `XDG_STATE_HOME/skills` 的 145 条）无法用 CLI 清理；现仅 `hub link --dir` 拒绝桥接目录（永不作为链接目标），`hub unlink --dir <目录>` 恢复为显式清理路径（fail-closed：仍只删指向 Hub 的链接）。
+- **回归测试**：新增「桥接目录 `unlink --dir` 允许清理」用例；全量测试 340/340。
+
 ## v0.28.0 (2026-10-03)
 
 - **宿主目录核实与链接范围收口**：`hub hosts` 把发现的目录分为三类 —— **已核实（verified）/ 自动发现（discovered）/ 桥接（bridge）**；`hub link --all` / `hub unlink --all` 默认范围只含已核实宿主，自动发现目录需 `--include-discovered` 显式纳入；`XDG_STATE_HOME/skills`（官方 skills CLI 锁目录）与 `XDG_DATA_HOME/skills`（数据桥接）永不作为链接目标（`--dir` 指向也会被拒绝，面板同样 fail-closed）。

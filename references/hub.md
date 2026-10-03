@@ -44,8 +44,9 @@ symlink），升级只改真源，已链接宿主即时生效。
 - **自动发现（discovered）**：文件系统启发式扫到的目录 —— 默认不链，
   `--include-discovered` 显式纳入；
 - **桥接（bridge）**：`XDG_STATE_HOME/skills`（官方 skills CLI 锁目录）与
-  `XDG_DATA_HOME/skills`（数据桥接）—— 永不作为链接目标，`--dir` 指向时
-  也会被拒绝（fail-closed）。
+  `XDG_DATA_HOME/skills`（数据桥接）—— 永不作为链接目标（`hub link --dir`
+  指向时会被拒绝）；历史误链用 `hub unlink --dir <目录>` 显式清理（fail-closed，
+  仍只删指向 Hub 的链接）。
 
 未核实映射（如无文档 / 无自证的宿主）默认不链，可用 `--dir <目录>` 显式指定。
 `hub doctor` 的 `link_scope:*` 检查只读报告「位于默认范围之外」的已建链接，
