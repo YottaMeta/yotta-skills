@@ -164,7 +164,8 @@ Hub 把「每个宿主装一份」改成「本机一份真源，按宿主链接�
 重命名副本会先移入回收站（`~/.yottaskills/trash/<时间戳>/`，保留 7 天、
 输出恢复路径；跨卷场景自动回退「复制 → 校验 → 删除源」），再建立指向
 Hub 的链接；宿主版本高于 Hub 时跳过并提示先
-`hub update`；外部技能同名冲突仍默认跳过、不自动删、不自动更新。
+`hub update`；目标条目为指向 Hub 之外的链接时默认跳过，显式 `--force`
+可替换（仅移除链接本身）；外部技能同名冲突仍默认跳过、不自动删、不自动更新。
 
 ```bash
 # 1) 只读发现本机已装智能体与技能目录（文件系统 + 环境变量；不读元忆 / 注册表）
@@ -222,7 +223,7 @@ npx -y @yottameta/yotta-skills hub unlink --all
 | `hub adopt --scan` | 只读预演：扫描各宿主现有技能，输出收编候选、多副本冲突、已在 Hub 状态 |
 | `hub adopt --apply [--include <a,b>] [--force] [--in-place]` | 把选中技能收编进 Hub；输出明示范围与目标 Hub；默认复制保真 + 原目录保留；非元阁来源标注「无更新源」并对严格 YAML 风险只读告警；`--skip-scan` 显式提示跳过装前扫描 |
 | `hub refresh <slug> --from <path>` | 手动同步非元阁技能（重新收编 + 更新哈希 + 台账） |
-| `hub link --agent <id> \| --dir <dir> \| --all` | 把 Hub 技能链接到指定宿主 / 目录 / 全部已发现宿主；元技能链接时收敛旧副本（回收站 7 天）；`--dry-run` 只预览（含将收敛明细） |
+| `hub link --agent <id> \| --dir <dir> \| --all` | 把 Hub 技能链接到指定宿主 / 目录 / 全部已发现宿主；元技能链接时收敛旧副本（回收站 7 天）；`--dry-run` 只预览（含将收敛明细）；`--force` 可替换指向 Hub 之外的链接（仅移除链接本身） |
 | `hub unlink --agent <id> \| --dir <dir> \| --all` | 只删除链接；lstat + readlink 校验目标在 Hub 内，fail-closed |
 | `hub status [--json]` | 查看 Hub 技能来源、版本、链接宿主、异常链接与宿主发现摘要 |
 | `hub doctor [--json]` | 检查断链 / Hub 目标缺失 / slug 不一致 / 单一真源（只读报告多份副本与版本参差）/ 目录权限；异常时退出码 1 |

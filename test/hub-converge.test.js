@@ -281,6 +281,139 @@ test('non-EXDEV rename failures do not fall back to copying', () => {
   }
 });
 
+test('family link --force replaces an external link and repoints to hub', () => {
+  const root = tmp('ys-converge-force-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const targetDir = path.join(root, 'host', 'skills');
+    const trashRoot = path.join(root, 'trash');
+    const external = path.join(root, 'external', 'yotta-test');
+    writeSkill(path.join(hubDir, 'yotta-test'), 'yotta-test', '1.0.0');
+    writeSkill(external, 'yotta-test', '0.9.0', 'external');
+    fs.mkdirSync(targetDir, { recursive: true });
+    fs.symlinkSync(path.resolve(external), path.join(targetDir, 'yotta-test'), 'junction');
+
+    const plan = hub.linkSkills({
+      hubDir,
+      targetDir,
+      slugs: ['yotta-test'],
+      manifest: manifestFor('yotta-test'),
+      trashRoot,
+      force: true,
+      dryRun: true,
+    });
+    assert.strictEqual(plan.results[0].status, 'would-replace', JSON.stringify(plan.results[0]));
+    assert.strictEqual(fs.realpathSync(path.join(targetDir, 'yotta-test')).toLowerCase(),
+      fs.realpathSync(external).toLowerCase(), 'dry-run must not touch the link');
+
+    const result = hub.linkSkills({
+      hubDir,
+      targetDir,
+      slugs: ['yotta-test'],
+      manifest: manifestFor('yotta-test'),
+      trashRoot,
+      force: true,
+    });
+    const item = result.results[0];
+    assert.strictEqual(item.status, 'linked', JSON.stringify(item));
+    assert.ok(fs.lstatSync(path.join(targetDir, 'yotta-test')).isSymbolicLink());
+    assert.strictEqual(fs.realpathSync(path.join(targetDir, 'yotta-test')).toLowerCase(),
+      fs.realpathSync(path.join(hubDir, 'yotta-test')).toLowerCase(), 'link must point at hub');
+    assert.strictEqual(fs.readFileSync(path.join(external, 'marker.txt'), 'utf8'), 'external',
+      'external target must stay untouched');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('family link keeps an external link without --force', () => {
+  const root = tmp('ys-converge-noforce-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const targetDir = path.join(root, 'host', 'skills');
+    const external = path.join(root, 'external', 'yotta-test');
+    writeSkill(path.join(hubDir, 'yotta-test'), 'yotta-test', '1.0.0');
+    writeSkill(external, 'yotta-test', '0.9.0', 'external');
+    fs.mkdirSync(targetDir, { recursive: true });
+    fs.symlinkSync(path.resolve(external), path.join(targetDir, 'yotta-test'), 'junction');
+
+    const result = hub.linkSkills({
+      hubDir,
+      targetDir,
+      slugs: ['yotta-test'],
+      manifest: manifestFor('yotta-test'),
+      trashRoot: path.join(root, 'trash'),
+    });
+    const item = result.results[0];
+    assert.strictEqual(item.status, 'conflict', JSON.stringify(item));
+    assert.match(item.note, /--force/);
+    assert.strictEqual(fs.realpathSync(path.join(targetDir, 'yotta-test')).toLowerCase(),
+      fs.realpathSync(external).toLowerCase(), 'external link must stay');
+    assert.ok(fs.existsSync(path.join(external, 'marker.txt')));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('family link --force replaces the external link and converges renamed copies', () => {
+  const root = tmp('ys-converge-force-renamed-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const targetDir = path.join(root, 'host', 'skills');
+    const trashRoot = path.join(root, 'trash');
+    const external = path.join(root, 'external', 'yotta-test');
+    writeSkill(path.join(hubDir, 'yotta-test'), 'yotta-test', '1.0.0');
+    writeSkill(external, 'yotta-test', '0.9.0', 'external');
+    writeSkill(path.join(targetDir, 'yotta-test__skillhub'), 'yotta-test', '0.9.0', 'dup');
+    fs.symlinkSync(path.resolve(external), path.join(targetDir, 'yotta-test'), 'junction');
+
+    const result = hub.linkSkills({
+      hubDir,
+      targetDir,
+      slugs: ['yotta-test'],
+      manifest: manifestFor('yotta-test'),
+      trashRoot,
+      force: true,
+    });
+    const item = result.results[0];
+    assert.strictEqual(item.status, 'linked', JSON.stringify(item));
+    assert.strictEqual(item.moved.length, 1);
+    assert.strictEqual(item.moved[0].name, 'yotta-test__skillhub');
+    assert.strictEqual(fs.realpathSync(path.join(targetDir, 'yotta-test')).toLowerCase(),
+      fs.realpathSync(path.join(hubDir, 'yotta-test')).toLowerCase());
+    assert.ok(!fs.existsSync(path.join(targetDir, 'yotta-test__skillhub')));
+    assert.strictEqual(fs.readFileSync(path.join(external, 'marker.txt'), 'utf8'), 'external');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('family link --force does not bypass the version gate', () => {
+  const root = tmp('ys-converge-force-gate-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const targetDir = path.join(root, 'host', 'skills');
+    writeSkill(path.join(hubDir, 'yotta-test'), 'yotta-test', '1.0.0');
+    writeSkill(path.join(targetDir, 'yotta-test'), 'yotta-test', '9.9.9', 'newer');
+
+    const result = hub.linkSkills({
+      hubDir,
+      targetDir,
+      slugs: ['yotta-test'],
+      manifest: manifestFor('yotta-test'),
+      trashRoot: path.join(root, 'trash'),
+      force: true,
+    });
+    const item = result.results[0];
+    assert.strictEqual(item.status, 'skipped', JSON.stringify(item));
+    assert.match(item.note, /高于 Hub/);
+    assert.ok(!fs.lstatSync(path.join(targetDir, 'yotta-test')).isSymbolicLink());
+    assert.strictEqual(fs.readFileSync(path.join(targetDir, 'yotta-test', 'marker.txt'), 'utf8'), 'newer');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('pruneTrash removes entries older than the retention window', () => {
   const root = tmp('ys-trash-prune-');
   try {
