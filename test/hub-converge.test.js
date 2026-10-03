@@ -26,6 +26,23 @@ function manifestFor(slug) {
   return [{ slug, name: slug, pkg: '@yottameta/' + slug, version: '0.0.0' }];
 }
 
+function listFiles(dir) {
+  const out = [];
+  if (!fs.existsSync(dir)) return out;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...listFiles(full));
+    else out.push(full);
+  }
+  return out;
+}
+
+function exdevError() {
+  const error = new Error('EXDEV: cross-device link not permitted');
+  error.code = 'EXDEV';
+  throw error;
+}
+
 test('family link converges old copies into trash and links to hub', () => {
   const root = tmp('ys-converge-');
   try {
@@ -162,6 +179,103 @@ test('family link restores moved copies when creating the link fails', () => {
     assert.ok(fs.existsSync(path.join(targetDir, 'yotta-test', 'marker.txt')), 'exact copy restored');
     assert.ok(fs.existsSync(path.join(targetDir, 'yotta-test__skillhub', 'marker.txt')), 'renamed copy restored');
     assert.ok(!fs.lstatSync(path.join(targetDir, 'yotta-test')).isSymbolicLink());
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('cross-volume convergence falls back to verified copy on EXDEV', () => {
+  const root = tmp('ys-converge-exdev-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const targetDir = path.join(root, 'host', 'skills');
+    const trashRoot = path.join(root, 'trash');
+    writeSkill(path.join(hubDir, 'yotta-test'), 'yotta-test', '1.0.0');
+    writeSkill(path.join(targetDir, 'yotta-test'), 'yotta-test', '0.9.0', 'old');
+    writeSkill(path.join(targetDir, 'yotta-test__skillhub'), 'yotta-test', '0.9.0', 'old2');
+
+    const result = hub.linkSkills({
+      hubDir,
+      targetDir,
+      slugs: ['yotta-test'],
+      manifest: manifestFor('yotta-test'),
+      trashRoot,
+      renameEntry: exdevError,
+    });
+    const item = result.results[0];
+    assert.strictEqual(item.status, 'linked', JSON.stringify(item));
+    assert.strictEqual(item.moved.length, 2);
+    assert.ok(item.moved.every((moved) => moved.method === 'copy'), JSON.stringify(item.moved));
+    assert.match(item.note, /跨卷复制/);
+    assert.ok(fs.lstatSync(path.join(targetDir, 'yotta-test')).isSymbolicLink());
+    assert.ok(!fs.existsSync(path.join(targetDir, 'yotta-test__skillhub')));
+    const exact = item.moved.find((moved) => moved.name === 'yotta-test');
+    const renamed = item.moved.find((moved) => moved.name === 'yotta-test__skillhub');
+    assert.strictEqual(fs.readFileSync(path.join(exact.to, 'marker.txt'), 'utf8'), 'old');
+    assert.strictEqual(fs.readFileSync(path.join(renamed.to, 'marker.txt'), 'utf8'), 'old2');
+    assert.strictEqual(fs.readFileSync(path.join(exact.to, 'SKILL.md'), 'utf8').includes('version: 0.9.0'), true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('cross-volume restore falls back to verified copy when linking fails', () => {
+  const root = tmp('ys-converge-exdev-restore-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const targetDir = path.join(root, 'host', 'skills');
+    const trashRoot = path.join(root, 'trash');
+    writeSkill(path.join(hubDir, 'yotta-test'), 'yotta-test', '1.0.0');
+    writeSkill(path.join(targetDir, 'yotta-test'), 'yotta-test', '0.9.0', 'old');
+    writeSkill(path.join(targetDir, 'yotta-test__skillhub'), 'yotta-test', '0.9.0', 'old2');
+
+    const result = hub.linkSkills({
+      hubDir,
+      targetDir,
+      slugs: ['yotta-test'],
+      manifest: manifestFor('yotta-test'),
+      trashRoot,
+      renameEntry: exdevError,
+      createLink: () => { throw new Error('boom'); },
+    });
+    const item = result.results[0];
+    assert.strictEqual(item.status, 'error', JSON.stringify(item));
+    assert.strictEqual(item.restored, true);
+    assert.strictEqual(fs.readFileSync(path.join(targetDir, 'yotta-test', 'marker.txt'), 'utf8'), 'old');
+    assert.strictEqual(fs.readFileSync(path.join(targetDir, 'yotta-test__skillhub', 'marker.txt'), 'utf8'), 'old2');
+    assert.ok(!fs.lstatSync(path.join(targetDir, 'yotta-test')).isSymbolicLink());
+    assert.deepStrictEqual(listFiles(trashRoot), [], 'trash must be empty after cross-volume restore');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('non-EXDEV rename failures do not fall back to copying', () => {
+  const root = tmp('ys-converge-eperm-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const targetDir = path.join(root, 'host', 'skills');
+    const trashRoot = path.join(root, 'trash');
+    writeSkill(path.join(hubDir, 'yotta-test'), 'yotta-test', '1.0.0');
+    writeSkill(path.join(targetDir, 'yotta-test'), 'yotta-test', '0.9.0', 'old');
+
+    const result = hub.linkSkills({
+      hubDir,
+      targetDir,
+      slugs: ['yotta-test'],
+      manifest: manifestFor('yotta-test'),
+      trashRoot,
+      renameEntry: () => {
+        const error = new Error('EPERM: operation not permitted');
+        error.code = 'EPERM';
+        throw error;
+      },
+    });
+    const item = result.results[0];
+    assert.strictEqual(item.status, 'error', JSON.stringify(item));
+    assert.strictEqual(item.restored, true);
+    assert.ok(fs.existsSync(path.join(targetDir, 'yotta-test', 'marker.txt')), 'host copy must stay');
+    assert.deepStrictEqual(listFiles(trashRoot), [], 'no copy may be left behind');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
