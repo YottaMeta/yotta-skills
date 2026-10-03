@@ -1,3 +1,13 @@
+## v0.28.0 (2026-10-03)
+
+- **宿主目录核实与链接范围收口**：`hub hosts` 把发现的目录分为三类 —— **已核实（verified）/ 自动发现（discovered）/ 桥接（bridge）**；`hub link --all` / `hub unlink --all` 默认范围只含已核实宿主，自动发现目录需 `--include-discovered` 显式纳入；`XDG_STATE_HOME/skills`（官方 skills CLI 锁目录）与 `XDG_DATA_HOME/skills`（数据桥接）永不作为链接目标（`--dir` 指向也会被拒绝，面板同样 fail-closed）。
+- **映射修正（逐智能体核实）**：新增 `replit`（公开宿主表 `configHome/agents/skills`）与 `mimocode`（官方 MiMoCode 布局 + 本机自证）；`universal` 补 XDG 变体；`goose` 由 XDG 解析修正为本机真实目录字面 `~/.config/goose`；`crush` / `kimchi` 由 XDG 误解析改回公开宿主表字面 `~/.config`；XDG 解析收敛为显式集合（仅 `.config/agents`、`.config/devin`、`.config/opencode` 三类 rel）；`yottacode` / `box` 标记未核实、默认不链。
+- **realpath 去重**：`hub link` / `unlink` 的目标目录按 realpath 去重，junction / symlink 双路径不再重复建链；`hub hosts` 停止扫描 `XDG_STATE_HOME` / `XDG_DATA_HOME` 根。
+- **doctor 链接范围检查（只读）**：新增 `link_scope:*`，报告位于默认范围之外的已建链接并给出 `hub unlink --dir <目录>` 清理提示。
+- **面板**：宿主矩阵新增「范围」列（已核实 / 自动发现 / 桥接·不链），链接与体检页对桥接目录隐藏链接入口、对自动发现目录显示范围徽章；CLI 速查补 `--include-discovered`。
+- **文档**：`references/hub.md` 补「链接范围（0.28.0 起）」与发现口径；`SKILL.md` / help 同步。
+- **测试**：新增 `test/agent-dirs-scope.test.js`（5 项）+ `test/hub-scope.test.js`（4 项）；全量 339/339。
+
 ## v0.27.1 (2026-10-03)
 
 - **跨卷收敛修复**：`hub link` 收敛旧副本时，`rename` 在跨盘场景（源目录位于其它卷，或经 junction / symlink 落在其它卷）会报 `EXDEV: cross-device link not permitted`；现回退为「复制到回收站 → 校验（treeHash + 文件数 + 字节数）→ 删除源目录」，任一步失败都保持失败自动恢复语义（源完整则回滚副本；源已不完整则保留完整副本并输出路径）；链接条目按「重建链接 → 校验目标 → 删除原链接」处理；链接输出对跨卷复制的份数给出说明。

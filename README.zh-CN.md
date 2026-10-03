@@ -108,11 +108,13 @@ npx -y @yottameta/yotta-skills --reindex
 # 发现本机已装智能体与技能目录（文件系统优先，不读元忆 / 注册表）
 npx -y @yottameta/yotta-skills hub hosts
 
-# 单点装到本机 Hub，再链接分发到全部已发现宿主
+# 单点装到本机 Hub，再链接分发到全部已核实宿主（默认范围）
 npx -y @yottameta/yotta-skills hub install
 npx -y @yottameta/yotta-skills hub adopt --scan
 npx -y @yottameta/yotta-skills hub adopt --apply
 npx -y @yottameta/yotta-skills hub link --all
+# 显式把自动发现目录一并纳入（锁 / 数据桥接目录永不链接）
+npx -y @yottameta/yotta-skills hub link --all --include-discovered
 npx -y @yottameta/yotta-skills hub status
 npx -y @yottameta/yotta-skills hub doctor
 ```
@@ -139,15 +141,15 @@ npx -y @yottameta/yotta-skills hub doctor
 | `--registry <url>` | 检查的 npm registry 地址（默认 https://registry.npmjs.org/；`YOTTA_SKILLS_REGISTRY` 覆盖） |
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（install / update 完成后自动重扫，也可随时手动运行；`--rescan` 同义）；`--json` 输出 JSON |
-| `hub hosts` | 发现本机已装智能体与技能目录（文件系统 + 环境变量；不读元忆 / 注册表）；`--json` 输出 JSON |
+| `hub hosts` | 发现本机已装智能体与技能目录（文件系统 + 环境变量；不读元忆 / 注册表）；按已核实 / 自动发现 / 桥接分类；`--json` 输出 JSON |
 | `hub install [skill...]` | 把元技能安装到本机 Hub 真源（默认 `~/.yottaskills/hub`；`--hub` / `YOTTA_SKILLS_HUB` 覆盖） |
 | `hub adopt --scan` | 只读预演：扫描各宿主现有技能，输出收编候选、多副本冲突与已在 Hub 状态 |
 | `hub adopt --apply [--include <a,b>] [--force] [--in-place]` | 把选中技能收编进 Hub；默认复制保真 + 原目录保留；非元阁来源标注「无更新源」 |
 | `hub refresh <slug> --from <path>` | 手动同步非元阁技能（重新收编 + 更新哈希 + 台账） |
-| `hub link --all` | 把 Hub 技能链接到全部已发现宿主（Windows junction / POSIX symlink） |
-| `hub unlink --all` | 只删除链接，不动 Hub 真源（fail-closed；真目录 / 非 Hub 链接一律拒绝） |
+| `hub link --all [--include-discovered]` | 把 Hub 技能链接到全部已核实宿主（默认范围；`--include-discovered` 纳入自动发现目录）；Windows junction / POSIX symlink |
+| `hub unlink --all` | 只删除链接，不动 Hub 真源（fail-closed；真目录 / 非 Hub 链接一律拒绝）；清理范围外链接用 `--dir <目录>` 精确指定 |
 | `hub status` | 查看 Hub 技能来源、版本、链接宿主与异常；`--json` 输出 JSON |
-| `hub doctor` | 检查断链 / Hub 目标缺失 / slug 不一致 / 目录权限；异常时退出码 1；`--json` 输出 JSON |
+| `hub doctor` | 检查断链 / Hub 目标缺失 / slug 不一致 / 链接范围（`link_scope`）/ 目录权限；异常时退出码 1；`--json` 输出 JSON |
 | `--route <需求摘要>` | 编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；可选本地扩展提供方在已装白名单内增补 / 重排并返回 `confidence` / `reasons` / `summary` / `alternatives`（未配置时行为不变，协议见 `references/provider-protocol.md`）；`--json` 输出 JSON 与 `dynamic` 状态块、`--project` 附扫项目级目录 |
 | `usage status` / `usage enable` / `usage disable` | 查看 / 开启 / 关闭本地结构化使用记录；默认关闭，只记录 slug、时间、信号类型、playbook / confidence 与组合对 |
 | `usage mark --skill <slug> --signal used\|named\|accepted` | 记录一次显式使用信号；不要求先 enable |
