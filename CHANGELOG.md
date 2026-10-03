@@ -1,3 +1,8 @@
+## v0.28.2 (2026-10-03)
+
+- **清单 pin 更新**：`yotta-memory` 0.21.1 → 0.22.0（记忆管理台新增「高级 / CLI」页：高频命令速查 + 只读完整帮助，`HELP_MODEL` 单一真源）。
+- **scanPolicy 重绑**：`yotta-memory` 例外表按 0.22.0 候选 tarball 重算 treeHash（fail-closed 语义不变：版本或内容变化即旧例外失效）。
+
 ## v0.28.1 (2026-10-03)
 
 - **修复：桥接目录的 `unlink` 清理被误拦**。0.28.0 的 `--dir` 桥接守卫同时拦住了 `hub unlink --dir`，导致历史误链（如 `XDG_STATE_HOME/skills` 的 145 条）无法用 CLI 清理；现仅 `hub link --dir` 拒绝桥接目录（永不作为链接目标），`hub unlink --dir <目录>` 恢复为显式清理路径（fail-closed：仍只删指向 Hub 的链接）。
