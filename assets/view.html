@@ -800,7 +800,9 @@
   function renderCliHelp(d) {
     if (!d || d.error) { $('#cliMeta').textContent = '帮助加载失败'; return; }
     var total = 0;
-    (d.groups || []).forEach(function (g) { total += (g.commands || []).length; });
+    (d.groups || []).forEach(function (g) {
+      (g.commands || []).forEach(function (c) { total += 1 + (c.subcommands || []).length; });
+    });
     $('#cliMeta').textContent = 'v' + (d.version || '-') + ' · 命令 ' + total + ' · 选项 ' + (d.options || []).length;
     $('#cliQuick').innerHTML = (d.quick || []).map(function (g) {
       return '<div class="cmd-group"><h3>' + esc(g.group) + '</h3>' + (g.items || []).map(function (item) {
