@@ -146,8 +146,9 @@ npx -y @yottameta/yotta-skills hub doctor
 | `hub adopt --scan` | 只读预演：扫描各宿主现有技能，输出收编候选、多副本冲突与已在 Hub 状态 |
 | `hub adopt --apply [--include <a,b>] [--force] [--in-place]` | 把选中技能收编进 Hub；默认复制保真 + 原目录保留；非元阁来源标注「无更新源」 |
 | `hub refresh <slug> --from <path>` | 手动同步非元阁技能（重新收编 + 更新哈希 + 台账） |
-| `hub link --all [--include-discovered]` | 把 Hub 技能链接到全部已核实宿主（默认范围；`--include-discovered` 纳入自动发现目录）；Windows junction / POSIX symlink |
-| `hub unlink --all` | 只删除链接，不动 Hub 真源（fail-closed；真目录 / 非 Hub 链接一律拒绝）；清理范围外链接用 `--dir <目录>` 精确指定 |
+| `hub link --all [--include-discovered]` | 把 Hub 技能链接到全部已核实宿主（默认范围；`--include-discovered` 纳入自动发现目录）；指定智能体分发用 `hub link <技能> --agent <id>`；Windows junction / POSIX symlink |
+| `hub unlink --all` | 只删除链接，不动 Hub 真源（fail-closed；真目录 / 非 Hub 链接一律拒绝）；指定智能体解除用 `hub unlink <技能> --agent <id>`；清理范围外链接用 `--dir <目录>` 精确指定 |
+| `hub remove <slug> [--dry-run] [--include-discovered]` | 删除 Hub 技能：全宿主清链接（含死链）+ Hub 目录入回收站（7 天）+ 清 Hub / 链接台账 + 写审计；fail-closed（真副本 / 外部链接保留并报告；链接报错即中止不删 Hub）；`--agent` / `--dir` 收窄仅用于死链清理 |
 | `hub status` | 查看 Hub 技能来源、版本、链接宿主与异常；`--json` 输出 JSON |
 | `hub doctor` | 检查断链 / Hub 目标缺失 / slug 不一致 / 链接范围（`link_scope`）/ 目录权限；异常时退出码 1；`--json` 输出 JSON |
 | `--route <需求摘要>` | 编排路由：输出组合、调用顺序、技能角色、置信度、依据、已装/缺失状态与安装建议；可选本地扩展提供方在已装白名单内增补 / 重排并返回 `confidence` / `reasons` / `summary` / `alternatives`（未配置时行为不变，协议见 `references/provider-protocol.md`）；`--json` 输出 JSON 与 `dynamic` 状态块、`--project` 附扫项目级目录 |

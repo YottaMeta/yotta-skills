@@ -492,3 +492,67 @@ test('rollback refuses snapshots outside the per-slug snapshot root', async () =
     fs.rmSync(elsewhere, { recursive: true, force: true });
   }
 });
+
+test('view help endpoint serves the full CLI model (groups / quick / options)', async () => {
+  const home = tmp('ys-view-help-');
+  try {
+    const cliHelp = require('../lib/cli-help');
+    await withServer(home, async (view, port) => {
+      const res = await request(port, 'GET', '/api/help');
+      assert.strictEqual(res.status, 200, res.text);
+      assert.deepStrictEqual(res.json.groups, JSON.parse(JSON.stringify(cliHelp.CLI_HELP_MODEL)));
+      assert.deepStrictEqual(res.json.quick, JSON.parse(JSON.stringify(cliHelp.CLI_HELP_QUICK)));
+      assert.deepStrictEqual(res.json.options, JSON.parse(JSON.stringify(cliHelp.CLI_GLOBAL_OPTIONS)));
+    });
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('panel remove: preview, token + confirm gates, then removes links and hub entry', async () => {
+  const home = tmp('ys-view-remove-');
+  try {
+    const hubDir = path.join(home, '.yottaskills', 'hub');
+    const hostDir = path.join(home, '.codex', 'skills');
+    writeSkill(path.join(hubDir, 'yotta-one'), 'yotta-one', '1.0.0');
+    hub.linkSkills({ hubDir, targetDir: hostDir, slugs: ['yotta-one'], manifest: ['yotta-one'] });
+
+    await withServer(home, async (view, port) => {
+      const plan = await request(port, 'GET', '/api/skills/remove-plan?slug=yotta-one');
+      assert.strictEqual(plan.status, 200, plan.text);
+      assert.strictEqual(plan.json.verdict, 'dry-run');
+      assert.strictEqual(plan.json.unlinkable, 1);
+      assert.ok(fs.existsSync(path.join(hubDir, 'yotta-one')), 'preview must not write');
+
+      const noToken = await request(port, 'POST', '/api/skills/remove', {
+        body: { slug: 'yotta-one', confirm: 'remove', confirmSlug: 'yotta-one' },
+      });
+      assert.strictEqual(noToken.status, 403);
+
+      const wrongConfirm = await request(port, 'POST', '/api/skills/remove', {
+        body: { slug: 'yotta-one', confirm: 'nope', confirmSlug: 'yotta-one' },
+        headers: { [viewLib.TOKEN_HEADER]: TOKEN },
+      });
+      assert.strictEqual(wrongConfirm.status, 400);
+
+      const wrongSlug = await request(port, 'POST', '/api/skills/remove', {
+        body: { slug: 'yotta-one', confirm: viewLib.CONFIRM.remove, confirmSlug: 'yotta-two' },
+        headers: { [viewLib.TOKEN_HEADER]: TOKEN },
+      });
+      assert.strictEqual(wrongSlug.status, 400);
+      assert.ok(fs.existsSync(path.join(hubDir, 'yotta-one')), 'failed confirm must not remove');
+
+      const done = await request(port, 'POST', '/api/skills/remove', {
+        body: { slug: 'yotta-one', confirm: viewLib.CONFIRM.remove, confirmSlug: 'yotta-one' },
+        headers: { [viewLib.TOKEN_HEADER]: TOKEN },
+      });
+      assert.strictEqual(done.status, 200, done.text);
+      assert.strictEqual(done.json.verdict, 'removed');
+      assert.ok(!fs.existsSync(path.join(hostDir, 'yotta-one')), 'host link must be removed');
+      assert.ok(!fs.existsSync(path.join(hubDir, 'yotta-one')), 'hub entry must be removed');
+      assert.ok(done.json.trashedTo && fs.existsSync(done.json.trashedTo), 'trash copy must exist');
+    }, { hubDir });
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
