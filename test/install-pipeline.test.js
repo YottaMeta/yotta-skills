@@ -67,6 +67,30 @@ test('staged swap keeps nested package.json / bin payload (copy-tree top-level s
   assert.ok(fs.existsSync(path.join(target, 'SKILL.md')));
 });
 
+test('hub-scope install keeps declared runtimePayload top-level files (bin)', () => {
+  const { installer, dest, pkgDir } = fixture({
+    copyDir: (src, dst, options) => {
+      const skip = new Set(COPY_SKIP);
+      for (const name of (options && options.keep) || []) skip.delete(name);
+      copyTree(src, dst, skip, true);
+    },
+  });
+  fs.mkdirSync(path.join(pkgDir, 'bin'), { recursive: true });
+  fs.writeFileSync(path.join(pkgDir, 'bin', 'cli.js'), '// cli', 'utf8');
+  const runtimeSkill = { ...skill, runtimePayload: ['bin'] };
+
+  const normal = installer(runtimeSkill, dest, {});
+  assert.strictEqual(normal.status, 'ok');
+  assert.equal(fs.existsSync(path.join(dest, skill.slug, 'bin', 'cli.js')), false,
+    'normal host install stays thin (no bin)');
+
+  const hubDest = fs.mkdtempSync(path.join(os.tmpdir(), 'ys-pipe-hub-'));
+  const hub = installer(runtimeSkill, hubDest, { hubScope: true });
+  assert.strictEqual(hub.status, 'ok');
+  assert.equal(fs.readFileSync(path.join(hubDest, skill.slug, 'bin', 'cli.js'), 'utf8'), '// cli',
+    'hub install keeps declared runtimePayload');
+});
+
 test('install evidence carries scan policy review details and context', () => {
   const evidence = [];
   let seenContext = null;

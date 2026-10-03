@@ -1,7 +1,8 @@
 ## v0.28.1 (2026-10-03)
 
 - **修复：桥接目录的 `unlink` 清理被误拦**。0.28.0 的 `--dir` 桥接守卫同时拦住了 `hub unlink --dir`，导致历史误链（如 `XDG_STATE_HOME/skills` 的 145 条）无法用 CLI 清理；现仅 `hub link --dir` 拒绝桥接目录（永不作为链接目标），`hub unlink --dir <目录>` 恢复为显式清理路径（fail-closed：仍只删指向 Hub 的链接）。
-- **回归测试**：新增「桥接目录 `unlink --dir` 允许清理」用例；全量测试 340/340。
+- **修复：Hub 真源保留运行时载荷（OpenCode 契约）**。特殊家族收敛为 Hub 链接后，OpenCode 的 `yotta-skills` 缺 `bin/`（安装管线顶层跳过），违反 handoff `keepExtra` 硬约束；现在 Hub 安装 / 更新（`hubScope`）按清单声明的 `runtimePayload` 保留顶层载荷（元忆 `bin`、元阁 `bin`），链接宿主直接获得，`sync_opencode_runtime --check` 通过；普通宿主安装仍为薄片（跳过 bin）。
+- **回归测试**：新增「桥接目录 `unlink --dir` 允许清理」+「hubScope 安装保留 runtimePayload」用例；全量测试 341/341。
 
 ## v0.28.0 (2026-10-03)
 

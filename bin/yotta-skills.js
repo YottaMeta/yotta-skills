@@ -887,7 +887,11 @@ function ensureGate(context) {
 const installOne = createInstaller({
   runNpmPack,
   extractTarball,
-  copyDir: (src, dst) => copyDir(src, dst, COPY_SKIP, true),
+  copyDir: (src, dst, options) => {
+    const skip = new Set(COPY_SKIP);
+    for (const name of (options && options.keep) || []) skip.delete(name);
+    copyDir(src, dst, skip, true);
+  },
   readInstalledVersion,
   ensureGate,
   scanTarget,
