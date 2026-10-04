@@ -556,3 +556,86 @@ test('panel remove: preview, token + confirm gates, then removes links and hub e
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+test('panel hosts add/remove: token gate, registry write + audit, directory untouched', async () => {
+  const home = tmp('ys-view-hosts-reg-');
+  try {
+    const hubDir = path.join(home, '.yottaskills', 'hub');
+    writeSkill(path.join(hubDir, 'demo-skill'), 'demo-skill', '1.0.0');
+    const custom = path.join(home, 'custom', 'skills');
+    fs.mkdirSync(custom, { recursive: true });
+    await withServer(home, async (view, port) => {
+      const unauth = await request(port, 'POST', '/api/hosts/add', { body: { dir: custom } });
+      assert.strictEqual(unauth.status, 403, '无 token 必须拒绝');
+
+      const add = await request(port, 'POST', '/api/hosts/add', {
+        headers: { [viewLib.TOKEN_HEADER]: TOKEN },
+        body: { dir: custom, label: '面板宿主' },
+      });
+      assert.strictEqual(add.status, 200, add.text);
+      assert.strictEqual(add.json.entry.dir, custom);
+      const registryFile = path.join(home, '.yottaskills', 'hosts.json');
+      assert.strictEqual(JSON.parse(fs.readFileSync(registryFile, 'utf8')).hosts.length, 1);
+
+      const hosts = await request(port, 'GET', '/api/hosts');
+      const item = hosts.json.hosts.find((host) => host.dir === custom);
+      assert.ok(item && item.state === 'available' && item.detection === 'user-registry');
+
+      const remove = await request(port, 'POST', '/api/hosts/remove', {
+        headers: { [viewLib.TOKEN_HEADER]: TOKEN },
+        body: { dir: custom },
+      });
+      assert.strictEqual(remove.status, 200, remove.text);
+      assert.ok(fs.existsSync(custom), '移除注册不得删除目录');
+      const audit = fs.readFileSync(path.join(hubDir, '.yotta-hub-audit.jsonl'), 'utf8');
+      assert.match(audit, /"event":"hosts\.add"/);
+      assert.match(audit, /"event":"hosts\.remove"/);
+    }, { hubDir });
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('panel hosts purge: plan endpoint + confirm gate + trash roundtrip', async () => {
+  const home = tmp('ys-view-hosts-purge-');
+  try {
+    const hubDir = path.join(home, '.yottaskills', 'hub');
+    writeSkill(path.join(hubDir, 'demo-skill'), 'demo-skill', '1.0.0');
+    const orphan = path.join(home, '.claude', 'skills');
+    fs.mkdirSync(orphan, { recursive: true });
+    const linkType = process.platform === 'win32' ? 'junction' : 'dir';
+    fs.symlinkSync(path.join(hubDir, 'demo-skill'), path.join(orphan, 'demo-skill'), linkType);
+    fs.writeFileSync(path.join(orphan, 'keep.txt'), 'user', 'utf8');
+
+    await withServer(home, async (view, port) => {
+      const plan = await request(port, 'GET', '/api/hosts/purge-plan?dir=' + encodeURIComponent(orphan));
+      assert.strictEqual(plan.status, 200, plan.text);
+      assert.strictEqual(plan.json.unlinkCount, 1);
+      assert.ok(fs.existsSync(path.join(orphan, 'demo-skill')), '预览不得删除链接');
+
+      const noToken = await request(port, 'POST', '/api/hosts/purge', {
+        body: { dir: orphan, confirm: viewLib.CONFIRM.purge },
+      });
+      assert.strictEqual(noToken.status, 403);
+
+      const badConfirm = await request(port, 'POST', '/api/hosts/purge', {
+        headers: { [viewLib.TOKEN_HEADER]: TOKEN },
+        body: { dir: orphan, confirm: 'nope' },
+      });
+      assert.strictEqual(badConfirm.status, 400);
+      assert.ok(fs.existsSync(orphan), '确认失败不得清理');
+
+      const purge = await request(port, 'POST', '/api/hosts/purge', {
+        headers: { [viewLib.TOKEN_HEADER]: TOKEN },
+        body: { dir: orphan, confirm: viewLib.CONFIRM.purge },
+      });
+      assert.strictEqual(purge.status, 200, purge.text);
+      assert.ok(purge.json.trashedTo);
+      assert.strictEqual(fs.existsSync(orphan), false, '目录已移入回收站');
+      assert.ok(fs.existsSync(path.join(purge.json.trashedTo, 'keep.txt')), '非链接内容随目录保留');
+      assert.ok(!fs.existsSync(path.join(purge.json.trashedTo, 'demo-skill')), 'Hub 链接已删除');
+    }, { hubDir });
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});

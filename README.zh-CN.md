@@ -46,11 +46,37 @@
 
 ## 快速使用
 
+首选流程（Hub 主路径，安装本体与智能体无关）：
+
+```bash
+# 1) 看本机有哪些宿主与技能目录（状态细分：可用 / 残留 / 未创建 / 仅标记）
+npx -y @yottameta/yotta-skills hub hosts
+
+# 2) 装进 Hub 真源（默认 ~/.yottaskills/hub；无需指定智能体）
+npx -y @yottameta/yotta-skills hub install
+
+# 3) 分发到全部已核实宿主（Windows junction / macOS·Linux symlink）
+npx -y @yottameta/yotta-skills hub link --all
+
+# 4) 图形化面板管理（宿主矩阵 / 链接与体检 / 收编 / 回滚）
+npx -y @yottameta/yotta-skills view
+```
+
+元阁独立安装（把管理引擎装成独立 CLI，不依赖任何智能体）：
+
+```bash
+npx -y @yottameta/yotta-skills install-self                    # 默认 ~/.yottaskills/yotta-skills
+npx -y @yottameta/yotta-skills install-self --dir ~/tools/yotta-skills
+npx -y @yottameta/yotta-skills where                           # 查看运行中 CLI / 独立安装 / Hub 位置
+```
+
+指定智能体直装（兼容路径）：
+
 ```bash
 # 列出全家技能（不联网、不改动）
 npx -y @yottameta/yotta-skills --list
 
-# 装全家到指定智能体默认用户级技能目录（推荐）
+# 装全家到指定智能体默认用户级技能目录
 npx -y @yottameta/yotta-skills install --agent codex
 
 # 装全家到任意目录（每个技能落在 <dir>/<slug>）
@@ -126,7 +152,9 @@ npx -y @yottameta/yotta-skills hub doctor
 | 命令 / 选项 | 作用 |
 |---|---|
 | `--list`（`-l`） | 列出全家技能 + 版本 + 说明；可加技能名过滤 |
-| `install --agent <name>` | 装全家到指定智能体默认用户级技能目录（推荐） |
+| `install-self [--dir <path>] [--dry-run] [--force]` | 元阁独立安装：把管理引擎装到独立位置（默认 `~/.yottaskills/yotta-skills`）；不写宿主配置、不建全局 shim |
+| `where [--json]` | 查看元阁位置：运行中 CLI / 独立安装目录（标记当前运行项）/ Hub 真源 |
+| `install --agent <name>` | 装全家到指定智能体默认用户级技能目录（兼容直装路径） |
 | `install --dir <path>` | 装全家到指定目录，每个技能落在 `<path>/<slug>` |
 | `install <skill>... [--agent <name> \| --dir <path>]` | 只装指定的一个或多个技能 |
 | `update [--agent <name> \| --dir <path>]` | 增量更新：补齐缺失、升级版本不一致的技能 |
@@ -141,7 +169,10 @@ npx -y @yottameta/yotta-skills hub doctor
 | `--registry <url>` | 检查的 npm registry 地址（默认 https://registry.npmjs.org/；`YOTTA_SKILLS_REGISTRY` 覆盖） |
 | `--inventory` | 盘点已装技能：扫描技能目录并更新本地注册表（自包含）；`--json` 输出 JSON、`--project` 附扫项目级目录 |
 | `--reindex` | 重扫注册表：扫描技能目录并增量合并变化（install / update 完成后自动重扫，也可随时手动运行；`--rescan` 同义）；`--json` 输出 JSON |
-| `hub hosts` | 发现本机已装智能体与技能目录（文件系统 + 环境变量；不读元忆 / 注册表）；按已核实 / 自动发现 / 桥接分类；`--json` 输出 JSON |
+| `hub hosts [--json] [--state <state>]` | 发现宿主与技能目录（文件系统 + 环境变量；不读元忆 / 注册表）；状态细分（可用 / 残留 / 未创建 / 仅标记）；`--state` 过滤；`--json` 输出 JSON |
+| `hub hosts add <dir> [--label <名称>] [--id <agentId>]` | 注册自定义宿主目录（只注册，不创建目录、不改宿主配置；Hub / 桥接目录 fail-closed 拒绝） |
+| `hub hosts remove <dir \| --id <agentId>> [--purge [--yes]]` | 移除注册（绝不删目录）；`--purge` = 清理残留目录（默认预览，`--yes` 执行；只删指向 Hub 的链接，目录入回收站 7 天） |
+| `hub hosts list` / `hub hosts mark <dir> --state <available\|orphan\|ignored>` | 查看注册表 / 手动标记宿主状态（与注册表共用存储） |
 | `hub install [skill...]` | 把元技能安装到本机 Hub 真源（默认 `~/.yottaskills/hub`；`--hub` / `YOTTA_SKILLS_HUB` 覆盖） |
 | `hub adopt --scan` | 只读预演：扫描各宿主现有技能，输出收编候选、多副本冲突与已在 Hub 状态 |
 | `hub adopt --apply [--include <a,b>] [--force] [--in-place]` | 把选中技能收编进 Hub；默认复制保真 + 原目录保留；非元阁来源标注「无更新源」 |

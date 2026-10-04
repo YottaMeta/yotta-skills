@@ -403,3 +403,31 @@ test('isSafeTarEntry rejects traversal, absolute and non-package entries', () =>
   assert.strictEqual(isSafeTarEntry('C:\\tmp\\evil'), false);
   assert.strictEqual(isSafeTarEntry('other/file'), false);
 });
+
+test('dryRun returns a plan without network or disk writes (0.29.0 D1)', () => {
+  let packCalls = 0;
+  const { installer, dest } = fixture({
+    runNpmPack: () => {
+      packCalls++;
+      return { tarball: '/tmp/demo.tgz', resolved: '1.0.0', spec: skill.pkg + '@1.x' };
+    },
+    readInstalledVersion: () => '0.9.0',
+  });
+  const result = installer(skill, dest, { dryRun: true });
+  assert.strictEqual(result.status, 'planned');
+  assert.strictEqual(result.planned, 'update');
+  assert.strictEqual(result.installedVersion, '0.9.0');
+  assert.strictEqual(result.version, '1.0.0');
+  assert.strictEqual(packCalls, 0, 'dry-run 不得调用 npm pack');
+  assert.strictEqual(fs.existsSync(path.join(dest, skill.slug)), false, 'dry-run 不得写盘');
+});
+
+test('dryRun marks latest-version skills as unresolved preview (0.29.0 D1)', () => {
+  const latestSkill = { ...skill, version: 'latest' };
+  const { installer, dest } = fixture({});
+  const result = installer(latestSkill, dest, { dryRun: true });
+  assert.strictEqual(result.status, 'planned');
+  assert.strictEqual(result.version, 'latest');
+  assert.strictEqual(result.latestUnresolved, true);
+  assert.match(result.note, /预览不解析/);
+});

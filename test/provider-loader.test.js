@@ -23,6 +23,9 @@ function baseProvider(extra) {
     id: 'fake',
     capabilities: ['o1.route'],
     command: [process.execPath, FIXTURE],
+    // 全量并发跑时给 node 子进程冷启动留余量（功能测试不测默认 600ms 值；
+    // 超时行为由显式 timeout_ms: 200 的用例覆盖）。
+    timeout_ms: 3000,
   }, extra || {});
 }
 

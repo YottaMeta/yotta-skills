@@ -39,6 +39,8 @@ function writeProvider(home, command, extra) {
       id: 'fake',
       capabilities: ['o1.route'],
       command,
+      // 全量并发跑时给 node 子进程冷启动留余量（超时行为由显式 200ms 用例覆盖）。
+      timeout_ms: 3000,
     }, extra || {})],
   }), 'utf8');
 }

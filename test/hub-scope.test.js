@@ -125,15 +125,16 @@ test('explicit --dir unlink on a bridge dir is allowed (cleanup path)', () => {
   }
 });
 
-test('hub hosts labels verified / discovered / bridge dirs', () => {
+test('hub hosts labels host states / discovered / bridge dirs', () => {
   const home = tmp('ys-scope-hosts-');
   try {
     makeFixture(home);
     const env = fakeHomeEnv(home);
     const result = run(['hub', 'hosts'], env);
     assert.strictEqual(result.status, 0, result.stderr);
-    assert.ok(result.stdout.includes('[已核实]'), result.stdout);
-    assert.ok(result.stdout.includes('[自动发现·默认不链]'), result.stdout);
+    // 0.29.0 F3：状态细分口径 —— 目录存在 + 无实体证据 = 残留·实体未确认。
+    assert.ok(result.stdout.includes('残留·实体未确认'), result.stdout);
+    assert.ok(result.stdout.includes('自动发现'), result.stdout);
     assert.ok(result.stdout.includes('[桥接·不链接]'), result.stdout);
   } finally {
     fs.rmSync(home, { recursive: true, force: true });

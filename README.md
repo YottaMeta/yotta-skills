@@ -43,11 +43,37 @@ Boundaries: it only downloads, places, gates and summarizes — it does **not** 
 
 ## Quick start
 
+Primary flow (Hub as the main path; the installation itself is agent-agnostic):
+
+```bash
+# 1) See the hosts and skill directories on this machine (states: available / orphan / missing / marker-only)
+npx -y @yottameta/yotta-skills hub hosts
+
+# 2) Install into the Hub source of truth (default ~/.yottaskills/hub; no agent needed)
+npx -y @yottameta/yotta-skills hub install
+
+# 3) Distribute to every verified host (Windows junction / macOS·Linux symlink)
+npx -y @yottameta/yotta-skills hub link --all
+
+# 4) Manage from the local panel (host matrix / links & health / adoption / rollback)
+npx -y @yottameta/yotta-skills view
+```
+
+Standalone install (run the engine as an independent CLI, no agent required):
+
+```bash
+npx -y @yottameta/yotta-skills install-self                    # default: ~/.yottaskills/yotta-skills
+npx -y @yottameta/yotta-skills install-self --dir ~/tools/yotta-skills
+npx -y @yottameta/yotta-skills where                           # running CLI / standalone installs / Hub location
+```
+
+Direct install into a specific agent (compatibility path):
+
 ```bash
 # List the whole family (no network, no changes)
 npx -y @yottameta/yotta-skills --list
 
-# Install everything into an agent's default user-level skills dir (recommended)
+# Install everything into an agent's default user-level skills dir
 npx -y @yottameta/yotta-skills install --agent codex
 
 # Install everything into any directory (each skill lands in <dir>/<slug>)
@@ -123,7 +149,9 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | Command / option | Description |
 |---|---|
 | `--list` (`-l`) | List the whole family with versions and descriptions; add a skill name to filter |
-| `install --agent <name>` | Install everything into the agent's default user-level skills dir (recommended) |
+| `install-self [--dir <path>] [--dry-run] [--force]` | Standalone install: place the engine at an independent location (default `~/.yottaskills/yotta-skills`); no host config, no global shim |
+| `where [--json]` | Show the YottaSkills location: running CLI / standalone installs (current one marked) / Hub source |
+| `install --agent <name>` | Install everything into the agent's default user-level skills dir (compatibility path) |
 | `install --dir <path>` | Install everything into a directory; each skill lands in `<path>/<slug>` |
 | `install <skill>... [--agent <name> \| --dir <path>]` | Install only the given skills |
 | `update [--agent <name> \| --dir <path>]` | Incremental update: add missing, upgrade version-skewed |
@@ -138,7 +166,10 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `--registry <url>` | npm registry to check against (default https://registry.npmjs.org/; `YOTTA_SKILLS_REGISTRY` overrides) |
 | `--inventory` | Inventory installed skills: scan skill directories and update the local registry (self-contained); `--json` for JSON, `--project` adds project-level dirs |
 | `--reindex` | Re-index the registry: re-scan skill directories and merge changes incrementally (on demand; `install` / `update` re-index automatically; `--rescan` is a synonym); `--json` for JSON |
-| `hub hosts` | Discover installed agents and their skill directories (filesystem + environment; never reads the memory registry); classify as verified / discovered / bridge; `--json` for JSON |
+| `hub hosts [--json] [--state <state>]` | Discover hosts and their skill directories (filesystem + environment; never reads the memory registry); lifecycle states (available / orphan / missing / marker-only); `--state` filter; `--json` for JSON |
+| `hub hosts add <dir> [--label <name>] [--id <agentId>]` | Register a custom host directory (registration only: never creates directories or edits host config; Hub / bridge dirs are fail-closed) |
+| `hub hosts remove <dir \| --id <agentId>> [--purge [--yes]]` | Remove a registration (never deletes the directory); `--purge` cleans an orphan directory (preview by default, `--yes` to execute; only Hub-pointing links are removed, the directory goes to trash for 7 days) |
+| `hub hosts list` / `hub hosts mark <dir> --state <available\|orphan\|ignored>` | Show the registry / manually mark a host state (shares the registry store) |
 | `hub install [skill...]` | Install family skills into the local Hub (`~/.yottaskills/hub` by default; override with `--hub` / `YOTTA_SKILLS_HUB`) |
 | `hub adopt --scan` | Read-only preview: scan existing host skills and report adoption candidates, duplicate conflicts and Hub state |
 | `hub adopt --apply [--include <a,b>] [--force] [--in-place]` | Adopt selected skills into the Hub; copy-preserving by default and keep the original directory; non-YottaMeta sources are marked "no update source" |

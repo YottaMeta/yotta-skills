@@ -10,8 +10,10 @@ const help = require('../lib/cli-help');
 
 const EXPECTED_PATHS = [
   'install',
+  'install-self',
   'update',
   '--dry-run',
+  'where',
   'doctor',
   'rollback',
   '--list',
@@ -21,6 +23,10 @@ const EXPECTED_PATHS = [
   'decide-memory',
   'hub',
   'hub hosts',
+  'hub hosts add',
+  'hub hosts remove',
+  'hub hosts list',
+  'hub hosts mark',
   'hub install',
   'hub update',
   'hub adopt',

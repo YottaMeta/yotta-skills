@@ -1,3 +1,12 @@
+## v0.29.0 (2026-10-04)
+
+- **D1 修复：`hub install / update --dry-run` 真正只读**。此前该命令会真实联网安装特殊家族并写 Hub 台账；现 dryRun 透传到安装管线 —— 预览不发网络请求、不写任何文件（含台账），`--json` 输出机器可读 plan（install / update / skip + installedVersion + latest 标记「预览不解析」）；隔离回归证明 treeHash / mtime / 台账逐字节不变、npm 零调用。
+- **F1 安装面：`install-self` + `where`**。保留 `install --agent/--dir` 兼容直装；新增元阁独立安装（默认 `~/.yottaskills/yotta-skills`，`--dir` 指定，`YOTTA_SKILLS_HOME` 覆盖根；写 `self.json` 登记；不写宿主配置、不建全局 shim；fail-closed：Hub 真源重叠 / 桥接目录 / 非空陌生目录拒绝，`--force` 才覆盖同名运行件）；新增 `where` 查看运行中 CLI / 独立安装目录（标记当前运行项）/ Hub 真源；README / SKILL / CLI help 首选流程统一为 Hub 四步（hosts → install → link → view）。
+- **F2 自定义宿主注册**：`hub hosts add/remove/list/mark` —— 注册进发现 / 分发 / 收编范围（`hosts.json` schema v1，realpath 去重；只注册不建目录、移除注册不删目录）；Hub / 桥接 / 不存在 / 重复 / 非法 label fail-closed；Hub 审计 hosts.add / hosts.remove / hosts.mark；面板「宿主矩阵 → 添加自定义目录 / 移除注册」。
+- **F3 宿主状态细分与残留清理**：目录证据与实体证据分开（应用标记 / 用户注册 / 手动标记），状态 = 可用 / 残留（实体未确认）/ 未创建 / 仅标记（+ 手动 ignored）；`hub hosts --state` 过滤、`hub doctor` 新增 `host_state` 只读检查；`hub hosts remove <dir> --purge` 清理残留（默认预览，`--yes` 执行；只删指向 Hub 的链接，非 Hub 链接 / 非技能内容随目录保留在回收站 7 天）；面板宿主矩阵统计 / 筛选 / 状态徽章 / 清理与移除动作（手输确认串 + 页面令牌）。
+- **面板 API**：`/api/hosts` 增加状态计数；新增 `/api/hosts/add`、`/api/hosts/remove`、`/api/hosts/purge` 与只读 `/api/hosts/purge-plan`。
+- **测试**：新增 dry-run 4 + 安装管线 2 + install-self 5 + host-state 3 + 注册表 5 + 残留清理 3 + 面板 2；provider 测试夹具并发加固；全量测试 385/385（原 361）。
+
 ## v0.28.3 (2026-10-03)
 
 - **新增 `hub remove <slug>`**：一条命令完成「全宿主清链接（含死链）→ Hub 目录入回收站（保留 7 天，跨卷复制 + 校验）→ 清 Hub / 链接台账（不调 `syncHubState`，防记回 missing）→ 写审计」；fail-closed：只删指向 Hub 的链接与 Hub 内目录，真副本 / 外部链接保留并报告；链接清理报错即中止、不删 Hub；默认范围 = 已核实宿主 ∪ 本技能链接台账；`--agent/--dir` 收窄仅用于死链清理；退出码 0 / 1 / 2 / 4。
