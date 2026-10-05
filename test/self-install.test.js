@@ -45,7 +45,7 @@ function run(args, env) {
   });
 }
 
-const RUNTIME_FILES = ['bin/yotta-skills.js', 'lib/hub.js', 'assets/view.html', 'package.json', 'skills.json'];
+const RUNTIME_FILES = ['bin/yotta-skills.js', 'lib/hub.js', 'assets/view.html', 'package.json', 'skills.json', 'scan-policy.json'];
 
 test('install-self：默认位置安装 + self.json 登记 + 安装副本可运行', () => {
   const home = tmp('ys-self-default-');
