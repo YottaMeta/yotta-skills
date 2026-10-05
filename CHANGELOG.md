@@ -1,3 +1,8 @@
+## v0.29.3 (2026-10-05)
+
+- **修复（发布缺陷）**：0.29.2 的 npm / GitHub 包内 `scan-policy.json` 未随本批重绑（仍绑元忆 0.22.2，treeHash `7b2cd7a2…`），导致安装元忆 0.22.3 时 scanPolicy 复核 `version-mismatch` → DO NOT INSTALL（可 `--skip-scan` 临时绕过）。本版将包内 policy 重绑为元忆 0.22.3（treeHash `4f499e0d…`）；其余功能与 0.29.2 一致。
+- **护栏（防复发）**：`tools/pack_candidate.py` 打包 yotta-skills 候选时自动校验包内 `package/scan-policy.json`（version vs skills.json pins + 例外 vs SCAN_SPECS + treeHash vs handoff lock），不一致即 FAIL（exit 4）；新增 `tools/check_scan_policy.py --policy/--tarball` 与回归 `tools/test_check_scan_policy.py`；发布规范 §19.4 增补红线。
+
 ## v0.29.2 (2026-10-05)
 
 - **U4 Hub 位置持久化**：新增 `<YOTTA_SKILLS_HOME>/config.json`（schema v1，原子写）与 `hub config get / set --hub <path> [--move] / clear`；解析优先级 `--hub` > `YOTTA_SKILLS_HUB` > config > 默认 `~/.yottaskills/hub`；`where` 与面板「Hub 位置」显示来源与配置覆盖。
