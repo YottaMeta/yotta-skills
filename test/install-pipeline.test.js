@@ -431,3 +431,73 @@ test('dryRun marks latest-version skills as unresolved preview (0.29.0 D1)', () 
   assert.strictEqual(result.latestUnresolved, true);
   assert.match(result.note, /预览不解析/);
 });
+
+test('0.29.1 U1：pin 模式本地高于目标 -> skip（不联网、不写盘）', () => {
+  let packCalls = 0;
+  const { installer, dest } = fixture({
+    runNpmPack: () => {
+      packCalls++;
+      return { tarball: '/tmp/demo.tgz', resolved: '1.0.0', spec: skill.pkg + '@1.0.0' };
+    },
+    readInstalledVersion: () => '1.1.0',
+  });
+  const result = installer(skill, dest, { pin: true });
+  assert.strictEqual(result.status, 'skip');
+  assert.match(result.note, /本地领先 v1\.1\.0 > 目标 v1\.0\.0/);
+  assert.strictEqual(packCalls, 0, 'local-ahead 不得调用 npm pack');
+  assert.strictEqual(fs.existsSync(path.join(dest, skill.slug)), false, 'skip 不得写盘');
+});
+
+test('0.29.1 U1：--force 保留显式降级通道', () => {
+  const { installer, dest } = fixture({ readInstalledVersion: () => '1.1.0' });
+  const result = installer(skill, dest, { pin: true, force: true });
+  assert.strictEqual(result.status, 'ok');
+  assert.ok(fs.existsSync(path.join(dest, skill.slug, 'SKILL.md')));
+});
+
+test('0.29.1 U1：无法比较版本 -> fail-safe skip（不联网）', () => {
+  let packCalls = 0;
+  const { installer, dest } = fixture({
+    runNpmPack: () => {
+      packCalls++;
+      return { tarball: '/tmp/demo.tgz', resolved: '1.0.0' };
+    },
+    readInstalledVersion: () => 'dev-build',
+  });
+  const result = installer(skill, dest, { pin: true });
+  assert.strictEqual(result.status, 'skip');
+  assert.match(result.note, /无法比较版本/);
+  assert.strictEqual(packCalls, 0);
+});
+
+test('0.29.1 U1：latest 解析后不高于本地 -> 写前 skip', () => {
+  let packCalls = 0;
+  const latestSkill = { ...skill, version: 'latest' };
+  const { installer, dest } = fixture({
+    runNpmPack: () => {
+      packCalls++;
+      return { tarball: '/tmp/demo.tgz', resolved: '1.0.0' };
+    },
+    readInstalledVersion: () => '1.2.0',
+  });
+  const result = installer(latestSkill, dest, { pin: true });
+  assert.strictEqual(result.status, 'skip');
+  assert.match(result.note, /本地领先 v1\.2\.0 > 目标 v1\.0\.0/);
+  assert.strictEqual(packCalls, 1, 'latest 需先解析再复判');
+  assert.strictEqual(fs.existsSync(path.join(dest, skill.slug)), false, '复判发生在写盘之前');
+});
+
+test('0.29.1 U1：range 模式按解析版本判定（本地 = 清单版本仍可升级）', () => {
+  let packCalls = 0;
+  const { installer, dest, pkgDir } = fixture({
+    runNpmPack: () => {
+      packCalls++;
+      return { tarball: '/tmp/demo.tgz', resolved: '1.0.5' };
+    },
+    readInstalledVersion: () => '1.0.0',
+  });
+  fs.writeFileSync(path.join(pkgDir, 'SKILL.md'), '---\nname: yotta-demo\nversion: 1.0.5\n---\n', 'utf8');
+  const result = installer(skill, dest, { pin: false });
+  assert.strictEqual(result.status, 'ok');
+  assert.strictEqual(packCalls, 1);
+});

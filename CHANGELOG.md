@@ -1,3 +1,10 @@
+## v0.29.1 (2026-10-05)
+
+- **update「只升不降」**（U1）：`update` / `update --check` / `update --auto` / `hub update` 四路径统一语义 —— 本地版本高于目标（清单 pin / npm latest）时保留不降级：`update` / `hub update` 跳过并标注「本地领先」，`--check` 单列 `localAhead` 且不计更新（退出码 0），`--auto` 不动作；`--force` / `rollback` 保留显式降级通道；`latest` / range 模式在解析出精确版本后、任何写入之前复判。
+- **宿主矩阵与范围修正**（U2）：已安装标记区只显示未配对标记（CLI / 面板单一真源）；`installed` 配对确定性优选（用户注册 / 已核实映射 > env > 未核实映射 > 自动发现，消除 last-write-wins）；未核实映射显示「映射·未核实」而非「自动发现」；新增「不接管」开关（`hub hosts exclude/include`，发现 / 显示 / 链接三层跳过，含 `--include-discovered`）；新增目录覆盖（`hub hosts set <agentId> --dir` / `--clear`）；面板新增「不接管 / 恢复接管 / 编辑目录 / 标记可用 / 忽略」动作；**YottaCode 不纳入接管**（映射 / `YOTTACODE_HOME` / 扫描 / 注册 / 标记全部排除）。
+- **Hub 审计补全**（U3）：`hub install` / `hub update` 成功、失败各写一条 Hub 审计（slug / 版本 / 来源 / verdict / via / ok；skip 与 dry-run 不写），面板「最近动作」可见。
+- **元忆联动**：清单 pin 元忆 0.22.2（插件载荷修复同步升版）；scanPolicy 按新 treeHash 重绑。
+
 ## v0.29.0 (2026-10-04)
 
 - **D1 修复：`hub install / update --dry-run` 真正只读**。此前该命令会真实联网安装特殊家族并写 Hub 台账；现 dryRun 透传到安装管线 —— 预览不发网络请求、不写任何文件（含台账），`--json` 输出机器可读 plan（install / update / skip + installedVersion + latest 标记「预览不解析」）；隔离回归证明 treeHash / mtime / 台账逐字节不变、npm 零调用。

@@ -17,6 +17,9 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const BIN = path.join(ROOT, 'bin', 'yotta-skills.js');
 const FAKE_NPM = path.join(ROOT, 'test', 'helpers', 'fake-npm.js');
+// 与清单 pin 动态对齐（元忆升版不再改测试字面量）。
+const MANIFEST = require(path.join(ROOT, 'skills.json'));
+const MEMORY_PIN = MANIFEST.skills.find((s) => s.slug === 'yotta-memory').version;
 
 function tmp(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -101,7 +104,7 @@ test('hub install --dry-run：无网络 / 无写入 / 台账逐字节不变（--
     assert.ok(item, 'plan 必须包含 yotta-memory');
     assert.strictEqual(item.planned, 'update');
     assert.strictEqual(item.installedVersion, '0.0.1');
-    assert.strictEqual(item.version, '0.22.1');
+    assert.strictEqual(item.version, MEMORY_PIN);
 
     assert.strictEqual(fs.existsSync(logFile), false, 'dry-run 不得调用 npm（联网）');
     assert.strictEqual(snapshotTree(hubDir), before, 'dry-run 不得改动 Hub 目录（含 mtime）');
@@ -143,7 +146,7 @@ test('hub install --dry-run：已是最新的技能计划为 skip，文本模式
   const home = tmp('ys-dryrun-skip-');
   try {
     const hubDir = path.join(home, '.yottaskills', 'hub');
-    writeSkill(path.join(hubDir, 'yotta-memory'), 'yotta-memory', '0.22.1');
+    writeSkill(path.join(hubDir, 'yotta-memory'), 'yotta-memory', MEMORY_PIN);
     const logFile = path.join(home, 'fake-npm.log');
     const env = fakeHomeEnv(home, logFile);
 

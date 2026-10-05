@@ -227,3 +227,21 @@ test('defaultRoots：识别 OpenClaw 技能目录（含 OPENCLAW_STATE_DIR 覆�
     fs.rmSync(fake, { recursive: true, force: true });
   }
 });
+
+test('versionRelation：六态判定（update「只升不降」统一口径）', () => {
+  const rel = scan.versionRelation;
+  assert.strictEqual(rel(null, '1.0.0'), 'install');
+  assert.strictEqual(rel(null, 'latest'), 'install');
+  assert.strictEqual(rel('0.9.0', '1.0.0'), 'upgrade');
+  assert.strictEqual(rel('1.0.0', '1.0.0'), 'equal');
+  assert.strictEqual(rel('1.1.0', '1.0.0'), 'local-ahead');
+  // 预发布号 < 同版本正式号（semver）
+  assert.strictEqual(rel('1.0.0-beta.1', '1.0.0'), 'upgrade');
+  assert.strictEqual(rel('1.0.0', '1.0.0-beta.1'), 'local-ahead');
+  assert.strictEqual(rel('1.0.0-beta.2', '1.0.0-beta.1'), 'local-ahead');
+  assert.strictEqual(rel('1.0.0', 'latest'), 'resolve-needed');
+  assert.strictEqual(rel('not-a-version', '1.0.0'), 'unknown');
+  assert.strictEqual(rel('1.0.0', 'not-a-version'), 'unknown');
+  // compareSemver 对不可解析输入返回 0 —— 判定必须先 parse 校验，不得误判 equal
+  assert.notStrictEqual(rel('not-a-version', 'also-bad'), 'equal');
+});

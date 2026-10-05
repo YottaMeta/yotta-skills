@@ -80,7 +80,7 @@ test('update --check：家族技能有更新 -> 退出码 3 且报告', async ()
     assert.match(r.stdout, /yotta-present/);
     assert.match(r.stdout, /已最新（本地 v0\.5\.0）/);
     assert.match(r.stdout, /非元阁家族，跳过/);
-    assert.match(r.stdout, /汇总: 有更新 1 \/ 已最新 1 \/ 检查失败 0 \/ 非家族跳过 1/);
+    assert.match(r.stdout, /汇总: 有更新 1 \/ 本地领先 0 \/ 已最新 1 \/ 检查失败 0 \/ 非家族跳过 1/);
   } finally { fs.rmSync(dest, { recursive: true, force: true }); await free(server); }
 });
 
@@ -92,7 +92,7 @@ test('update --check：全部最新 -> 退出码 0', async () => {
     const r = await run(['update', '--check', '--dir', dest], { YOTTA_SKILLS_REGISTRY: 'http://127.0.0.1:' + server.address().port + '/' });
     assert.strictEqual(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /已最新（本地 v0\.11\.0）/);
-    assert.match(r.stdout, /汇总: 有更新 0 \/ 已最新 1 \/ 检查失败 0 \/ 非家族跳过 0/);
+    assert.match(r.stdout, /汇总: 有更新 0 \/ 本地领先 0 \/ 已最新 1 \/ 检查失败 0 \/ 非家族跳过 0/);
   } finally { fs.rmSync(dest, { recursive: true, force: true }); await free(server); }
 });
 

@@ -49,7 +49,8 @@ test('known roots carry the verified flag (unverified hosts are not default-link
   const byDir = new Map(roots.map((root) => [root.dir, root]));
   assert.strictEqual(byDir.get(path.join(XDG, 'agents', 'skills')).verified, true);
   assert.strictEqual(byDir.get(path.join(HOME, '.config', 'mimocode', 'skills')).verified, true);
-  assert.strictEqual(byDir.get(path.join(HOME, '.yottacode', 'skills')).verified, false);
+  // 0.29.1 U2：YottaCode 不纳入元阁接管（映射 / env / 扫描 / 注册全部排除）。
+  assert.strictEqual(byDir.get(path.join(HOME, '.yottacode', 'skills')), undefined);
   assert.strictEqual(byDir.get(path.join(HOME, '.box-agent', 'skills')).verified, false);
 });
 
