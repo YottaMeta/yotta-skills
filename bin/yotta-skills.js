@@ -2253,7 +2253,8 @@ function printAdoptScan(payload, json) {
   out('yotta-skills（元阁）v' + VERSION + ' —— Hub 收编预演（只读）');
   out('Hub: ' + payload.hubDir);
   out('候选 ' + payload.summary.candidates + ' / 冲突 ' + payload.summary.conflicts +
-    ' / 已在 Hub ' + payload.summary.alreadyInHub);
+    ' / 已在 Hub ' + payload.summary.alreadyInHub +
+    (payload.summary.skipped ? ' / 跳过 ' + payload.summary.skipped : ''));
   out('');
   for (const item of payload.candidates) {
     const mark = item.conflict ? '△' : item.inHub ? '·' : '✔';
@@ -2268,6 +2269,13 @@ function printAdoptScan(payload, json) {
     }
   }
   if (payload.candidates.length === 0) out('  （没有发现可收编技能）');
+  if ((payload.skipped || []).length) {
+    out('');
+    out('跳过 ' + payload.skipped.length + ' 个不可读候选（坏链 / 竞态删除；只读扫描不中断）:');
+    for (const item of payload.skipped) {
+      out('  ✘ ' + item.slug + '  ' + item.dir + '（' + item.reason + '）');
+    }
+  }
 }
 
 function printAdoptApply(payload, json) {

@@ -1,6 +1,8 @@
 ## v0.29.4 (2026-10-05)
 
-- **清单同步**：`skills.json` pin 元习 `0.2.2 → 0.3.0`（元习 0.3.0 知识库批次）；`references/skill-list.md` 同步版本与说明。其余功能与 0.29.3 一致。
+- **清单同步**：`skills.json` pin 元习 `0.2.2 → 0.3.0`（元习 0.3.0 知识库批次）；`references/skill-list.md` 同步版本与说明。
+- **修复（npm test flake 根因）**：`hub adopt --scan` 对不可读候选目录（坏链 / 扫描途中被删除）不再整体失败 —— 新增 `safeHashTree` 守卫，跳过该候选并在输出中列出「跳过」清单；回归覆盖坏链候选与有效候选共存场景。
+- **测试隔离**：测试进程 preload `test/setup-env.js`，清除指向真实宿主根的环境变量（DSH / Codex / XDG / OpenClaw / Claude 等）—— 此前 `hub config --move` 与 host-scope 类用例会把 junction 写进真实宿主技能目录、用例清理后留下坏链（flake 根因）。
 
 ## v0.29.3 (2026-10-05)
 

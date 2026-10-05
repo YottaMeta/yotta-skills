@@ -10,6 +10,7 @@ const ROOT = path.join(__dirname, '..');
 const BIN = path.join(ROOT, 'bin', 'yotta-skills.js');
 const hub = require('../lib/hub');
 const discovery = require('../lib/agent-discovery');
+const hubAdopt = require('../lib/hub-adopt');
 
 function tmp(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -204,6 +205,50 @@ test('CLI hub adopt --scan lists a filesystem candidate without writing', () => 
     assert.strictEqual(candidate.version, '2.0.0');
     assert.strictEqual(candidate.inHub, false);
     assert.ok(!fs.existsSync(path.join(hubDir, 'custom-skill')), 'scan must not write');
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('adopt scan hash guard tolerates unreadable candidate dirs', () => {
+  const base = tmp('ys-adopt-guard-');
+  try {
+    const result = hubAdopt.safeHashTree(path.join(base, 'missing-dir'));
+    assert.strictEqual(result.ok, false);
+    assert.strictEqual(result.hash, null);
+    assert.ok(result.error, 'guard should report the underlying error');
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+});
+
+test('CLI hub adopt --scan skips broken link candidates without failing', () => {
+  const home = tmp('ys-hub-adopt-broken-');
+  const hubDir = path.join(home, 'hub');
+  try {
+    writeSkill(path.join(home, '.newagent', 'skills', 'good-skill'), 'good-skill', '1.0.0');
+    const broken = path.join(home, '.newagent', 'skills', 'broken-skill');
+    fs.mkdirSync(path.dirname(broken), { recursive: true });
+    try {
+      fs.symlinkSync(path.join(home, 'missing-target'), broken,
+        process.platform === 'win32' ? 'junction' : 'dir');
+    } catch (_) { /* 无链接权限时退化为普通缺失路径，断言同样成立 */ }
+    const r = run(['hub', 'adopt', '--scan', '--hub', hubDir, '--json'], {
+      USERPROFILE: home,
+      HOME: home,
+      CODEX_HOME: path.join(home, '.codex'),
+      XDG_CONFIG_HOME: path.join(home, '.config'),
+      XDG_STATE_HOME: path.join(home, '.state'),
+      APPDATA: path.join(home, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
+      YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+    }, home);
+    assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+    const data = JSON.parse(r.stdout);
+    assert.ok(data.candidates.some((item) => item.slug === 'good-skill'),
+      'valid candidate should still be listed');
+    assert.ok(!data.candidates.some((item) => item.slug === 'broken-skill'),
+      'broken candidate must be skipped');
   } finally {
     fs.rmSync(home, { recursive: true, force: true });
   }

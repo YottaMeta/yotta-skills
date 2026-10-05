@@ -44,6 +44,6 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test \"**/*.test.js\""
+    "test": "node --require ./test/setup-env.js --test \"**/*.test.js\""
   }
 }
