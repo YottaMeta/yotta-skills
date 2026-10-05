@@ -173,6 +173,7 @@ npx -y @yottameta/yotta-skills hub doctor
 | `hub hosts add <dir> [--label <名称>] [--id <agentId>]` | 注册自定义宿主目录（只注册，不创建目录、不改宿主配置；Hub / 桥接目录 fail-closed 拒绝） |
 | `hub hosts remove <dir \| --id <agentId>> [--purge [--yes]]` | 移除注册（绝不删目录）；`--purge` = 清理残留目录（默认预览，`--yes` 执行；只删指向 Hub 的链接，目录入回收站 7 天） |
 | `hub hosts list` / `hub hosts mark <dir> --state <available\|orphan\|ignored>` | 查看注册表 / 手动标记宿主状态（与注册表共用存储） |
+| `hub config get \| set --hub <path> [--move] \| clear` | Hub 位置持久化（`config.json`；优先级 `--hub` > `YOTTA_SKILLS_HUB` > config > 默认）；`--move` = 复制校验 → 重链 → 旧 Hub 入回收站（7 天），fail-closed |
 | `hub install [skill...]` | 把元技能安装到本机 Hub 真源（默认 `~/.yottaskills/hub`；`--hub` / `YOTTA_SKILLS_HUB` 覆盖） |
 | `hub adopt --scan` | 只读预演：扫描各宿主现有技能，输出收编候选、多副本冲突与已在 Hub 状态 |
 | `hub adopt --apply [--include <a,b>] [--force] [--in-place]` | 把选中技能收编进 Hub；默认复制保真 + 原目录保留；非元阁来源标注「无更新源」 |

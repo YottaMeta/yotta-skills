@@ -1,3 +1,12 @@
+## v0.29.2 (2026-10-05)
+
+- **U4 Hub 位置持久化**：新增 `<YOTTA_SKILLS_HOME>/config.json`（schema v1，原子写）与 `hub config get / set --hub <path> [--move] / clear`；解析优先级 `--hub` > `YOTTA_SKILLS_HUB` > config > 默认 `~/.yottaskills/hub`；`where` 与面板「Hub 位置」显示来源与配置覆盖。
+- **`--move` 迁移（fail-closed）**：复制旧 Hub → 逐技能 treeHash 校验 → 切换配置 → `hub link` 以新 Hub 为源 `--force` 重链 → 旧 Hub 入回收站（7 天）；校验失败不切配置、不删旧 Hub；重链未完成保留旧 Hub 供重试。
+- **误用防护**：`--hub` 只允许与 `hub` / `view` / `where` 一起使用；裸 `yotta-skills --hub X` 或 `install --hub` 现在 fail-closed（此前会落入 install 并静默忽略 `--hub`）。
+- **`hub refresh` scanPolicy 复核**：refresh / adopt 复用安装管线同款 scanPolicy 例外复核（version + treeHash 绑定，fail-closed）；元忆自指扫描不再需要 `--skip-scan` 绕过。
+- **面板**：概览「Hub 位置」区新增来源 / 配置覆盖 / 重启提示与「设置新位置 / 清除覆盖」（页面令牌 + `hub-config` 确认串；不热切换，重启 `view` 生效）。
+- 测试：新增 hub-config 6 + hub-migrate 3 + refresh scanPolicy 2 + 面板 2。
+
 ## v0.29.1 (2026-10-05)
 
 - **update「只升不降」**（U1）：`update` / `update --check` / `update --auto` / `hub update` 四路径统一语义 —— 本地版本高于目标（清单 pin / npm latest）时保留不降级：`update` / `hub update` 跳过并标注「本地领先」，`--check` 单列 `localAhead` 且不计更新（退出码 0），`--auto` 不动作；`--force` / `rollback` 保留显式降级通道；`latest` / range 模式在解析出精确版本后、任何写入之前复判。

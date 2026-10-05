@@ -170,6 +170,7 @@ Requirements: Node.js 18+, npm, and system <code>tar</code> (built into Windows 
 | `hub hosts add <dir> [--label <name>] [--id <agentId>]` | Register a custom host directory (registration only: never creates directories or edits host config; Hub / bridge dirs are fail-closed) |
 | `hub hosts remove <dir \| --id <agentId>> [--purge [--yes]]` | Remove a registration (never deletes the directory); `--purge` cleans an orphan directory (preview by default, `--yes` to execute; only Hub-pointing links are removed, the directory goes to trash for 7 days) |
 | `hub hosts list` / `hub hosts mark <dir> --state <available\|orphan\|ignored>` | Show the registry / manually mark a host state (shares the registry store) |
+| `hub config get \| set --hub <path> [--move] \| clear` | Persist the Hub location in `config.json` (priority `--hub` > `YOTTA_SKILLS_HUB` > config > default); `--move` copies + verifies the old Hub, relinks hosts and trashes the old one (7 days), fail-closed |
 | `hub install [skill...]` | Install family skills into the local Hub (`~/.yottaskills/hub` by default; override with `--hub` / `YOTTA_SKILLS_HUB`) |
 | `hub adopt --scan` | Read-only preview: scan existing host skills and report adoption candidates, duplicate conflicts and Hub state |
 | `hub adopt --apply [--include <a,b>] [--force] [--in-place]` | Adopt selected skills into the Hub; copy-preserving by default and keep the original directory; non-YottaMeta sources are marked "no update source" |
