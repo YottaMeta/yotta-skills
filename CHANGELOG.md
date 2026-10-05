@@ -1,3 +1,7 @@
+## v0.29.4 (2026-10-05)
+
+- **清单同步**：`skills.json` pin 元习 `0.2.2 → 0.3.0`（元习 0.3.0 知识库批次）；`references/skill-list.md` 同步版本与说明。其余功能与 0.29.3 一致。
+
 ## v0.29.3 (2026-10-05)
 
 - **修复（发布缺陷）**：0.29.2 的 npm / GitHub 包内 `scan-policy.json` 未随本批重绑（仍绑元忆 0.22.2，treeHash `7b2cd7a2…`），导致安装元忆 0.22.3 时 scanPolicy 复核 `version-mismatch` → DO NOT INSTALL（可 `--skip-scan` 临时绕过）。本版将包内 policy 重绑为元忆 0.22.3（treeHash `4f499e0d…`）；其余功能与 0.29.2 一致。
