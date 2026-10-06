@@ -469,6 +469,53 @@ test('adopt refresh moves the replaced Hub copy into trash (not in place)', () =
   }
 });
 
+test('trash destinations stay unique for same-basename host dirs (convergence collision)', () => {
+  const root = tmp('ys-converge-uniq-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const trashRoot = path.join(root, 'trash');
+    writeSkill(path.join(hubDir, 'yotta-test'), 'yotta-test', '1.0.0');
+    const hostA = path.join(root, 'a', 'skills');
+    const hostB = path.join(root, 'b', 'skills');
+    writeSkill(path.join(hostA, 'yotta-test'), 'yotta-test', '0.9.0', 'oldA');
+    writeSkill(path.join(hostB, 'yotta-test'), 'yotta-test', '0.9.0', 'oldB');
+    const now = new Date('2026-10-06T10:00:00Z');
+    const a = hub.linkSkills({ hubDir, targetDir: hostA, slugs: ['yotta-test'], manifest: manifestFor('yotta-test'), trashRoot, now });
+    const b = hub.linkSkills({ hubDir, targetDir: hostB, slugs: ['yotta-test'], manifest: manifestFor('yotta-test'), trashRoot, now });
+    assert.strictEqual(a.results[0].status, 'linked', JSON.stringify(a.results[0]));
+    assert.strictEqual(b.results[0].status, 'linked', JSON.stringify(b.results[0]));
+    assert.notStrictEqual(a.results[0].moved[0].to, b.results[0].moved[0].to, 'trash destinations must not collide');
+    assert.ok(fs.existsSync(path.join(a.results[0].moved[0].to, 'marker.txt')));
+    assert.ok(fs.existsSync(path.join(b.results[0].moved[0].to, 'marker.txt')));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('cleanupBackupResidues handles same-basename dirs without collisions', () => {
+  const root = tmp('ys-cleanup-uniq-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    fs.mkdirSync(hubDir, { recursive: true });
+    const hostA = path.join(root, 'a', 'skills');
+    const hostB = path.join(root, 'b', 'skills');
+    fs.mkdirSync(path.join(hostA, '.yottaskills-staging'), { recursive: true });
+    fs.mkdirSync(path.join(hostB, '.yottaskills-staging'), { recursive: true });
+    const result = hub.cleanupBackupResidues({
+      hubDir,
+      dirs: [hostA, hostB],
+      now: new Date('2026-10-06T10:00:00Z'),
+    });
+    assert.strictEqual(result.ok, true, JSON.stringify(result));
+    assert.strictEqual(result.moved.length, 2);
+    for (const item of result.moved) assert.ok(fs.existsSync(item.to), item.to);
+    assert.ok(!fs.existsSync(path.join(hostA, '.yottaskills-staging')));
+    assert.ok(!fs.existsSync(path.join(hostB, '.yottaskills-staging')));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('pruneTrash removes entries older than the retention window', () => {
   const root = tmp('ys-trash-prune-');
   try {
