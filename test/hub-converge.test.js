@@ -414,6 +414,61 @@ test('family link --force does not bypass the version gate', () => {
   }
 });
 
+test('non-family link --force moves the replaced real dir into trash (no host residue)', () => {
+  const root = tmp('ys-converge-nonfam-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const targetDir = path.join(root, 'host', 'skills');
+    const trashRoot = path.join(root, 'trash');
+    writeSkill(path.join(hubDir, 'plain-skill'), 'plain-skill', '1.0.0');
+    writeSkill(path.join(targetDir, 'plain-skill'), 'plain-skill', '0.9.0', 'old');
+
+    const result = hub.linkSkills({
+      hubDir,
+      targetDir,
+      slugs: ['plain-skill'],
+      force: true,
+      trashRoot,
+      label: 'test host',
+    });
+    const item = result.results[0];
+    assert.strictEqual(item.status, 'linked', JSON.stringify(item));
+    assert.ok(item.backup && item.backup.startsWith(trashRoot), 'backup must live in trash: ' + item.backup);
+    assert.ok(fs.existsSync(path.join(item.backup, 'SKILL.md')), 'old copy must be recoverable from trash');
+    assert.ok(fs.lstatSync(path.join(targetDir, 'plain-skill')).isSymbolicLink());
+    const residue = fs.readdirSync(targetDir).filter((name) => name.includes('.yottaskills-backup-'));
+    assert.deepStrictEqual(residue, [], 'host dir must not keep .yottaskills-backup-* residue');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('adopt refresh moves the replaced Hub copy into trash (not in place)', () => {
+  const root = tmp('ys-converge-adopt-');
+  try {
+    const hubDir = path.join(root, 'hub');
+    const trashRoot = path.join(root, 'trash');
+    const source = path.join(root, 'src', 'yotta-x');
+    writeSkill(path.join(hubDir, 'yotta-x'), 'yotta-x', '1.0.0', 'old');
+    writeSkill(source, 'yotta-x', '1.1.0', 'new');
+    const result = hubAdopt.refreshFrom({
+      hubDir,
+      slug: 'yotta-x',
+      from: source,
+      skipScan: true,
+      trashRoot,
+    });
+    assert.strictEqual(result.ok, true, result.error);
+    assert.ok(result.backup && result.backup.startsWith(trashRoot), 'old copy must be in trash: ' + result.backup);
+    assert.ok(fs.existsSync(path.join(result.backup, 'SKILL.md')));
+    assert.match(fs.readFileSync(path.join(hubDir, 'yotta-x', 'marker.txt'), 'utf8'), /new/);
+    const residue = fs.readdirSync(hubDir).filter((name) => name.includes('.yottaskills-backup-'));
+    assert.deepStrictEqual(residue, [], 'hub dir must not keep .yottaskills-backup-* residue');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('pruneTrash removes entries older than the retention window', () => {
   const root = tmp('ys-trash-prune-');
   try {

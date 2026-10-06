@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { createInstaller, renameWithRetry, isSafeTarEntry } = require('../lib/install-pipeline');
+const { createInstaller, renameWithRetry, isSafeTarEntry, pruneStaleStaging } = require('../lib/install-pipeline');
 const { COPY_SKIP, copyDir: copyTree } = require('../lib/copy-tree');
 
 const skill = { slug: 'yotta-demo', name: '元示例', pkg: '@yottameta/yotta-demo', version: '1.0.0' };
@@ -89,6 +89,85 @@ test('hub-scope install keeps declared runtimePayload top-level files (bin)', ()
   assert.strictEqual(hub.status, 'ok');
   assert.equal(fs.readFileSync(path.join(hubDest, skill.slug, 'bin', 'cli.js'), 'utf8'), '// cli',
     'hub install keeps declared runtimePayload');
+});
+
+test('staging root is cleaned up after success and after a failed install (0.29.5 S4)', () => {
+  const okFixture = fixture({});
+  const ok = okFixture.installer(skill, okFixture.dest, {});
+  assert.strictEqual(ok.status, 'ok');
+  assert.ok(!fs.existsSync(path.join(okFixture.dest, '.yottaskills-staging')),
+    'staging root must be removed after success');
+
+  const manifest = {
+    manifestVersion: 1,
+    slug: 'yotta-demo',
+    name: '元示例',
+    package: '@yottameta/yotta-demo',
+    version: '1.0.0',
+    trust: 'yottameta',
+    install: { idempotent: true, setup: 'scripts/lifecycle/setup.js' },
+    permissions: { filesystem: 'user-skills-dir', network: 'none' },
+  };
+  const failFixture = fixture({
+    manifest,
+    runPhase: (packageDir, loaded, phase) => {
+      if (phase === 'setup') return { ok: false, skipped: false, error: 'setup boom', result: null };
+      return { ok: true, skipped: true, error: null, result: null };
+    },
+  });
+  const failed = failFixture.installer(skill, failFixture.dest, {});
+  assert.strictEqual(failed.status, 'fail');
+  assert.ok(!fs.existsSync(path.join(failFixture.dest, '.yottaskills-staging')),
+    'staging root must be removed after a failed install');
+});
+
+test('dir-scope update keeps declared runtimePayload only when the target already carries it', () => {
+  const { installer, pkgDir } = fixture({
+    copyDir: (src, dst, options) => {
+      const skip = new Set(COPY_SKIP);
+      for (const name of (options && options.keep) || []) skip.delete(name);
+      copyTree(src, dst, skip, true);
+    },
+  });
+  fs.mkdirSync(path.join(pkgDir, 'bin'), { recursive: true });
+  fs.writeFileSync(path.join(pkgDir, 'bin', 'cli.js'), '// cli v2', 'utf8');
+  const runtimeSkill = { ...skill, runtimePayload: ['bin'] };
+
+  const managedDest = fs.mkdtempSync(path.join(os.tmpdir(), 'ys-pipe-managed-'));
+  fs.mkdirSync(path.join(managedDest, skill.slug, 'bin'), { recursive: true });
+  fs.writeFileSync(path.join(managedDest, skill.slug, 'SKILL.md'),
+    '---\nname: yotta-demo\nversion: 0.9.0\n---\n', 'utf8');
+  fs.writeFileSync(path.join(managedDest, skill.slug, 'bin', 'cli.js'), '// cli v1', 'utf8');
+  const kept = installer(runtimeSkill, managedDest, { force: true });
+  assert.strictEqual(kept.status, 'ok');
+  assert.strictEqual(fs.readFileSync(path.join(managedDest, skill.slug, 'bin', 'cli.js'), 'utf8'), '// cli v2',
+    'managed dir update must refresh the existing runtime payload');
+
+  const thinDest = fs.mkdtempSync(path.join(os.tmpdir(), 'ys-pipe-thin-'));
+  fs.mkdirSync(path.join(thinDest, skill.slug), { recursive: true });
+  fs.writeFileSync(path.join(thinDest, skill.slug, 'SKILL.md'),
+    '---\nname: yotta-demo\nversion: 0.9.0\n---\n', 'utf8');
+  const thin = installer(runtimeSkill, thinDest, { force: true });
+  assert.strictEqual(thin.status, 'ok');
+  assert.ok(!fs.existsSync(path.join(thinDest, skill.slug, 'bin', 'cli.js')),
+    'thin dir install must stay body-only');
+});
+
+test('pruneStaleStaging removes stale subdirs and keeps fresh ones', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ys-staging-'));
+  try {
+    const stale = path.join(root, 'yotta-demo-stale');
+    const fresh = path.join(root, 'yotta-demo-fresh');
+    fs.mkdirSync(stale, { recursive: true });
+    fs.mkdirSync(fresh, { recursive: true });
+    const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    fs.utimesSync(stale, old, old);
+    assert.strictEqual(pruneStaleStaging(root), 1);
+    assert.ok(!fs.existsSync(stale));
+    assert.ok(fs.existsSync(fresh));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('install evidence carries scan policy review details and context', () => {

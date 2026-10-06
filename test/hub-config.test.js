@@ -215,3 +215,167 @@ test('CLI: hub config set --move migrates hub, relinks hosts and trashes the old
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+test('CLI: hub config set (switch only) records lastSwitch and get shows the pending hint', () => {
+  const home = tmp('ys-cfg-switch-');
+  try {
+    const root = path.join(home, '.yottaskills');
+    const oldHub = path.join(root, 'hub');
+    const newHub = path.join(home, 'switched-hub');
+    writeSkill(oldHub, 'yotta-demo', '1.0.0');
+
+    const set = runCli(home, ['hub', 'config', 'set', '--hub', newHub, '--json']);
+    assert.strictEqual(set.status, 0, set.stderr);
+    const setPayload = JSON.parse(set.stdout);
+    assert.strictEqual(setPayload.move.moved, false);
+    assert.strictEqual(setPayload.move.oldSkills, 1);
+
+    const get = runCli(home, ['hub', 'config', 'get', '--json']);
+    assert.strictEqual(get.status, 0, get.stderr);
+    const getPayload = JSON.parse(get.stdout);
+    assert.ok(getPayload.lastSwitch, 'lastSwitch must be recorded');
+    assert.strictEqual(path.resolve(getPayload.lastSwitch.from), path.resolve(oldHub));
+    assert.strictEqual(getPayload.lastSwitch.skills, 1);
+    assert.strictEqual(getPayload.lastMigration, null);
+
+    const text = runCli(home, ['hub', 'config', 'get']);
+    assert.match(text.stdout, /未迁移提示/);
+    assert.match(text.stdout, /还有 1 个技能未迁移/);
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI: doctor empty-hub hint points at the pending old hub migration', () => {
+  const home = tmp('ys-cfg-doctor-');
+  try {
+    const oldHub = path.join(home, '.yottaskills', 'hub');
+    writeSkill(oldHub, 'yotta-demo', '1.0.0');
+    const newHub = path.join(home, 'empty-new-hub');
+    fs.mkdirSync(newHub, { recursive: true });
+    const set = runCli(home, ['hub', 'config', 'set', '--hub', newHub, '--json']);
+    assert.strictEqual(set.status, 0, set.stderr);
+    const doctor = runCli(home, ['hub', 'doctor', '--json']);
+    const payload = JSON.parse(doctor.stdout);
+    const check = (payload.checks || []).find((item) => item.id === 'hub_nonempty');
+    assert.ok(check, JSON.stringify(payload.checks));
+    assert.match(check.hint, /未迁移/);
+    assert.match(check.hint, /--move/);
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI: hub config rollback previews then reverses the migration position', () => {
+  const home = tmp('ys-cfg-rollback-');
+  try {
+    const root = path.join(home, '.yottaskills');
+    const oldHub = path.join(root, 'hub');
+    const newHub = path.join(root, 'hub2');
+    writeSkill(oldHub, 'yotta-demo', '1.0.0');
+
+    const moved = runCli(home, ['hub', 'config', 'set', '--hub', newHub, '--move', '--json']);
+    assert.strictEqual(moved.status, 0, moved.stderr);
+
+    const get = runCli(home, ['hub', 'config', 'get', '--json']);
+    const getPayload = JSON.parse(get.stdout);
+    assert.ok(getPayload.lastMigration, 'lastMigration must be recorded');
+    assert.strictEqual(getPayload.lastMigration.kind, 'migrate');
+    assert.strictEqual(path.resolve(getPayload.lastMigration.from), path.resolve(oldHub));
+    assert.strictEqual(path.resolve(getPayload.lastMigration.to), path.resolve(newHub));
+    assert.strictEqual(getPayload.lastMigration.verifiedSkills, 1);
+    assert.strictEqual(getPayload.migrationDaysLeft, 7);
+
+    const preview = runCli(home, ['hub', 'config', 'rollback', '--json']);
+    assert.strictEqual(preview.status, 0, preview.stderr);
+    const previewPayload = JSON.parse(preview.stdout);
+    assert.strictEqual(previewPayload.preview, true);
+    assert.strictEqual(previewPayload.ok, true);
+    assert.strictEqual(path.resolve(previewPayload.current), path.resolve(newHub));
+    assert.strictEqual(path.resolve(previewPayload.target), path.resolve(oldHub));
+    assert.ok(fs.existsSync(newHub), 'preview must not move anything');
+
+    const rollback = runCli(home, ['hub', 'config', 'rollback', '--yes', '--json']);
+    assert.strictEqual(rollback.status, 0, rollback.stderr);
+    const payload = JSON.parse(rollback.stdout);
+    assert.strictEqual(payload.action, 'config.rollback');
+    assert.strictEqual(payload.preview, false);
+    assert.ok(fs.existsSync(path.join(oldHub, 'yotta-demo', 'SKILL.md')), 'content must be back at the old hub');
+    assert.ok(!fs.existsSync(newHub), 'current hub must be retired to trash');
+    const cfg = JSON.parse(fs.readFileSync(path.join(root, 'config.json'), 'utf8'));
+    assert.strictEqual(path.resolve(cfg.hub), path.resolve(oldHub));
+    assert.strictEqual(cfg.lastMigration.kind, 'rollback');
+    assert.ok(cfg.lastMigration.trashedTo, 'rollback must record its own trash target');
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI: --move refuses residue-only targets; --clean-residue migrates', () => {
+  const home = tmp('ys-cfg-residue-');
+  try {
+    const root = path.join(home, '.yottaskills');
+    const oldHub = path.join(root, 'hub');
+    const newHub = path.join(home, 'residue-hub');
+    writeSkill(oldHub, 'yotta-demo', '1.0.0');
+    fs.mkdirSync(newHub, { recursive: true });
+    fs.writeFileSync(path.join(newHub, '.yotta-hub.json'), '{}\n', 'utf8');
+    fs.writeFileSync(path.join(newHub, '.yotta-hub-audit.jsonl'), '', 'utf8');
+
+    const refused = runCli(home, ['hub', 'config', 'set', '--hub', newHub, '--move', '--json']);
+    assert.strictEqual(refused.status, 2, refused.stdout + refused.stderr);
+    assert.match(refused.stderr, /残留/);
+    assert.match(refused.stderr, /clean-residue/);
+    assert.strictEqual(configLib.readConfig({ homeDir: home, env: {} }).hub, null, 'config must not switch');
+    assert.ok(fs.existsSync(path.join(oldHub, 'yotta-demo', 'SKILL.md')), 'old hub must stay intact');
+
+    const cleaned = runCli(home, ['hub', 'config', 'set', '--hub', newHub, '--move', '--clean-residue', '--json']);
+    assert.strictEqual(cleaned.status, 0, cleaned.stdout + cleaned.stderr);
+    assert.ok(fs.existsSync(path.join(newHub, 'yotta-demo', 'SKILL.md')));
+    assert.ok(!fs.existsSync(path.join(newHub, '.yotta-hub.json')), 'residue must be moved away');
+    const cfg = JSON.parse(fs.readFileSync(path.join(root, 'config.json'), 'utf8'));
+    assert.strictEqual(path.resolve(cfg.hub), path.resolve(newHub));
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('CLI: hub cleanup-backups previews residue, doctor warns, --yes trashes it', () => {
+  const home = tmp('ys-cfg-cleanup-');
+  try {
+    const root = path.join(home, '.yottaskills');
+    const hubDir = path.join(root, 'hub');
+    writeSkill(hubDir, 'yotta-demo', '1.0.0');
+    const hostDir = path.join(home, '.agents', 'skills');
+    fs.mkdirSync(hostDir, { recursive: true });
+    const hostResidue = path.join(hostDir, 'create-plan.yottaskills-backup-123');
+    fs.writeFileSync(hostResidue, 'stale backup\n', 'utf8');
+    const hubStaging = path.join(hubDir, '.yottaskills-staging');
+    fs.mkdirSync(hubStaging, { recursive: true });
+
+    const doctor = runCli(home, ['hub', 'doctor', '--json']);
+    assert.match(doctor.stdout, /backup_residue:/);
+
+    const preview = runCli(home, ['hub', 'cleanup-backups', '--json']);
+    assert.strictEqual(preview.status, 0, preview.stderr);
+    const previewPayload = JSON.parse(preview.stdout);
+    assert.strictEqual(previewPayload.preview, true);
+    assert.ok(previewPayload.count >= 2, JSON.stringify(previewPayload));
+    assert.ok(fs.existsSync(hostResidue), 'preview must not move anything');
+
+    const applied = runCli(home, ['hub', 'cleanup-backups', '--yes', '--json']);
+    assert.strictEqual(applied.status, 0, applied.stderr);
+    const appliedPayload = JSON.parse(applied.stdout);
+    assert.ok(appliedPayload.moved.length >= 2, JSON.stringify(appliedPayload));
+    assert.ok(!fs.existsSync(hostResidue), 'host residue must be gone');
+    assert.ok(!fs.existsSync(hubStaging), 'staging residue must be gone');
+    for (const item of appliedPayload.moved) {
+      assert.ok(fs.existsSync(item.to), 'moved residue must be recoverable in trash: ' + item.to);
+    }
+
+    const doctorAfter = runCli(home, ['hub', 'doctor', '--json']);
+    assert.ok(!doctorAfter.stdout.includes('backup_residue:'), 'doctor must be clean after cleanup');
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});

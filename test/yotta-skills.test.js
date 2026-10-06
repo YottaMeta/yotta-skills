@@ -240,7 +240,10 @@ test('install bootstraps verifier before installing another family skill', () =>
   });
   const r = run(['install', 'yotta-memory', '--dir', dest], env);
   assert.strictEqual(r.status, 0, r.stdout + r.stderr);
-  assert.ok(fs.existsSync(path.join(dest, 'yotta-verify', 'scripts', 'yotta_verify.py')));
+  // 0.29.5 S4：自举落点 = 运行时缓存，不再写进目标目录。
+  assert.ok(!fs.existsSync(path.join(dest, 'yotta-verify')), 'verifier must not land in the target dir');
+  assert.ok(!fs.existsSync(path.join(dest, '.yottaskills-staging')), 'staging must not remain in the target dir');
+  assert.ok(fs.existsSync(path.join(home, '.yottaskills', 'runtime', 'verifier', 'yotta-verify', 'scripts', 'yotta_verify.py')));
   assert.ok(fs.existsSync(path.join(dest, 'yotta-memory', 'SKILL.md')));
   const log = fs.readFileSync(path.join(home, '.yottaskills', 'install-log.jsonl'), 'utf8');
   assert.match(log, /trusted-bootstrap/);

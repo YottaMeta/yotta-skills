@@ -1,3 +1,12 @@
+## v0.29.5 (2026-10-06)
+
+- **面板迁移向导（S1，缺陷修复）**：面板「设置 Hub 位置」不再只写指针 + 报「已写入配置」；升级为向导 —— 「迁移到新位置」（默认推荐，复用 CLI `--move` 同一内核：复制 → 逐技能校验 → 切配置 → 全宿主重链 → 旧 Hub 入回收站 7 天）/「仅切换位置（保留旧内容）」，迁移中 loading 态、结果真实回显（技能数 / 重链目录数 / 回收站路径；部分失败保留旧 Hub + 重试指引，不报成功）；目标为「空 Hub 台账残留」时提供「清理残留并迁移」；仅切换且旧 Hub 非空 → 二次确认 + 概览横幅「旧 Hub 还有 N 个技能未迁移」+ 一键迁移。
+- **最近迁移 + 一键回滚（S2，面板 + CLI 双端）**：`config.json` 新增 `lastMigration`（时间 / from→to / 校验技能数 / 重链目录数 / 回收站与剩余天数）；`hub config get` 展示「最近一次迁移」块与回滚命令；新增 `hub config rollback`（默认预览，`--yes` 执行；反向迁移同内核，`--json`）；面板新增「最近一次迁移」卡片 + 一键回滚。回滚语义 = **位置回退（用当前内容）**，不是恢复旧快照；目标非空 fail-closed 不合并。
+- **备份自动清理（S3）**：`hub link --force` / `hub adopt` 替换真目录时，旧副本不再原地留 `<name>.yottaskills-backup-*`（宿主会把备份当技能扫描），统一移入回收站（7 天可恢复）；替换失败自动把旧副本移回原位；`hub link` 输出「替换了 N 份真目录旧副本 + 回收站去向」；`hub doctor` 只读报告 `backup_residue` 警告；新增 `hub cleanup-backups [--yes] [--include-discovered]`（默认预览，清理 `.yottaskills-backup-*` / `.yottaskills-import-*` / `.yottaskills-rollback-*` / `.yottaskills-staging`）。
+- **`--dir` 模式修复（S4）**：① 元信自举落点改为运行时缓存（`<记录根>/runtime/verifier`，默认 `~/.yottaskills/runtime/verifier`），不再把 `yotta-verify` + `.yottaskills-staging` 写进目标目录（yottacode skill-inventory 污染修复）；受信记录仍按路径 + SHA-256 校验，目标目录未受信副本一律不用（反劫持模型不变）。② `.yottaskills-staging` 结束（含失败）强制清理 + 启动时清理超过 1 小时的陈旧暂存；扫描 / 注册忽略点目录（不把暂存目录当 slug）。③ `--dir` 托管目录更新保持既有运行时载荷（目标已带 `bin/` 等 → 继续携带，防更新后引擎缺 bin）；新装 / 普通技能目录仍只落本体（§6.3 口径不变）。④ npm / npx 子进程显式继承调用方环境（`YOTTA_SKILLS_REGISTRY_FILE` / `YOTTA_SKILLS_MANIFEST` 等）。
+- **面板数据源**：`GET /api/hub/config`（位置 + 最近迁移 + 回滚预览）；概览新增迁移块与未迁移提示；`from` 迁移仅接受面板记录的「未迁移旧 Hub」（不接受任意目录）。
+- 测试：新增 / 扩展 hub-config 4 + hub-converge 2 + hub-view-config 3 + install-pipeline 3 + self-bootstrap-cache 2 + skills-scan 1；全量 `npm test` 445+ 连续复跑。
+
 ## v0.29.4 (2026-10-05)
 
 - **清单同步**：`skills.json` pin 元习 `0.2.2 → 0.3.0`（元习 0.3.0 知识库批次）；`references/skill-list.md` 同步版本与说明。

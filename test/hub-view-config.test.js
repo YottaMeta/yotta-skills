@@ -63,8 +63,15 @@ function request(port, method, target, options) {
   });
 }
 
-async function withServer(home, fn) {
-  const hubDir = path.join(home, '.yottaskills', 'hub');
+function writeSkill(dir, slug, version) {
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'SKILL.md'),
+    '---\nname: ' + slug + '\nversion: ' + version + '\ndescription: test skill\n---\n# ' + slug + '\n', 'utf8');
+}
+
+async function withServer(home, fn, options) {
+  const opts = options || {};
+  const hubDir = opts.hubDir || path.join(home, '.yottaskills', 'hub');
   fs.mkdirSync(hubDir, { recursive: true });
   const view = viewLib.createHubViewServer({
     hubDir,
@@ -144,6 +151,106 @@ test('panel hub config rejects self-install overlap and requires the write token
       });
       assert.strictEqual(overlap.status, 400);
       assert.match(overlap.json.error, /独立安装目录/);
+    });
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('panel hub config switch records lastSwitch; the restarted panel shows the pending hint', async () => {
+  const home = tmp('ys-view-switch-');
+  try {
+    const root = path.join(home, '.yottaskills');
+    const oldHub = path.join(root, 'hub');
+    writeSkill(path.join(oldHub, 'yotta-demo'), 'yotta-demo', '1.0.0');
+    const newHub = path.join(home, 'panel-switched-hub');
+    await withServer(home, async (view, port) => {
+      const set = await request(port, 'POST', '/api/hub/config', {
+        headers: auth(),
+        body: { hub: newHub, mode: 'switch', confirm: 'hub-config' },
+      });
+      assert.strictEqual(set.status, 200, set.text);
+      assert.strictEqual(set.json.mode, 'switch');
+      assert.strictEqual(set.json.oldSkills, 1);
+      assert.ok(fs.existsSync(path.join(oldHub, 'yotta-demo', 'SKILL.md')), 'switch must not move files');
+    });
+    await withServer(home, async (view, port) => {
+      const overview = await request(port, 'GET', '/api/overview');
+      assert.strictEqual(overview.status, 200, overview.text);
+      assert.ok(overview.json.migration.switchPending, JSON.stringify(overview.json.migration));
+      assert.strictEqual(overview.json.migration.switchPending.skills, 1);
+      assert.strictEqual(
+        path.resolve(overview.json.migration.switchPending.from),
+        path.resolve(oldHub),
+      );
+    }, { hubDir: newHub });
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('panel hub config move migrates; rollback endpoint reverses the position', async () => {
+  const home = tmp('ys-view-move-');
+  try {
+    const root = path.join(home, '.yottaskills');
+    const oldHub = path.join(root, 'hub');
+    writeSkill(path.join(oldHub, 'yotta-demo'), 'yotta-demo', '1.0.0');
+    const newHub = path.join(home, 'panel-moved-hub');
+    await withServer(home, async (view, port) => {
+      const moved = await request(port, 'POST', '/api/hub/config', {
+        headers: auth(),
+        body: { hub: newHub, mode: 'move', confirm: 'hub-config' },
+      });
+      assert.strictEqual(moved.status, 200, moved.text);
+      assert.strictEqual(moved.json.mode, 'move');
+      assert.strictEqual(moved.json.move.moved, true);
+      assert.strictEqual(moved.json.move.verifiedSkills, 1);
+      assert.ok(fs.existsSync(path.join(newHub, 'yotta-demo', 'SKILL.md')));
+      assert.ok(!fs.existsSync(oldHub), 'old hub must be retired to trash');
+    });
+    await withServer(home, async (view, port) => {
+      const cfg = await request(port, 'GET', '/api/hub/config');
+      assert.strictEqual(cfg.status, 200, cfg.text);
+      assert.ok(cfg.json.lastMigration, JSON.stringify(cfg.json));
+      assert.strictEqual(cfg.json.rollback.ok, true, JSON.stringify(cfg.json.rollback));
+      assert.strictEqual(path.resolve(cfg.json.rollback.target), path.resolve(oldHub));
+      const rb = await request(port, 'POST', '/api/hub/config', {
+        headers: auth(),
+        body: { rollback: true, confirm: 'hub-config' },
+      });
+      assert.strictEqual(rb.status, 200, rb.text);
+      assert.strictEqual(rb.json.action, 'config.rollback');
+      assert.ok(fs.existsSync(path.join(oldHub, 'yotta-demo', 'SKILL.md')));
+      assert.ok(!fs.existsSync(newHub), 'current hub must be retired to trash');
+    }, { hubDir: newHub });
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('panel hub config move reports residue-only targets and cleans on retry', async () => {
+  const home = tmp('ys-view-residue-');
+  try {
+    const oldHub = path.join(home, '.yottaskills', 'hub');
+    writeSkill(path.join(oldHub, 'yotta-demo'), 'yotta-demo', '1.0.0');
+    const newHub = path.join(home, 'panel-residue-hub');
+    fs.mkdirSync(newHub, { recursive: true });
+    fs.writeFileSync(path.join(newHub, '.yotta-hub.json'), '{}\n', 'utf8');
+    await withServer(home, async (view, port) => {
+      const refused = await request(port, 'POST', '/api/hub/config', {
+        headers: auth(),
+        body: { hub: newHub, mode: 'move', confirm: 'hub-config' },
+      });
+      assert.strictEqual(refused.status, 409, refused.text);
+      assert.strictEqual(refused.json.code, 'target-residue');
+      assert.ok(fs.existsSync(path.join(newHub, '.yotta-hub.json')), 'residue must stay before the retry');
+      const cleaned = await request(port, 'POST', '/api/hub/config', {
+        headers: auth(),
+        body: { hub: newHub, mode: 'move', confirm: 'hub-config', cleanResidue: true },
+      });
+      assert.strictEqual(cleaned.status, 200, cleaned.text);
+      assert.ok(fs.existsSync(path.join(newHub, 'yotta-demo', 'SKILL.md')));
+      assert.ok(!fs.existsSync(path.join(newHub, '.yotta-hub.json')), 'residue must be moved away');
     });
   } finally {
     fs.rmSync(home, { recursive: true, force: true });

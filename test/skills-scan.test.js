@@ -82,6 +82,19 @@ test('scanSkillDir：只识别含 SKILL.md 且 frontmatter 有 name 的子目录
   }
 });
 
+test('scanSkillDir：点目录（暂存 / 备份残留）不当作技能 slug', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'yotta-scan-dot-'));
+  try {
+    mkSkill(root, 'good-skill');
+    mkSkill(root, '.yottaskills-staging');
+    mkSkill(root, '.yottaskills-backup-good-skill-123');
+    const found = scan.scanSkillDir(root);
+    assert.deepStrictEqual(found.map((item) => item.slug), ['good-skill']);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('scanRoots：多根扫描去重合并 + 版本冲突记录 + 缺失目录记 error', () => {
   const rootA = fs.mkdtempSync(path.join(os.tmpdir(), 'yotta-scan-a-'));
   const rootB = fs.mkdtempSync(path.join(os.tmpdir(), 'yotta-scan-b-'));
