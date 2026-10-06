@@ -576,6 +576,21 @@
     });
   }
 
+  function showSwitchResult(result) {
+    $('#modalBody').innerHTML =
+      '<div class="result"><span class="badge ok">已切换</span><span>' + esc(result.previous || '') + ' → ' + esc(result.hub || '') + '</span></div>' +
+      ((result.oldSkills || 0) > 0
+        ? '<div class="result"><span class="badge warn">未迁移</span><span>旧 Hub 还有 ' + esc(result.oldSkills) + ' 个技能未迁移；概览会持续提示，可一键迁移。</span></div>'
+        : '') +
+      '<div class="note">只切换了指针，没有移动任何文件；新位置从下次面板加载开始生效。</div>';
+    rewireModalButtons({
+      okText: '关闭',
+      onOk: closeModal,
+      cancelText: '刷新面板',
+      onCancel: function () { closeModal(); loadOverview(); },
+    });
+  }
+
   async function executeHubMigration(body, opts) {
     opts = opts || {};
     var seq = showLoad(body.mode === 'switch' ? '正在切换 Hub 位置…' : '正在迁移 Hub（复制 → 校验 → 重链 → 回收站）…');
@@ -592,7 +607,10 @@
       }
       return null;
     }
-    if (opts.inModal) showMigrationResult(r);
+    if (opts.inModal) {
+      if (body.mode === 'switch') showSwitchResult(r);
+      else showMigrationResult(r);
+    }
     else {
       closeModal();
       toast('迁移完成：校验 ' + ((r.move && r.move.verifiedSkills) || 0) + ' 个技能 · 重链 ' + ((r.move && r.move.relinkDirs) || 0) + ' 个目录' + (r.move && r.move.incomplete ? '（重链未全部完成，见概览提示）' : ''));
