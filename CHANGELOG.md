@@ -1,6 +1,6 @@
 ## v0.29.6 (2026-10-07)
 
-- 清单联动：`skills.json` 的 yotta-learn pin 0.3.0 → 0.4.0（元习 0.4.0：存储独立与迁移 / MCP stdio / 本地管理台 / 升库路径），`references/skill-list.md` 同步；无其他行为变更。
+- 清单联动：`skills.json` 的 yotta-learn pin 0.3.0 → 0.4.0（元习 0.4.0：存储独立与迁移 / MCP stdio / 本地管理台 / 升库路径；legacy 回退写操作 fail-closed）；yotta-memory pin 0.22.3 → 0.22.4（元忆 Windows 自启修复：S4U 主体 + 任务 XML + 去电池 / 72h 限制 + Startup 兜底）；`references/skill-list.md` 同步；包内 `scan-policy.json` 重绑元忆 0.22.4（treeHash 随候选包重算）；无其他行为变更。
 
 ## v0.29.5 (2026-10-06)
 
