@@ -1,3 +1,8 @@
+## v0.29.10 (2026-10-09)
+
+- **清单联动**：`skills.json` pin `yotta-memory` 0.22.6 → **0.22.7**（配置键人话说明：管理台「高级 / CLI」页与官网 /product/ 的 39 个配置键逐键补全说明 + 覆盖回归；无其他行为变更）；`references/skill-list.md` 同步。
+- **scan-policy 重绑 yotta-memory 0.22.7（npm 真包口径）**：treeHash 由 `python tools/build_scan_policy.py` 从 npm 发布包重算（非本地候选），与 2026-10-09 行尾口径红线一致。
+
 ## v0.29.9 (2026-10-09)
 
 - **scan-policy 重绑 yotta-memory 0.22.6（npm 真包口径）**：treeHash `sha256:efa988a0…`（18 文件 / 1,334,872 B），与 npm 发布包逐字节一致；修复候选与发布包行尾差异导致的哈希绑定不一致。
