@@ -1,3 +1,8 @@
+## v0.29.8 (2026-10-09)
+
+- **图形化面板 CLI 补全**：高级 CLI 页现在渲染全部子命令选项（此前 74 个子命令级选项完全未渲染），选项计数改为完整口径（命令级 + 子命令级 + 全局 = 187），与 `--help` 同源、不漂移。
+- 新增 `test/hub-view-cli.test.js` 子命令选项渲染与计数回归。
+
 ## v0.29.7 (2026-10-07)
 
 - 清单联动：`skills.json` pin `yotta-memory` 0.22.4 → **0.22.5**（Electron 宿主自启修复：任务 / 兜底 / 定时配置自动注入 ELECTRON_RUN_AS_NODE，不再拉起 GUI）；`references/skill-list.md` 同步；包内 `scan-policy.json` 重绑元忆 0.22.5（treeHash 随候选包重算）。

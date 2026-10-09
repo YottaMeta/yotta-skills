@@ -51,6 +51,12 @@ test('view help is documented and --port is bound to the view command', () => {
   assert.match(badPort.stderr, /--port 端口非法/);
 });
 
+test('view CLI help renders subcommand options and counts the full option surface', () => {
+  const source = fs.readFileSync(BIN, 'utf8');
+  assert.ok(source.includes('s.options.map(function (f)'), 'subcommand options must be rendered in the view');
+  assert.ok(source.includes('optTotal += (s.options || []).length'), 'option total must include subcommand options');
+});
+
 test('view command starts the loopback panel and answers /api/status', async () => {
   const home = tmp('ys-view-cli-');
   const child = spawn(process.execPath, [BIN, 'view', '--port', '0'], {
