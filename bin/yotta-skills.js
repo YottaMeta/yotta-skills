@@ -3038,8 +3038,9 @@ function runHostsList(opts) {
     }, null, 2));
     return;
   }
-  out('yotta-skills（元阁）v' + VERSION + ' —— 自定义宿主注册表');
+  out('yotta-skills（元阁）v' + VERSION + ' —— 自定义宿主注册表（仅手动 add 的目录）');
   out('注册表: ' + hostsRegistryLib.hostsRegistryPath(registryOpts));
+  out('（本表只列手动注册的目录；全部宿主 / 技能目录请用: yotta-skills hub hosts）');
   if (registry.hosts.length === 0 && (registry.excluded || []).length === 0 && (registry.overrides || []).length === 0) {
     out('（空；用 yotta-skills hub hosts add <目录> 注册）');
     return;
