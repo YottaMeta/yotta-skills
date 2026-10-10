@@ -332,7 +332,22 @@ test('CLI: --move refuses residue-only targets; --clean-residue migrates', () =>
     const cleaned = runCli(home, ['hub', 'config', 'set', '--hub', newHub, '--move', '--clean-residue', '--json']);
     assert.strictEqual(cleaned.status, 0, cleaned.stdout + cleaned.stderr);
     assert.ok(fs.existsSync(path.join(newHub, 'yotta-demo', 'SKILL.md')));
-    assert.ok(!fs.existsSync(path.join(newHub, '.yotta-hub.json')), 'residue must be moved away');
+    // 旧空残留必须移入回收站（逐字节保留原内容）；
+    // 新 Hub 的 state 由重链阶段按需写入 —— 若存在，必须是全新的合法 state，
+    // 不能是旧 `{}` 残留（0.30.0 修正过时断言）。
+    const residueTrash = path.join(root, 'trash');
+    assert.ok(fs.existsSync(residueTrash), 'residue trash dir must exist');
+    const residueDirs = fs.readdirSync(residueTrash).filter((n) => n.startsWith('hub-residue-'));
+    assert.ok(residueDirs.length >= 1, 'residue must be moved to trash');
+    const movedState = path.join(residueTrash, residueDirs[0], '.yotta-hub.json');
+    assert.ok(fs.existsSync(movedState), 'old residue state must be in trash');
+    assert.strictEqual(fs.readFileSync(movedState, 'utf8').trim(), '{}', 'trash must hold the old residue content');
+    const newStateFile = path.join(newHub, '.yotta-hub.json');
+    if (fs.existsSync(newStateFile)) {
+      const freshState = JSON.parse(fs.readFileSync(newStateFile, 'utf8'));
+      assert.strictEqual(freshState.standard, 'yotta-skills-hub/v1');
+      assert.ok(freshState.skills && freshState.skills['yotta-demo'], 'fresh state must list migrated skill');
+    }
     const cfg = JSON.parse(fs.readFileSync(path.join(root, 'config.json'), 'utf8'));
     assert.strictEqual(path.resolve(cfg.hub), path.resolve(newHub));
   } finally {

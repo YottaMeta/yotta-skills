@@ -24,6 +24,7 @@ const EXPECTED_PATHS = [
   'hub',
   'hub hosts',
   'hub hosts add',
+  'hub hosts rename',
   'hub hosts remove',
   'hub hosts list',
   'hub hosts mark',

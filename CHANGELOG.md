@@ -1,3 +1,12 @@
+## v0.30.0 (2026-10-11)
+
+- **Hub 清理与配置防呆（UX-02 / UX-04 / OPT-01 / OPT-02）**：`hub unlink` 无 slug 时以文件系统为真源扫描目标目录（台账缺失也能清理指向当前 Hub 的链接；指向其它位置的链接 fail-closed 不动，并给出错位警告 + `hub config get` 自查提示）；dry-run / 执行均输出汇总；空结果不再静默。`hub config clear` 当前配置 Hub 有技能时默认阻断（输出影响面 + 默认位置 + `--move` 替代路径 + `--yes` 显式确认）。
+- **一致性检查与列语义（UX-03 / OPT-03）**：`hub doctor` 新增 `hub_mismatch` 检查（宿主链接指向其它 Hub 时告警 + 修复指引）；面板「宿主矩阵 / 链接与体检」把「指向当前 Hub」改为文件系统真源口径，其它 Hub 链接单独计数并警告色标注（配置错位预警）。
+- **宿主管理（UX-06 / UX-08 / UX-09）**：新增 `hub hosts rename <目录> --label <名称>` 一步改名（只改显示名，保留目录 / 手动状态 / 覆盖；CLI + 面板 + 审计）；「忽略」统一改名「隐藏标记」（ignored 只影响显示，不拦截行为）；移除注册 / 不接管后提示目录剩余 Hub 链接与 `hub unlink --dir` 清理指引。
+- **帮助与提示（UX-05 / UX-07 / OPT-04 / OPT-05）**：面板宿主矩阵新增「术语速查」折叠块 + 关键动作 tooltip；高危命令（unlink / remove / config clear / config rollback / hosts remove / hosts exclude）在 `--help` 与面板高级 CLI 页统一补「影响面 / 替代路径」两行；`hub config get` 检测到运行中 view 面板仍用旧位置时提示重启（view 运行标记 + PID 存活校验）；`hub refresh` 被 scanPolicy 拦截时输出「当前命中 + 与上一已审版本新增 / 消失规则」差异摘要 + `--allow-unverified` 复核指引。
+- 面板：清除覆盖确认框显示影响面（技能数 / 原 Hub / 回落默认位置），当前 Hub 有技能时要求输入 `clear` 二次确认。
+- 测试：新增 `hub-ux-030`（7 项）与 `hub-view-ux-030`（2 项）；全量 458/458。
+
 ## v0.29.10 (2026-10-09)
 
 - **清单联动**：`skills.json` pin `yotta-memory` 0.22.6 → **0.22.7**（配置键人话说明：管理台「高级 / CLI」页与官网 /product/ 的 39 个配置键逐键补全说明 + 覆盖回归；无其他行为变更）；`references/skill-list.md` 同步。
