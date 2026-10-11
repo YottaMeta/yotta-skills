@@ -6,6 +6,7 @@
 - **帮助与提示（UX-05 / UX-07 / OPT-04 / OPT-05）**：面板宿主矩阵新增「术语速查」折叠块 + 关键动作 tooltip；高危命令（unlink / remove / config clear / config rollback / hosts remove / hosts exclude）在 `--help` 与面板高级 CLI 页统一补「影响面 / 替代路径」两行；`hub config get` 检测到运行中 view 面板仍用旧位置时提示重启（view 运行标记 + PID 存活校验）；`hub refresh` 被 scanPolicy 拦截时输出「当前命中 + 与上一已审版本新增 / 消失规则」差异摘要 + `--allow-unverified` 复核指引。
 - 面板：清除覆盖确认框显示影响面（技能数 / 原 Hub / 回落默认位置），当前 Hub 有技能时要求输入 `clear` 二次确认。
 - 测试：新增 `hub-ux-030`（7 项）与 `hub-view-ux-030`（2 项）；全量 458/458。
+- **清单联动（发布期）**：`skills.json` pin `yotta-memory` 0.22.7 → **0.22.8**、`yotta-learn` 0.4.0 → **0.5.0**；`references/skill-list.md` 同步；`scan-policy.json` 按 npm 真包口径重绑。
 
 ## v0.29.10 (2026-10-09)
 
