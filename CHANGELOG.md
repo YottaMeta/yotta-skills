@@ -1,3 +1,10 @@
+## v0.30.1 (2026-10-11)
+
+- **面板「高级 CLI」速查说明修复（UX-10）**：速查行此前只按命令后第一段匹配（`hub hosts add` / `hub hosts list` 等全部落回父级 `hub hosts` 条目），导致说明整列重复、`hub config get` 等行说明为空；现在按**最深前缀**解析（容忍旗标 / 参数尾段），每行显示自己条目的说明。
+- **解析单一真源化**：新增 `resolveHelpEntry()` + `quickWithMeta()`（`lib/cli-help.js`），`/api/help` 随载荷下发每行的 `meta`，面板直接渲染（移除前端本地解析，终端 / 面板同源）。
+- **旗标变体行 per-row note**：`hub hosts` / `hub link` / `hub unlink` / `hub adopt` / `update` / `install` / `view` 等同一命令的多个速查行补齐区分说明，不再出现两行一模一样的解释。
+- **门禁**：`test/cli-help-coverage.test.js` 新增「最深条目 + 同组说明不重复 + 服务端 meta 一致性」回归；`tools/check_hub_view.js` 面板走查新增代表性行断言（`hub hosts add` 不得回退到父级说明、`hub config get` 说明非空、`hub hosts` 旗标变体行必须不同）。
+
 ## v0.30.0 (2026-10-11)
 
 - **Hub 清理与配置防呆（UX-02 / UX-04 / OPT-01 / OPT-02）**：`hub unlink` 无 slug 时以文件系统为真源扫描目标目录（台账缺失也能清理指向当前 Hub 的链接；指向其它位置的链接 fail-closed 不动，并给出错位警告 + `hub config get` 自查提示）；dry-run / 执行均输出汇总；空结果不再静默。`hub config clear` 当前配置 Hub 有技能时默认阻断（输出影响面 + 默认位置 + `--move` 替代路径 + `--yes` 显式确认）。

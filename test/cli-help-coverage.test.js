@@ -116,6 +116,37 @@ test('cli help quick list covers every command and subcommand with unique runnab
   }
 });
 
+test('quick help resolves deepest entry and stays distinguishable per group (UX-10)', () => {
+  for (const group of help.CLI_HELP_QUICK) {
+    const seen = new Set();
+    for (const item of group.items) {
+      const meta = help.resolveHelpEntry(help.CLI_HELP_MODEL, item.cmd);
+      assert.ok(meta, 'quick item must resolve to a model entry: ' + item.cmd);
+      const key = String(meta.what || '') + '|' + String(item.note || '');
+      assert.ok(!seen.has(key),
+        'duplicate explanation in group ' + group.group + ': ' + item.cmd + ' -> ' + key);
+      seen.add(key);
+    }
+  }
+  // 最深前缀：hub hosts add 必须解析到自身条目，而不是父级 hub hosts。
+  const hosts = help.resolveHelpEntry(help.CLI_HELP_MODEL, 'hub hosts');
+  const hostsAdd = help.resolveHelpEntry(help.CLI_HELP_MODEL, 'hub hosts add');
+  assert.strictEqual(hosts.name, 'hosts');
+  assert.strictEqual(hostsAdd.name, 'hosts add');
+  assert.notStrictEqual(hostsAdd, hosts);
+  // 旗标 / 参数尾段容忍；伪命令全名精确匹配。
+  assert.strictEqual(help.resolveHelpEntry(help.CLI_HELP_MODEL, 'hub hosts --state orphan').name, 'hosts');
+  assert.strictEqual(help.resolveHelpEntry(help.CLI_HELP_MODEL, 'hub config get').name, 'config get');
+  assert.strictEqual(help.resolveHelpEntry(help.CLI_HELP_MODEL, '--list').name, '--list');
+  // 服务端下发解析结果：quickWithMeta 与解析函数逐项一致。
+  const enriched = help.quickWithMeta();
+  assert.deepStrictEqual(enriched.map((g) => g.group), help.CLI_HELP_QUICK.map((g) => g.group));
+  enriched.forEach((group, gi) => group.items.forEach((item, ii) => {
+    const expected = help.resolveHelpEntry(help.CLI_HELP_MODEL, help.CLI_HELP_QUICK[gi].items[ii].cmd) || {};
+    assert.deepStrictEqual(item.meta, expected);
+  }));
+});
+
 test('--help renders from the same model (parity both ways)', () => {
   const r = spawnSync(process.execPath, [BIN, '--help'], { encoding: 'utf8' });
   assert.strictEqual(r.status, 0, r.stderr);

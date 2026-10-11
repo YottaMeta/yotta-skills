@@ -55,6 +55,7 @@ test('view CLI help renders subcommand options and counts the full option surfac
   const source = fs.readFileSync(BIN, 'utf8');
   assert.ok(source.includes('s.options.map(function (f)'), 'subcommand options must be rendered in the view');
   assert.ok(source.includes('optTotal += (s.options || []).length'), 'option total must include subcommand options');
+  assert.ok(source.includes('item.meta'), 'quick rows must use server-resolved meta (UX-10)');
 });
 
 test('view command starts the loopback panel and answers /api/status', async () => {

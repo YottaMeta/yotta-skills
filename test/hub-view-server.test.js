@@ -501,7 +501,7 @@ test('view help endpoint serves the full CLI model (groups / quick / options)', 
       const res = await request(port, 'GET', '/api/help');
       assert.strictEqual(res.status, 200, res.text);
       assert.deepStrictEqual(res.json.groups, JSON.parse(JSON.stringify(cliHelp.CLI_HELP_MODEL)));
-      assert.deepStrictEqual(res.json.quick, JSON.parse(JSON.stringify(cliHelp.CLI_HELP_QUICK)));
+      assert.deepStrictEqual(res.json.quick, JSON.parse(JSON.stringify(cliHelp.quickWithMeta())));
       assert.deepStrictEqual(res.json.options, JSON.parse(JSON.stringify(cliHelp.CLI_GLOBAL_OPTIONS)));
     });
   } finally {
