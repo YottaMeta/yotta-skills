@@ -4,6 +4,7 @@
 - **解析单一真源化**：新增 `resolveHelpEntry()` + `quickWithMeta()`（`lib/cli-help.js`），`/api/help` 随载荷下发每行的 `meta`，面板直接渲染（移除前端本地解析，终端 / 面板同源）。
 - **旗标变体行 per-row note**：`hub hosts` / `hub link` / `hub unlink` / `hub adopt` / `update` / `install` / `view` 等同一命令的多个速查行补齐区分说明，不再出现两行一模一样的解释。
 - **门禁**：`test/cli-help-coverage.test.js` 新增「最深条目 + 同组说明不重复 + 服务端 meta 一致性」回归；`tools/check_hub_view.js` 面板走查新增代表性行断言（`hub hosts add` 不得回退到父级说明、`hub config get` 说明非空、`hub hosts` 旗标变体行必须不同）。
+- **清单联动（发布期）**：`skills.json` pin `yotta-memory` 0.22.8 → **0.22.9**、`yotta-learn` 0.5.0 → **0.5.1**；`references/skill-list.md` 同步；`scan-policy.json` 按 npm 真包口径重绑（yotta-memory 0.22.9）。
 
 ## v0.30.0 (2026-10-11)
 
