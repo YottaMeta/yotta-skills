@@ -1,3 +1,7 @@
+## v0.30.3 (2026-10-13)
+
+- **清单联动（发布期）**：`skills.json` pin `yotta-learn` 0.6.0 → **0.6.4**（含面板弹窗 / 写库门槛 / 端口 fail-fast / 排空超时四项修复）；`references/skill-list.md` 同步；`scan-policy.json` 无需重绑（元习不在扫描例外表内）。
+
 ## v0.30.2 (2026-10-12)
 
 - **清单联动（发布期）**：`skills.json` pin `yotta-learn` 0.5.1 → **0.6.0**（desc 同步为知识库口径：跨智能体知识库 + 归位决策树 + 首次激活引导）；`references/skill-list.md` 同步；`scan-policy.json` 无需重绑（元习不在扫描例外表内）。
