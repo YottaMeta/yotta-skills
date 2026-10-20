@@ -1,3 +1,7 @@
+## v0.30.4 (2026-10-20)
+
+- **清单联动（发布期）**：`skills.json` pin `yotta-memory` 0.22.9 → **0.23.0**（上下文包 COMMIT 段保留策略 + 归档门槛 0.35→0.55 + 规模体检补强 + 用法引导）；`references/skill-list.md` 同步；`scan-policy.json` 按 npm 真包口径重绑（yotta-memory 0.23.0 / treeHash `d18537c9…` / 18 文件 / 1,364,905 B；9 技能 / 37 例外）。
+
 ## v0.30.3 (2026-10-13)
 
 - **清单联动（发布期）**：`skills.json` pin `yotta-learn` 0.6.0 → **0.6.4**（含面板弹窗 / 写库门槛 / 端口 fail-fast / 排空超时四项修复）；`references/skill-list.md` 同步；`scan-policy.json` 无需重绑（元习不在扫描例外表内）。
