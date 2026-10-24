@@ -1,3 +1,7 @@
+## v0.30.5 (2026-10-25)
+
+- **清单联动（发布期）**：`skills.json` pin `yotta-humanize` 0.2.2 → **0.2.3**（去 AI 味即时入口包装：展示名 / 摘要 / 描述 + README 首屏 + 2 条真实 before/after 案例；检测与改写引擎逻辑不变）；`references/skill-list.md` 同步；`scan-policy.json` 无需重绑（元真不在扫描例外表内）。
+
 ## v0.30.4 (2026-10-20)
 
 - **清单联动（发布期）**：`skills.json` pin `yotta-memory` 0.22.9 → **0.23.0**（上下文包 COMMIT 段保留策略 + 归档门槛 0.35→0.55 + 规模体检补强 + 用法引导）；`references/skill-list.md` 同步；`scan-policy.json` 按 npm 真包口径重绑（yotta-memory 0.23.0 / treeHash `d18537c9…` / 18 文件 / 1,364,905 B；9 技能 / 37 例外）。
