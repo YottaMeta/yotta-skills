@@ -41,6 +41,14 @@ Installing the whole YottaMeta family used to mean running <code>npx</code> for 
 
 Boundaries: it only downloads, places, gates and summarizes — it does **not** develop skill content, does **not** bundle any skill body, does **not** use <code>-g</code> global installs, and does **not** silently write host configuration or agent global memory. Besides the target directory, it keeps its registry, snapshots, install evidence and update-check cache under <code>~/.yottaskills</code>.
 
+## Usage cases
+
+**1. Put the whole family into one agent.** `npx -y @yottameta/yotta-skills install --agent codex` resolves the manifest, scans each package with the pre-install gate, places every skill (already-current ones are skipped) and re-indexes the registry afterwards.
+
+**2. Keep one source of truth and fan it out.** `hub install` places the family into a single local Hub directory; `hub link --all` then distributes it to every verified host as a junction or symlink, and `hub status` / `doctor` show where each copy points and whether anything drifted.
+
+**3. See what is already installed, and what a task needs.** `--inventory` / `--reindex` scan the skill directories on this machine into a local registry, while `--route "<task>"` returns a candidate combination, call order, per-skill role, confidence, evidence, installed/missing status and the install command. Routing only suggests; it never installs on its own.
+
 ## Quick start
 
 Primary flow (Hub as the main path; the installation itself is agent-agnostic):
