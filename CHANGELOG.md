@@ -2,7 +2,7 @@
 
 - **ClawHub 英文门面（无引擎变更）**：发布副本改为英文优先的双语 `summary` / `description`（英文在前、中文关键词保留在后）并补英文 tags，上线后 ClawHub 技能卡摘要由超长中文变为英文优先；同时以更高版本覆盖此前在该市场提交后未转公开的两版。
 - **README 使用案例**：英文 / 中文 README 首屏新增「使用案例」三条（一条命令装全家 / Hub 单点真源 + 全宿主分发 / 盘点与路由建议）。
-- **清单联动（发布期）**：`skills.json` pin `yotta-memory` 0.23.0 → **0.23.1**；`references/skill-list.md` 同步；安装扫描例外表按 npm 真包口径重绑（`yotta-memory` 0.23.1 / 版本 + treeHash）。
+- **清单联动（发布期）**：`skills.json` pin `yotta-memory` 0.23.0 → **0.23.1**；`references/skill-list.md` 同步；安装扫描例外表按 npm 真包口径重绑（`yotta-memory` 0.23.1 / treeHash `578570c2…` / 18 文件 / 1,367,666 B；9 技能 / 37 例外）。
 - 兼容性：命令、参数、清单结构与安装行为全部不变；本次仅门面文案、发布副本与清单版本。
 
 ## v0.30.5 (2026-10-25)
