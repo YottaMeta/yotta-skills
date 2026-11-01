@@ -41,11 +41,65 @@ function fixture(deps) {
   return { installer, dest, home, pkgDir };
 }
 
+function makeDirLink(real, link, t) {
+  try {
+    fs.symlinkSync(real, link, process.platform === 'win32' ? 'junction' : 'dir');
+    return true;
+  } catch (error) {
+    if (t) t.skip('当前主机不能创建目录链接: ' + error.code);
+    return false;
+  }
+}
+
 test('safe pipeline installs a new package', () => {
   const { installer, dest } = fixture({});
   const result = installer(skill, dest, {});
   assert.strictEqual(result.status, 'ok');
   assert.ok(fs.existsSync(path.join(dest, skill.slug, 'SKILL.md')));
+});
+
+test('pipeline rejects an arbitrary target link without writing through it', (t) => {
+  const { installer, dest } = fixture({});
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'ys-pipe-outside-'));
+  const target = path.join(dest, skill.slug);
+  fs.writeFileSync(path.join(outside, 'SKILL.md'), 'outside\n', 'utf8');
+  if (!makeDirLink(outside, target, t)) return;
+
+  const result = installer(skill, dest, { force: true });
+  assert.strictEqual(result.status, 'fail');
+  assert.strictEqual(result.exitCode, 4);
+  assert.strictEqual(fs.readFileSync(path.join(outside, 'SKILL.md'), 'utf8'), 'outside\n');
+  assert.ok(fs.lstatSync(target).isSymbolicLink());
+});
+
+test('pipeline updates a managed Hub link through its real target and keeps the link', (t) => {
+  const { installer, dest } = fixture({});
+  const hub = fs.mkdtempSync(path.join(os.tmpdir(), 'ys-pipe-hub-link-'));
+  const real = path.join(hub, skill.slug);
+  fs.mkdirSync(real, { recursive: true });
+  fs.writeFileSync(path.join(hub, '.yotta-hub.json'), '{}', 'utf8');
+  fs.writeFileSync(path.join(real, 'SKILL.md'), 'old\n', 'utf8');
+  const target = path.join(dest, skill.slug);
+  if (!makeDirLink(real, target, t)) return;
+
+  const result = installer(skill, dest, { force: true });
+  assert.strictEqual(result.status, 'ok');
+  assert.ok(fs.lstatSync(target).isSymbolicLink());
+  assert.match(fs.readFileSync(path.join(real, 'SKILL.md'), 'utf8'), /name: yotta-demo/);
+});
+
+test('pipeline rejects a nested link inside an existing target', (t) => {
+  const { installer, dest } = fixture({});
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'ys-pipe-nested-outside-'));
+  const target = path.join(dest, skill.slug);
+  fs.mkdirSync(target, { recursive: true });
+  fs.writeFileSync(path.join(target, 'SKILL.md'), 'old\n', 'utf8');
+  if (!makeDirLink(outside, path.join(target, 'scripts'), t)) return;
+
+  const result = installer(skill, dest, { force: true });
+  assert.strictEqual(result.status, 'fail');
+  assert.strictEqual(result.exitCode, 4);
+  assert.strictEqual(fs.readdirSync(outside).length, 0);
 });
 
 test('staged swap keeps nested package.json / bin payload (copy-tree top-level skip)', () => {
