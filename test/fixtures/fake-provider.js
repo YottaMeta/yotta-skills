@@ -31,8 +31,10 @@ if (mode === 'hang') {
   process.stdout.write('not-json');
   process.exit(0);
 } else if (mode === 'oversize') {
-  process.stdout.write(JSON.stringify({ ok: true, data: { pad: 'x'.repeat(300 * 1024) } }));
-  process.exit(0);
+  process.stdout.write(
+    JSON.stringify({ ok: true, data: { pad: 'x'.repeat(300 * 1024) } }),
+    () => process.exit(0),
+  );
 } else if (mode === 'license') {
   send({ ok: false, code: 'license_required', message: '需要授权后使用' });
 } else if (mode === 'custom') {
