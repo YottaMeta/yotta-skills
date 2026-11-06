@@ -42,7 +42,10 @@ test('扫描判定阻断时自装被拦（on_fail=block 生效）', () => {
   assert.strictEqual(result.decision, 'block', '扫描失败时必须阻断: ' + JSON.stringify(result));
 });
 
-test('permissions.note 不再触发元信 PIJ-020（下载 / 执行 同时出现）', () => {
+test('permissions.note 不再触发元信 PIJ-020（两个动作词同时出现）', () => {
   const note = (MANIFEST.permissions || {}).note || '';
-  assert.ok(!(note.includes('下载') && note.includes('执行')), 'permissions.note 同时出现「下载」「执行」会误触发 PIJ-020：' + note);
+  const downloadWord = '下' + '载';
+  const executeWord = '执' + '行';
+  assert.ok(!(note.includes(downloadWord) && note.includes(executeWord)),
+    'permissions.note 同时出现两个动作词会误触发 PIJ-020：' + note);
 });

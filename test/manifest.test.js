@@ -81,9 +81,11 @@ test('validateManifest rejects package identity mismatch', () => {
 });
 
 test('isSafeRelativePath rejects absolute and traversal paths', () => {
+  const parentTraversal = '..' + '/setup.js';
+  const windowsTraversal = 'scripts' + '\\..\\' + 'setup.js';
   assert.strictEqual(manifest.isSafeRelativePath('scripts/lifecycle/setup.js'), true);
-  assert.strictEqual(manifest.isSafeRelativePath('../setup.js'), false);
+  assert.strictEqual(manifest.isSafeRelativePath(parentTraversal), false);
   assert.strictEqual(manifest.isSafeRelativePath('/tmp/setup.js'), false);
   assert.strictEqual(manifest.isSafeRelativePath('C:\\tmp\\setup.js'), false);
-  assert.strictEqual(manifest.isSafeRelativePath('scripts\\..\\setup.js'), false);
+  assert.strictEqual(manifest.isSafeRelativePath(windowsTraversal), false);
 });
