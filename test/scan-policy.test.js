@@ -6,6 +6,7 @@ const os = require('os');
 const path = require('path');
 const policyLib = require('../lib/scan-policy');
 
+const SELF_ROOT = path.join(__dirname, '..');
 const REPO_ROOT = path.join(__dirname, '..', '..', '..');
 
 function tmpDir(prefix) {
@@ -171,7 +172,7 @@ test('applyScanPolicy requires findings and an entry for the slug', () => {
 });
 
 test('shipped scan-policy matches handoff lock bindings', (t) => {
-  const policyPath = path.join(REPO_ROOT, 'yottaskills', 'yotta-skills', 'scan-policy.json');
+  const policyPath = path.join(SELF_ROOT, 'scan-policy.json');
   const lockPath = path.join(REPO_ROOT, 'handoff', 'opencode-v1', 'skills.lock.json');
   if (!fs.existsSync(policyPath) || !fs.existsSync(lockPath)) {
     t.skip('仓库缺少 scan-policy.json 或 handoff lock');
@@ -192,7 +193,7 @@ test('shipped scan-policy matches handoff lock bindings', (t) => {
 });
 
 test('scan-policy covers the family install blockers (memory / logwatch / triage)', () => {
-  const policyPath = path.join(REPO_ROOT, 'yottaskills', 'yotta-skills', 'scan-policy.json');
+  const policyPath = path.join(SELF_ROOT, 'scan-policy.json');
   if (!fs.existsSync(policyPath)) {
     assert.fail('缺少 scan-policy.json');
   }

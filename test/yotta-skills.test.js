@@ -253,13 +253,37 @@ test('install bootstraps verifier before installing another family skill', () =>
 test('install yotta-verify records before_install hook evidence', () => {
   const dest = tmpdir('ys-hook-install-');
   const home = tmpdir('ys-hook-install-home-');
+  const verifyManifest = path.join(home, 'yotta-verify-manifest.json');
+  const verifyEntry = skills.find((entry) => entry.slug === 'yotta-verify');
+  fs.writeFileSync(verifyManifest, JSON.stringify({
+    manifestVersion: 1,
+    slug: 'yotta-verify',
+    name: '元信',
+    package: verifyEntry.pkg,
+    version: verifyEntry.version,
+    trust: 'yottameta',
+    install: { idempotent: true },
+    permissions: {
+      filesystem: 'user-skills-dir',
+      network: 'none',
+      process: 'child-process',
+      note: '测试夹具：仅验证安装前 hook 证据。',
+    },
+    hooks: [{
+      event: 'before_install',
+      require_tool: 'scan_skill',
+      on_fail: 'block',
+      fallback: 'wrapper',
+      evidence: ['audit_log'],
+    }],
+  }, null, 2), 'utf8');
   const r = run(
     ['install', 'yotta-verify', '--dir', dest, '--pin', '--no-reindex'],
     {
       YOTTA_SKILLS_NPM: FAKE_NPM,
       YOTTA_SKILLS_FETCH: 'npm',
       YOTTA_SKILLS_FAKE_VERDICT: 'SAFE TO INSTALL',
-      YOTTA_SKILLS_FAKE_MANIFEST_FILE: path.join(ROOT, '..', 'yotta-verify', 'skill-manifest.json'),
+      YOTTA_SKILLS_FAKE_MANIFEST_FILE: verifyManifest,
       USERPROFILE: home,
       HOME: home,
       CODEX_HOME: path.join(home, '.codex'),

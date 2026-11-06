@@ -35,6 +35,12 @@ function writeManifest(file, hooks) {
   }, null, 2), 'utf8');
 }
 
+function pilotManifest(home, name, hooks) {
+  const file = path.join(home, name + '-manifest.json');
+  writeManifest(file, hooks);
+  return file;
+}
+
 test('hook capabilities outputs the host matrix as JSON', () => {
   const home = tmpDir('ys-hook-cli-home-');
   const r = run(['hook', 'capabilities', '--host', 'codex', '--json'], home);
@@ -128,7 +134,13 @@ test('hook rejects an event without a manifest', () => {
 
 test('yotta-present before_send pilot records explicit-unverified on Codex', () => {
   const home = tmpDir('ys-hook-present-');
-  const manifest = path.join(ROOT, '..', 'yotta-present', 'skill-manifest.json');
+  const manifest = pilotManifest(home, 'present', [{
+    event: 'before_send',
+    require_tool: 'present_result',
+    on_fail: 'block',
+    fallback: 'explicit-unverified',
+    evidence: ['tool_call_id', 'host_transcript'],
+  }]);
   const r = run([
     'hook', 'evaluate',
     '--host', 'codex',
@@ -151,7 +163,13 @@ test('yotta-present before_send pilot records explicit-unverified on Codex', () 
 
 test('yotta-guardian before_tool pilot records native-audit correction', () => {
   const home = tmpDir('ys-hook-guardian-');
-  const manifest = path.join(ROOT, '..', 'yotta-guardian', 'skill-manifest.json');
+  const manifest = pilotManifest(home, 'guardian', [{
+    event: 'before_tool',
+    require_tool: 'guard_check',
+    on_fail: 'block',
+    fallback: 'explicit-unverified',
+    evidence: ['audit_log'],
+  }]);
   const r = run([
     'hook', 'evaluate',
     '--host', 'codex',
@@ -180,7 +198,19 @@ test('yotta-guardian before_tool pilot records native-audit correction', () => {
 
 test('yotta-workflow start and milestone pilots preserve file evidence', () => {
   const home = tmpDir('ys-hook-workflow-');
-  const manifest = path.join(ROOT, '..', 'yotta-workflow', 'skill-manifest.json');
+  const manifest = pilotManifest(home, 'workflow', [{
+    event: 'before_start',
+    require_action: 'read_state',
+    on_fail: 'block',
+    fallback: 'explicit-unverified',
+    evidence: ['file_path'],
+  }, {
+    event: 'after_milestone',
+    require_action: 'write_state',
+    on_fail: 'block',
+    fallback: 'explicit-unverified',
+    evidence: ['file_path', 'audit_log'],
+  }]);
   const start = run([
     'hook', 'evaluate',
     '--host', 'codex',
@@ -215,7 +245,13 @@ test('yotta-workflow start and milestone pilots preserve file evidence', () => {
 
 test('yotta-publish-guard wrapper blocks failed publish gate', () => {
   const home = tmpDir('ys-hook-publish-');
-  const manifest = path.join(ROOT, '..', 'yotta-publish-guard', 'skill-manifest.json');
+  const manifest = pilotManifest(home, 'publish-guard', [{
+    event: 'before_publish',
+    require_tool: 'publish_gate',
+    on_fail: 'block',
+    fallback: 'wrapper',
+    evidence: ['exit_code', 'audit_log'],
+  }]);
   const r = run([
     'hook', 'evaluate',
     '--host', 'codex',
@@ -240,7 +276,13 @@ test('yotta-publish-guard wrapper blocks failed publish gate', () => {
 
 test('yotta-publish-guard without wrapper is explicit-unverified', () => {
   const home = tmpDir('ys-hook-publish-');
-  const manifest = path.join(ROOT, '..', 'yotta-publish-guard', 'skill-manifest.json');
+  const manifest = pilotManifest(home, 'publish-guard', [{
+    event: 'before_publish',
+    require_tool: 'publish_gate',
+    on_fail: 'block',
+    fallback: 'wrapper',
+    evidence: ['exit_code', 'audit_log'],
+  }]);
   const r = run([
     'hook', 'evaluate',
     '--host', 'codex',
@@ -266,7 +308,13 @@ test('yotta-publish-guard without wrapper is explicit-unverified', () => {
 
 test('yotta-memory after_milestone pilot requires memory file evidence', () => {
   const home = tmpDir('ys-hook-memory-');
-  const manifest = path.join(ROOT, '..', 'yotta-memory', 'skill-manifest.json');
+  const manifest = pilotManifest(home, 'memory', [{
+    event: 'after_milestone',
+    require_tool: 'remember_commit',
+    on_fail: 'block',
+    fallback: 'explicit-unverified',
+    evidence: ['file_path'],
+  }]);
   const ok = run([
     'hook', 'evaluate',
     '--host', 'codex',

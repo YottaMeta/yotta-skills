@@ -172,6 +172,7 @@ test('CLI hub status reports hub standard and empty hub state', () => {
       APPDATA: path.join(home, 'AppData', 'Roaming'),
       LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
       YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+      YOTTA_SKILLS_DISCOVERY_ROOTS: '',
     }, home);
     assert.strictEqual(r.status, 0, r.stdout + r.stderr);
     const data = JSON.parse(r.stdout);
@@ -197,6 +198,7 @@ test('CLI hub adopt --scan lists a filesystem candidate without writing', () => 
       APPDATA: path.join(home, 'AppData', 'Roaming'),
       LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
       YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+      YOTTA_SKILLS_DISCOVERY_ROOTS: '',
     }, home);
     assert.strictEqual(r.status, 0, r.stdout + r.stderr);
     const data = JSON.parse(r.stdout);
@@ -269,6 +271,7 @@ test('CLI hub adopt --apply copies into hub and keeps the original directory', (
       APPDATA: path.join(home, 'AppData', 'Roaming'),
       LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
       YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+      YOTTA_SKILLS_DISCOVERY_ROOTS: '',
     }, home);
     assert.strictEqual(r.status, 0, r.stdout + r.stderr);
     const data = JSON.parse(r.stdout);
@@ -300,6 +303,7 @@ test('CLI hub refresh updates an adopted skill from an explicit path', () => {
       APPDATA: path.join(home, 'AppData', 'Roaming'),
       LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
       YOTTA_SKILLS_DISCOVERY_NO_CWD: '1',
+      YOTTA_SKILLS_DISCOVERY_ROOTS: '',
     }, home);
     writeSkill(next, 'custom-skill', '2.1.0');
     const r = run(['hub', 'refresh', 'custom-skill', '--from', next, '--skip-scan', '--hub', hubDir, '--json'], {
