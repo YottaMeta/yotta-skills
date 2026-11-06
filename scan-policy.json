@@ -29,9 +29,9 @@
     },
     "yotta-chain": {
       "version": "0.1.7",
-      "treeHash": "sha256:629fa49a035730fb5e04397820d75618354bd7932113d366e94675665f613505",
+      "treeHash": "sha256:ecc0bbe664f6032239bb2400d3590f79e4ff308a48aa6797fd6e7f36c13d334c",
       "files": 9,
-      "bytes": 276087,
+      "bytes": 275586,
       "mode": "strict",
       "exceptions": [
         {
@@ -60,9 +60,9 @@
     },
     "yotta-guardian": {
       "version": "0.1.10",
-      "treeHash": "sha256:ed82ccb1dbc3277b33c75988f4731edb0c07fe07dc394ec22cbcdbb841e506cb",
+      "treeHash": "sha256:a3a65ecc44e5a21160d8a7fe0e3ecb8e94eda8b30d97c2117bb4e999fa77c659",
       "files": 13,
-      "bytes": 268104,
+      "bytes": 268084,
       "mode": "detection",
       "exceptions": [
         {
@@ -105,9 +105,9 @@
     },
     "yotta-logwatch": {
       "version": "0.3.3",
-      "treeHash": "sha256:c2a5bd10216528cc01d5071a4c966757cae91d51198320a2f9a8b30f697f999b",
+      "treeHash": "sha256:ba9351d02a7429c57e600cb1db593434a912267f15bca29874f25391b3034119",
       "files": 13,
-      "bytes": 268271,
+      "bytes": 268251,
       "mode": "detection",
       "exceptions": [
         {
@@ -210,9 +210,9 @@
     },
     "yotta-memory": {
       "version": "0.23.3",
-      "treeHash": "sha256:513fe813bf094995f9e76925de06059f686af8dad82752f2554ef53e9ed80487",
+      "treeHash": "sha256:6b87c902fa5e5b6f5d5e306a36d5d7b31f0c74b0d68d68a81abb3862212c1f30",
       "files": 18,
-      "bytes": 1370995,
+      "bytes": 1370169,
       "mode": "strict",
       "exceptions": [
         {
@@ -398,9 +398,9 @@
     },
     "yotta-recon": {
       "version": "0.1.10",
-      "treeHash": "sha256:85c0f879f893a226fee4578262d71bc7aeed0ac7eadb5de763a9331883a63a77",
+      "treeHash": "sha256:85252b09f0746b0170682b48cb09819489e00e50c32a2a0c7cfdab714bf09797",
       "files": 11,
-      "bytes": 276486,
+      "bytes": 276466,
       "mode": "detection",
       "exceptions": [
         {
@@ -431,9 +431,9 @@
     },
     "yotta-security-audit": {
       "version": "0.3.3",
-      "treeHash": "sha256:c67dbe567a26d725f302598e848c0ae297cec9234abc1a84ded292ddbf2cf94b",
+      "treeHash": "sha256:de930dfe97fae6a4be337463d0e4971a51790e2d0989e4ccaebf0eb070575568",
       "files": 15,
-      "bytes": 357543,
+      "bytes": 356803,
       "mode": "detection",
       "exceptions": [
         {
@@ -484,9 +484,9 @@
     },
     "yotta-triage": {
       "version": "0.1.6",
-      "treeHash": "sha256:72ad64ce492215eef5ffaeb2521d65a3560544354e2a145faa8bb71bc859f542",
+      "treeHash": "sha256:ff6445525b6ba316f8acc325f2e7d3dab7057b7cf006d7fcd5adb060ec357d10",
       "files": 10,
-      "bytes": 235165,
+      "bytes": 234723,
       "mode": "detection",
       "exceptions": [
         {

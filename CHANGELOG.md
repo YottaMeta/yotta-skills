@@ -5,6 +5,7 @@
 - scan-policy 补测试夹具例外；测试字面量去自命中；发布前测试接入。
 - 发布门禁批次：发布工作流在 `npm publish` 前执行版本/发布面检查与 `npm test`；测试版本断言改为从 `package.json` 读取；补齐测试脚本。
 - 打包与文档：发布包内容、CHANGELOG / README 与交付说明对齐；规则摘要与注册清单同步。
+- S6 候选收口：scan-policy 改为从 LF 干净候选 tarball 重绑，修正 7 个技能在 CRLF 工作树口径下的 treeHash 漂移。
 
 ## v0.30.7 (2026-11-01)
 
