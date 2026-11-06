@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.30.10 (2026-11-06)
+
+- 最终修正 Linux `spawnSync` 对超大 stdout 的截断差异：内部最多捕获 1 MiB，再按 256 KiB 业务上限统一返回 `error`。
+- 技能与插件同步到 0.30.10；0.30.9 的插件已发布但缺少本项最终修复，不回写旧版本。
+
 ## v0.30.9 (2026-11-06)
 
 - provider stdout 超限改为在 Windows / Linux 一致返回 `error`，不再因 Node 平台差异落到 `invalid_output`。
