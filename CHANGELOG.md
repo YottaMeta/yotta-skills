@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.30.9 (2026-11-06)
+
+- provider stdout 超限改为在 Windows / Linux 一致返回 `error`，不再因 Node 平台差异落到 `invalid_output`。
+- 发布测试改为干净 checkout 自包含：pilot hook manifest、scan-policy 路径、跨仓覆盖检查与 Hub adopt 环境隔离不再依赖本机兄弟仓或真实宿主。
+
 ## v0.30.8 (2026-11-05)
 
 - scan-policy 补测试夹具例外；测试字面量去自命中；发布前测试接入。
