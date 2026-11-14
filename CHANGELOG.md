@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.30.14 (2026-11-14)
+
+- **元忆联动**：`skills.json` 的 `yotta-memory` pin 更新到 **0.24.3**，同步 `references/skill-list.md`。
+- **扫描例外重绑**：按元忆 0.24.3 的干净 LF 候选 tarball 重建 `scan-policy.json`。
+- **发布期修复**：处理 Linux CI 上命中打点 mtime 断言的 Node 原生亚微秒精度差异。
+
 ## v0.30.13 (2026-11-14)
 
 - **元忆联动**：`skills.json` 的 `yotta-memory` pin 更新到 **0.24.2**，同步 `references/skill-list.md`。
