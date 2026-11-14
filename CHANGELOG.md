@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.30.12 (2026-11-14)
+
+- **清单联动**：`skills.json` 的 `yotta-memory` pin 更新到 **0.24.1**，同步 `references/skill-list.md`。
+- **扫描例外重绑**：按元忆 0.24.1 的干净候选 tarball 重建 `scan-policy.json`；旧版本例外自动失效。
+- 兼容性：元阁命令、参数、安装流程与清单结构不变；本版仅清单 pin、扫描例外和版本同步。
+
 ## v0.30.11 (2026-11-12)
 
 - **清单联动**：`skills.json` 的 `yotta-memory` pin 从 0.23.3 更新到 **0.24.0**，同步 `references/skill-list.md`。
