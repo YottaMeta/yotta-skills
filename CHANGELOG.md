@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.30.13 (2026-11-14)
+
+- **元忆联动**：`skills.json` 的 `yotta-memory` pin 更新到 **0.24.2**，同步 `references/skill-list.md`。
+- **扫描例外重绑**：按元忆 0.24.2 的干净 LF 候选 tarball 重建 `scan-policy.json`。
+- **发布期修复**：元忆 0.24.1 的 CI 在 Linux 上暴露 Windows profile 路径解析缺陷；本版随元忆 0.24.2 重新签发。
+
 ## v0.30.12 (2026-11-14)
 
 - **清单联动**：`skills.json` 的 `yotta-memory` pin 更新到 **0.24.1**，同步 `references/skill-list.md`。
