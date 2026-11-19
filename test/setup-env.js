@@ -20,6 +20,8 @@ const HOST_ROOT_ENV_KEYS = [
   'YOTTA_SKILLS_HOME',
   'YOTTA_SKILLS_HUB',
   'YOTTA_SKILLS_DISCOVERY_ROOTS',
+  'ProgramFiles',
+  'ProgramFiles(x86)',
 ];
 
 for (const key of HOST_ROOT_ENV_KEYS) {
