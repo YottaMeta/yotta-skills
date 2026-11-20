@@ -178,7 +178,7 @@
       "slug": "yotta-verify",
       "name": "元信",
       "pkg": "@yottameta/yotta-verify",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "domain": "security",
       "desc": "装前安全扫描器 + audited 徽章（prompt injection + 危险模式）"
     },
