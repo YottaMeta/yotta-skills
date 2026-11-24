@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.30.16 (2026-11-24)
+
+- 宿主识别从 `YottaCode` / `.yottacode` / `YOTTACODE_HOME` 完整切换到
+  `YottaWeave` / `.yottaweave` / `YOTTAWEAVE_HOME`，不保留旧标识兼容。
+- Hub 映射、目录发现、注册、标记、链接与错误提示统一使用 YottaWeave。
+- `skills.json` 同步元忆 `0.24.5`，scan-policy 在候选阶段重新绑定。
+
 ## v0.30.15 (2026-11-20)
 
 - **元忆联动**：`skills.json` 的 `yotta-memory` pin 更新到 **0.24.4**，同步 `references/skill-list.md`。

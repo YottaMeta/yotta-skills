@@ -2,7 +2,7 @@
 /**
  * 0.29.1 U2：宿主矩阵与宿主范围修正回归。
  * 覆盖：配对确定性优选 / 不接管开关（发现·显示·链接三层）/ 目录覆盖 /
- * YottaCode 不接管（映射·env·扫描·注册）/ unpaired 单一真源 / CLI 集成。
+ * YottaWeave 不接管（映射·env·扫描·注册）/ unpaired 单一真源 / CLI 集成。
  */
 const { test } = require('node:test');
 const assert = require('node:assert');
@@ -162,31 +162,31 @@ test('U2 目录覆盖：override 生效 + 旧目录不进入默认发现；clear
   }
 });
 
-test('U2 YottaCode 不接管：映射 / env / 扫描 / 注册全部排除', () => {
+test('U2 YottaWeave 不接管：映射 / env / 扫描 / 注册全部排除', () => {
   const home = tmp('ys-u2-yc-');
   try {
-    const env = Object.assign(makeEnv(home), { YOTTACODE_HOME: path.join(home, 'yottacode-home') });
+    const env = Object.assign(makeEnv(home), { YOTTAWEAVE_HOME: path.join(home, 'yottaweave-home') });
     const opts = { homeDir: home, env };
-    const ycDir = path.join(home, '.yottacode', 'skills');
+    const ycDir = path.join(home, '.yottaweave', 'skills');
     writeSkill(ycDir, 'yotta-x', '1.0.0');
-    writeSkill(path.join(env.YOTTACODE_HOME, 'skills'), 'yotta-y', '1.0.0');
+    writeSkill(path.join(env.YOTTAWEAVE_HOME, 'skills'), 'yotta-y', '1.0.0');
 
-    assert.ok(!dirs.knownRoots(opts).some((r) => dirs.isYottaCodeDir(r.dir)), 'knownRoots 不应含 .yottacode');
-    assert.ok(!dirs.envRoots(opts).some((r) => samePath(r.dir, path.join(env.YOTTACODE_HOME, 'skills'))),
-      'envRoots 不应含 YOTTACODE_HOME');
+    assert.ok(!dirs.knownRoots(opts).some((r) => dirs.isYottaWeaveDir(r.dir)), 'knownRoots 不应含 .yottaweave');
+    assert.ok(!dirs.envRoots(opts).some((r) => samePath(r.dir, path.join(env.YOTTAWEAVE_HOME, 'skills'))),
+      'envRoots 不应含 YOTTAWEAVE_HOME');
 
     const found = discovery.discoverHosts(opts);
-    assert.ok(!found.hosts.some((h) => dirs.isYottaCodeDir(h.dir)), '发现层不应含 .yottacode');
-    assert.ok(!found.hosts.some((h) => samePath(h.dir, path.join(env.YOTTACODE_HOME, 'skills'))),
-      '发现层不应含 YOTTACODE_HOME');
+    assert.ok(!found.hosts.some((h) => dirs.isYottaWeaveDir(h.dir)), '发现层不应含 .yottaweave');
+    assert.ok(!found.hosts.some((h) => samePath(h.dir, path.join(env.YOTTAWEAVE_HOME, 'skills'))),
+      '发现层不应含 YOTTAWEAVE_HOME');
 
     const add = hostsRegistry.addHost(opts, { dir: ycDir });
     assert.strictEqual(add.ok, false);
-    assert.match(add.error, /YottaCode/);
+    assert.match(add.error, /YottaWeave/);
 
     const ex = hostsRegistry.excludeHost(opts, { target: ycDir });
     assert.strictEqual(ex.ok, false);
-    assert.match(ex.error, /YottaCode/);
+    assert.match(ex.error, /YottaWeave/);
   } finally {
     fs.rmSync(home, { recursive: true, force: true });
   }
