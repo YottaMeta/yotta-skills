@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.30.17 (2026-11-28)
+
+- 元忆 pin 升到 `1.0.0`（口径：数据永不出你本机的下一代记忆引擎），`skills.json` 描述同步。
+- `scan-policy.json` 重新绑定元忆 `1.0.0` 的 treeHash；例外条目内容不变——8 条内置记忆安全规则表的自指命中、1 条 hardening 数据外发误报、以及既有测试夹具例外。
+- 无命令、参数或安装行为变更；安装器仍只落技能本体并跳过 `package.json` / `bin` / `node_modules`。
+
 ## v0.30.16 (2026-11-24)
 
 - 宿主识别从 `YottaCode` / `.yottacode` / `YOTTACODE_HOME` 完整切换到
