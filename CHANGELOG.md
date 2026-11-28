@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.30.18 (2026-11-28)
+
+- 锁定元忆 `1.0.1`（局域网传输边界文档版）。
+- **scan-policy 改绑 LF 口径**：元忆条目改为 `1.0.1` / `sha256:05d5f4ea…` / 21 文件 / 1,303,663 B。上一版按 CRLF 安装副本计算 treeHash，与 npm 的 LF 包不一致；本次改为按 LF 载荷绑定，避免新装用户被 fail-closed 误挡。
+- `skills.json`、`references/skill-list.md`、`skill-manifest.json`、MCP `VERSION` 同步。
+
 ## v0.30.17 (2026-11-28)
 
 - 元忆 pin 升到 `1.0.0`（口径：数据永不出你本机的下一代记忆引擎），`skills.json` 描述同步。
